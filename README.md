@@ -1,143 +1,166 @@
-🏦 Gemach Management System – Chasdei Yaakov
+Gemach Management System – Chasdei Yaakov
 
 Software Engineering Project – JCT (Course 151060)
 
-📌 Overview
+Overview
 
-The Gemach Management System is a full-stack web application designed to manage community loans, repayments, trustees, borrowers, and donations in a secure and transparent way.
-Administrators have full control over all system data, while trustees, borrowers, and donors receive view-only access relevant to their role.
+The Gemach Management System is a full-stack web application designed to manage community loans, repayments, trustees, borrowers, and donations.
+The system provides secure, role-based access control: administrators can create and update all data, while trustees, borrowers, and donors have view-only access to the information relevant to their role.
 
-The project is developed using Agile methodology, managed entirely through Azure DevOps, and implemented with a modern frontend, backend, and cloud-ready architecture.
+This project is developed using Agile methodology and managed through Azure DevOps.
+The system is built with a modern frontend, backend, and database architecture, with planned cloud deployment in later stages.
 
-🎯 Project Objectives
+Project Structure
 
-Digitize and centralize the Gemach’s loan-management workflow
+The project is built as a modular full-stack application consisting of three layers:
 
-Provide accurate, secure, and role-based access to sensitive data
+Frontend: Vue.js (Vite), Tailwind CSS (RTL support), Axios
 
-Support automatic payment schedules and reporting features
+Backend: Django (Python), Django REST Framework, REST API
 
-Deliver a production-ready architecture that supports cloud deployment
+Database: PostgreSQL 15+ with integration via psycopg2-binary
 
-Maintain high standards of maintainability, reliability, and usability
+DevOps: Azure Boards, GitHub/Azure Repos, planned CI/CD pipelines
 
-🧠 System Architecture
+Documentation: Azure Wiki, dashboards, and sprint-based tracking
 
-The system follows a Frontend → Backend → Database layered architecture.
+Implemented Stages
+Stage 1–2 (Current)
 
+Repository setup, project documentation, and initial architecture.
+
+Creation of README, repository structure, and Azure DevOps project.
+
+Establishing development environments (backend, frontend, local DB).
+
+Definition of Epics, Features, and User Stories according to Agile methodology.
+
+Stage 3 (Sprint 1 – Upcoming)
+
+Setup of the Django backend project structure.
+
+Setup of Vue frontend project with Tailwind CSS.
+
+Creation of initial PostgreSQL schema (borrowers, loans, trustees, donors).
+
+Implementation of a minimal end-to-end working system (first loan creation flow).
+
+Basic API endpoints for core functionality.
+
+Stage 4–6 (Later Sprints)
+
+Complete CRUD functionality for all entities.
+
+Auto-generated payment schedules.
+
+Automatic status updates for loans and payments.
+
+Reports and dashboards for admins.
+
+Expanded user permissions and validations.
+
+Initial cloud deployment.
+
+Technologies
 Frontend
 
 Vue.js (Vite)
 
-Tailwind CSS with full RTL support
+Tailwind CSS
 
-Axios for REST API communication
+Axios for API communication
 
 Backend
 
-Django (Python)
+Python 3.12+
+
+Django 5
 
 Django REST Framework
 
-PostgreSQL integration via psycopg2-binary
+PostgreSQL integration (psycopg2-binary)
 
 Database
 
-PostgreSQL
+PostgreSQL 15+
 
-Local development DB for early sprints
+Managed locally via pgAdmin
 
-Cloud DB support for deployment (Azure, Render, Supabase, etc.)
+Cloud-ready structure for future deployment
 
-DevOps
+DevOps & Tools
 
-Azure DevOps Boards — backlog, sprints, tasks, user stories
+Azure DevOps (Boards, Wiki, Pipelines)
 
-Azure Repos or GitHub — version control
+Git (GitHub / Azure Repos)
 
-Azure Pipelines (planned) — CI/CD
+Postman / Insomnia for API testing
 
-Wiki documentation and dashboards
-
-🛠 Development Setup
-✔ Local Development (Sprints 1–2)
-
-Local environment is used during early development for faster iteration.
-
-Backend setup:
-
+Development Setup
+Backend Setup
 cd backend
 python -m venv venv
-venv\Scripts\activate   # Windows
+venv\Scripts\activate     # Windows
 pip install -r requirements.txt
+python manage.py migrate
 python manage.py runserver
 
-
-Frontend setup:
-
+Frontend Setup
 cd frontend
 npm install
 npm run dev
 
+PostgreSQL Setup
 
-Local PostgreSQL setup:
-Create database gemach_db and update settings.py accordingly.
+Create a local database named:
 
-☁ Future Cloud Deployment (Later Sprints)
+gemach_db
 
-The system is designed to be easily deployed to cloud environments.
 
-Supported future deployment providers:
+Configure it in settings.py as follows:
 
-Azure App Service (recommended for Django)
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'gemach_db',
+        'USER': 'postgres',
+        'PASSWORD': 'admin',
+        'HOST': 'localhost',
+        'PORT': '5432',
+    }
+}
 
-Render
+Future Deployment
 
-Supabase / Azure Database for PostgreSQL
+In later sprints, the system will be deployed to a cloud environment.
 
-Netlify/Vercel for frontend hosting
+Planned deployment stack:
 
-Production environment will include:
+Backend: Azure App Service / Render
 
-Cloud-hosted PostgreSQL instance
+Database: Azure PostgreSQL / Supabase
 
-Backend deployment with environment variables (no hardcoded credentials)
+Frontend: Netlify / Vercel / Azure Static Web Apps
 
-CI/CD pipeline via Azure Pipelines
+CI/CD: Azure Pipelines with automated testing and deployment
 
-Frontend built via Vite and deployed to a static hosting provider
-
-Cloud-specific configuration will be added in upcoming sprints.
-
-🗂 Repository Structure
-gemach-system/
+Repository Structure
+Loan-Management/
 │
 ├── backend/
 │   ├── gemach_backend/
 │   ├── apps/
-│   ├── requirements.txt
-│   └── manage.py
+│   ├── manage.py
+│   └── requirements.txt
 │
-└── frontend/
-    ├── src/
-    ├── public/
-    └── package.json
+├── frontend/
+│   ├── src/
+│   ├── public/
+│   └── package.json
+│
+└── README.md
 
-📅 Agile Workflow
-
-Managed entirely through Azure DevOps:
-
-Epics → Features → User Stories → Tasks
-
-2-week sprints
-
-Daily team sync
-
-Retrospectives
-
-Dashboard tracking of progress and velocity
-
-👥 Team
+Team
 
 Yael Farber
 
@@ -147,6 +170,6 @@ Hila Miller
 
 Bracha Kalagi
 
-📄 License
+License
 
-Internal academic project — no external licensing currently applied.
+This is an academic project. No external license is currently applied.
