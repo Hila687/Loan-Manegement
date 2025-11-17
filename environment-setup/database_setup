@@ -1,0 +1,198 @@
+📄 הנחיות התקנה והגדרת סביבת דאטאבייס – PostgreSQL (Windows + macOS)
+מסמך זה כולל את כל השלבים להקמת סביבת הדאטאבייס המקומית עבור הפרויקט:
+ התקנת PostgreSQL, התקנת pgAdmin, והקמת בסיס הנתונים gemach_db.
+
+✨ חלק 1 — התקנת PostgreSQL על Windows:
+✔️ 1. הורדת PostgreSQL
+כדי להימנע מבעיות בהתקנה, יש להוריד את האינסטולר הרשמי של Windows מהקישור הישיר:
+👉 PostgreSQL 15 – Windows x64
+ https://get.enterprisedb.com/postgresql/postgresql-15.7-1-windows-x64.exe
+האינסטולר כולל:
+PostgreSQL Server
+
+
+pgAdmin 4
+
+
+StackBuilder
+
+
+כלי שורת פקודה
+
+
+
+✔️ 2. התקנת PostgreSQL – צעד אחר צעד
+הפעילי את קובץ ההתקנה והמשיכי כך:
+1️⃣ מסך פתיחה
+Next
+2️⃣ בחירת רכיבים (Components)
+להשאיר הכל מסומן:
+✔ PostgreSQL Server
+ ✔ pgAdmin 4
+ ✔ StackBuilder
+ ✔ Command Line Tools
+Next
+3️⃣ מיקום התקנה
+להשאיר ברירת מחדל:
+C:\Program Files\PostgreSQL\15\
+
+Next
+4️⃣ סיסמה למשתמש postgres
+להגדיר סיסמה:
+admin
+
+(זוהי סיסמת ה־superuser של הדאטאבייס)
+Next
+5️⃣ Port
+להשאיר:
+5432
+
+Next
+6️⃣ Locale
+להשאיר ברירת מחדל.
+Next → Install
+7️⃣ סיום התקנה
+להוריד את ה־V מ־StackBuilder (לא נדרש)
+ Finish
+
+✔️ 3. פתיחת pgAdmin וחיבור לשרת
+לפתוח pgAdmin 4 מתפריט ההתחל
+
+
+להמתין לטעינת הממשק
+
+
+בצד שמאל – ללחוץ פעמיים על:
+ PostgreSQL 15
+
+
+להזין את הסיסמה שהגדרת בהתקנה:
+ admin
+
+
+לסמן ✔ "Save Password"
+
+
+אם ה־X האדום נעלם → החיבור לשרת הצליח.
+
+✔️ 4. יצירת בסיס הנתונים של הפרויקט – gemach_db
+בחלונית השמאלית לפתוח:
+
+ Servers → PostgreSQL 15 → Databases
+
+
+ללחוץ קליק ימני על Databases
+
+
+לבחור:
+ Create → Database…
+
+
+למלא כך:
+
+
+Database name:
+gemach_db
+
+Owner:
+postgres
+
+(שדה OID נשאר ריק)
+ללחוץ למעלה על Save
+
+
+בסיס הנתונים נוצר בהצלחה.
+
+✔️ 5. סיום
+כעת PostgreSQL מותקן, pgAdmin מוגדר, ובסיס הנתונים הראשוני של הפרויקט מוכן.
+ אפשר להמשיך לשלב הבא בהקמת סביבת העבודה (Backend + Django).
+
+🍏 חלק 2 — התקנת PostgreSQL על macOS
+יש 2 דרכים מומלצות להתקנה:
+דרך Homebrew (מומלץ ביותר)
+או
+דרך האינסטולר של Postgres App (הכי פשוטה).
+שתי הדרכים מצוינות.
+
+✔️ אפשרות 1 — התקנת PostgreSQL באמצעות Homebrew (מומלץ)
+📌 דרישות:
+Homebrew מותקן?
+ אם לא, מתקינים באמצעות הפקודה:
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+
+✔️ התקנת PostgreSQL
+brew update
+brew install postgresql@15
+
+לאחר ההתקנה:
+brew services start postgresql@15
+
+
+✔️ בדיקת התקנה
+psql --version
+
+אמור להחזיר משהו כמו:
+psql (PostgreSQL) 15.x
+
+
+✔️ יצירת בסיס הנתונים
+ברוב ההתקנות PostgreSQL יוצר אוטומטית יוזר עם שם המשתמש של המחשב.
+ כדי ליצור את בסיס הנתונים:
+createdb gemach_db
+
+כדי להתחבר:
+psql gemach_db
+
+
+✔️ אפשרות 2 — התקנה עם Postgres App (הכי פשוט)
+להוריד מכאן:
+ 👉 https://postgresapp.com/
+שלבים:
+להוריד את Postgres.app
+
+
+לגרור ל-Applications
+
+
+לפתוח את האפליקציה
+
+
+ללחוץ על Initialize
+
+
+Postgres יופעל אוטומטית ברקע
+
+
+
+✔️ יצירת בסיס הנתונים
+ב-Terminal:
+createdb gemach_db
+
+
+✔️ חיבור עם כלי GUI ב-macOS (אם רוצות ממשק כמו pgAdmin)
+אפשר להוריד pgAdmin ל-macOS:
+👉 https://www.pgadmin.org/download/pgadmin-4-macos/
+פתיחה → Add New Server →
+ וכמו ב-Windows:
+Host: localhost
+
+
+Port: 5432
+
+
+Username: postgres או היוזר המקומי
+
+
+Password: מה שהוגדר
+
+
+
+🎉 סיום
+לאחר השלמת השלבים:
+✔ PostgreSQL מותקן
+ ✔ שירות הדאטאבייס פועל
+ ✔ קיים בסיס נתונים מקומי בשם gemach_db
+ ✔ המערכת מוכנה לחיבור ל-backend של Django
+
+
