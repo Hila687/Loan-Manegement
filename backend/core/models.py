@@ -55,7 +55,7 @@ class Loan(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="סכום ההלוואה")
     start_date = models.DateField(verbose_name="תאריך התחלה")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING', verbose_name="סטטוס")
-    form_file = models.CharField(max_length=255, blank=True, null=True, verbose_name="קובץ טופס חתום") 
+    form_file = models.FileField(upload_to='loan_forms/', blank=True, null=True, verbose_name="קובץ טופס חתום")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="תאריך יצירה")
     loan_type = models.CharField(max_length=50, verbose_name="סוג הלוואה") 
 
