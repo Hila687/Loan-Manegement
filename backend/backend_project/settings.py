@@ -79,7 +79,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'gemach_db',       
         'USER': 'postgres',        
-        'PASSWORD': 'admin',  
+        'PASSWORD': 'bracha2225',  
         'HOST': 'localhost',
         'PORT': '5432',
     }
