@@ -1,0 +1,88 @@
+{
+  "loanForm": {
+    "title": "New Loan",
+    "sections": {
+      "borrower": "Borrower Details",
+      "loan": "Loan Details",
+      "file": "Signed Form"
+    },
+    "badges": {
+      "borrower": "1 / 3",
+      "loan": "2 / 3",
+      "file": "3 / 3"
+    },
+    "fields": {
+      "borrowerName": "Borrower Name",
+      "borrowerNamePlaceholder": "Enter full name",
+      "borrowerPhone": "Phone",
+      "borrowerPhonePlaceholder": "Enter phone number",
+      "borrowerAddress": "Address",
+      "borrowerAddressPlaceholder": "Enter address",
+      "trustee": "Trustee",
+      "trusteePlaceholder": "Select or type trustee",
+      "amount": "Loan Amount",
+      "amountPlaceholder": "0.00",
+      "startDate": "Start Date",
+      "startDatePlaceholder": "Select date",
+      "numPayments": "Number of Payments",
+      "numPaymentsPlaceholder": "e.g., 25",
+      "signedForm": "Signed Form"
+    },
+    "trustees": {
+      "t1": "Trustee 1",
+      "t2": "Trustee 2"
+    },
+    "labels": {
+    "trusteeId": "Trustee ID:"
+    },
+    "messages": {
+      "validationError": "Please correct the fields marked in red",
+      "requiredFieldsError": "Please fill in all required fields",
+      "nameRequired": "Name is required",
+      "phoneInvalid": "Invalid phone number",
+      "amountInvalid": "Amount must be greater than 0",
+      "startDateInvalid": "Start date is required",
+      "numPaymentsInvalid": "Number of payments must be at least 1",
+      "noTrustees": "No trustees found",
+      "loadingTrustees": "Loading trustees...",
+      "trusteesLoadError": "Failed to load trustees",
+      "fileNotSelected": "No file selected",
+      "fileRequired": "File is required. Please upload the signed form",
+      "uploadFailed": "Upload failed. Try again",
+      "success": "Loan created successfully",
+      "genericError": "Error creating loan"
+    },
+    "buttons": {
+      "clearForm": "Clear Form",
+      "submit": "Save Loan",
+      "submitting": "Submitting..."
+    }
+  },
+
+  "usersList": {
+    "title": "API Test – Users List",
+    "loading": "Loading data...",
+    "noUsers": "No users found.",
+    "table": {
+      "id": "ID",
+      "username": "Username",
+      "role": "Role"
+    },
+    "buttons": {
+    "loadUsers": "Load users",
+    "retry": "Try again",
+    "refresh": "Refresh users"
+    },
+    "messages": {
+      "loadFailed": "Failed to load users. Please try again later.",
+      "errorDetails": "Network request failed. Please check your connection and try again."
+    },
+    "roles": {
+      "admin": "Admin"
+    }
+  },
+  "lang": {
+    "he": "עברית",
+    "en": "English"
+  }
+}
