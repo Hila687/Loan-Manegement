@@ -1,0 +1,89 @@
+{
+  "loanForm": {
+    "title": "הלוואה חדשה",
+    "sections": {
+      "borrower": "פרטי הלווה",
+      "loan": "פרטי הלוואה",
+      "file": "טופס חתום"
+    },
+    "badges": {
+      "borrower": "3 / 1",
+      "loan": "3 / 2",
+      "file": "3 / 3"
+    },
+    "fields": {
+      "borrowerName": "שם הלווה",
+      "borrowerNamePlaceholder": "הכנס שם מלא",
+      "borrowerPhone": "טלפון",
+      "borrowerPhonePlaceholder": "הכנס מספר טלפון",
+      "borrowerAddress": "כתובת",
+      "borrowerAddressPlaceholder": "הכנס כתובת",
+      "trustee": "נאמן",
+      "trusteePlaceholder": "בחר או הקלד נאמן",
+      "amount": "סכום הלוואה",
+      "amountPlaceholder": "0.00",
+      "startDate": "תאריך התחלה",
+      "startDatePlaceholder": "בחר תאריך",
+      "numPayments": "מספר תשלומים",
+      "numPaymentsPlaceholder": "לדוג׳ 25",
+      "signedForm": "טופס חתום"
+    },
+    "trustees": {
+      "t1": "נאמן 1",
+      "t2": "נאמן 2"
+    },
+    "labels": {
+    "trusteeId": "מזהה נאמן:"
+    },
+    "messages": {
+      "validationError": "אנא תקנו את השדות שמסומנים בשגיאה",
+      "requiredFieldsError": "אנא מלאו את כל השדות הנדרשים",
+      "nameRequired": "שם הוא שדה חובה",
+      "phoneInvalid": "מספר הטלפון אינו תקין",
+      "amountInvalid": "הסכום חייב להיות גדול מאפס",
+      "startDateInvalid": "תאריך ההתחלה אינו תקין",
+      "numPaymentsInvalid": "מספר התשלומים חייב להיות לפחות 1",
+      "noTrustees": "לא נמצאו נאמנים",
+      "loadingTrustees": "טוען נאמנים...",
+      "trusteesLoadError": "נכשלה טעינת רשימת הנאמנים",
+      "fileNotSelected": "לא בחרת קובץ",
+      "fileRequired": "קובץ נדרש. אנא העלה את הטופס החתום",
+      "uploadFailed": "העלאה נכשלה. נסה שוב",
+      "success": "ההלוואה נוצרה בהצלחה",
+      "genericError": "שגיאה בעת יצירת ההלוואה"
+    },
+    "buttons": {
+      "clearForm": "נקה טופס",
+      "submit": "שמירת הלוואה",
+      "submitting": "מעדכן..."
+    }
+  },
+
+  "usersList": {
+    "title": "בדיקת API – רשימת משתמשים",
+    "loading": "טוען נתונים...",
+    "noUsers": "לא נמצאו משתמשים להצגה.",
+    "table": {
+      "id": "ID",
+      "username": "שם משתמש",
+      "role": "תפקיד"
+    },
+    "buttons": {
+      "loadUsers": "טען משתמשים",
+      "retry": "נסה שוב",
+      "refresh": "רענן משתמשים"
+    },
+   "messages": {
+     "loadFailed": "טעינת המשתמשים נכשלה. אנא נסו שוב מאוחר יותר.",
+      "errorDetails": "בקשת הרשת נכשלה. בדקו את החיבור ונסו שוב."
+    },
+    "roles": {
+      "admin": "מנהל מערכת"
+    }
+  },
+
+  "lang": {
+    "he": "עברית",
+    "en": "English"
+  }
+}
