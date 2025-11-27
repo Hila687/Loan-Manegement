@@ -1,8 +1,19 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Trustee, Borrower, LoanChecks, LoanStandingOrder
+from .models import Trustee, Borrower, LoanChecks, LoanStandingOrder, Role, UserProfile
 
-# --- User & Trustee ---
+# --- Role & UserProfile ---
+class RoleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Role
+        fields = '__all__'
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfile
+        fields = '__all__'
+
+# --- User, Trustee, Borrower ---
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -14,16 +25,13 @@ class TrusteeSerializer(serializers.ModelSerializer):
         model = Trustee
         fields = '__all__'
 
-# --- Borrower ---
 class BorrowerSerializer(serializers.ModelSerializer):
     user_details = UserSerializer(source='user', read_only=True)
     class Meta:
         model = Borrower
         fields = '__all__'
 
-# --- Loan Serializers (Checks & Standing Order) ---
-# עכשיו יש לנו סירליאייזר נפרד לכל סוג
-
+# --- Loans ---
 class LoanChecksSerializer(serializers.ModelSerializer):
     class Meta:
         model = LoanChecks

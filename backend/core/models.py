@@ -2,7 +2,34 @@ from django.db import models
 from django.contrib.auth.models import User
 import uuid
 
-# --- 1. מודל הנאמן (Trustee) ---
+# --- 1. מודל תפקיד (Role) ---
+class Role(models.Model):
+    role_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=50, unique=True, verbose_name="שם תפקיד")
+    description = models.CharField(max_length=255, null=True, blank=True, verbose_name="תיאור")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = "תפקיד"
+        verbose_name_plural = "תפקידים"
+
+# --- 2. פרופיל משתמש (UserProfile) ---
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile', verbose_name="משתמש")
+    role = models.ForeignKey(Role, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="תפקיד")
+    phone = models.CharField(max_length=20, null=True, blank=True, verbose_name="טלפון")
+
+    def __str__(self):
+        return self.user.username
+
+    class Meta:
+        verbose_name = "פרופיל משתמש"
+        verbose_name_plural = "פרופילי משתמשים"
+
+# --- 3. מודל הנאמן (Trustee) ---
 class Trustee(models.Model):
     trustee_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='trustee_profile', verbose_name="משתמש מקושר")
@@ -16,8 +43,7 @@ class Trustee(models.Model):
         verbose_name = "נאמן"
         verbose_name_plural = "נאמנים"
 
-
-# --- 2. מודל הלווה (Borrower) ---
+# --- 4. מודל הלווה (Borrower) ---
 class Borrower(models.Model):
     borrower_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='borrower_profile', verbose_name="משתמש מקושר", null=True, blank=True)
@@ -33,9 +59,7 @@ class Borrower(models.Model):
         verbose_name = "לווה"
         verbose_name_plural = "לווים"
 
-
-# --- 3. מודל הלוואה בסיסי (Abstract Loan) ---
-# מודל אבסטרקטי לא יוצר טבלה בדאטהבייס. הוא משמש רק כתבנית.
+# --- 5. מודל הלוואה בסיסי (Abstract Loan) ---
 class Loan(models.Model):
     STATUS_CHOICES = [
         ('PENDING', 'ממתין לאישור'),
@@ -50,16 +74,13 @@ class Loan(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="סכום ההלוואה")
     start_date = models.DateField(verbose_name="תאריך התחלה")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING', verbose_name="סטטוס")
-    # כאן אנחנו שומרים את הקובץ (משימה 97)
     form_file = models.FileField(upload_to='loan_forms/', blank=True, null=True, verbose_name="קובץ טופס חתום")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="תאריך יצירה")
 
     class Meta:
-        abstract = True  # זה הופך את המודל לאבסטרקטי!
+        abstract = True
 
-
-# --- 4. הלוואת צ'קים (LoanChecks) ---
-# זהו מודל אמיתי שייצור טבלה, והוא יורש את כל השדות של Loan.
+# --- 6. הלוואות ספציפיות ---
 class LoanChecks(Loan):
     num_payments = models.IntegerField(verbose_name="מספר תשלומים")
     check_details = models.TextField(blank=True, null=True, verbose_name="פרטי צ'קים")
@@ -69,8 +90,6 @@ class LoanChecks(Loan):
         verbose_name = "הלוואה (צ'קים)"
         verbose_name_plural = "הלוואות (צ'קים)"
 
-
-# --- 5. הלוואת הוראת קבע (LoanStandingOrder) ---
 class LoanStandingOrder(Loan):
     monthly_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="סכום חודשי")
     charge_day = models.IntegerField(verbose_name="יום חיוב בחודש")
