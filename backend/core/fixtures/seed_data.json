@@ -1,0 +1,276 @@
+[
+  {
+    "model": "auth.user",
+    "pk": 1,
+    "fields": {
+      "username": "admin1",
+      "password": "pbkdf2_sha256$1000000$4ztoOmOdyi2xBasKu70yNe$xqnxqcK2Iy3cOCwK4DlL0SpiQOzVvRxxNS7S4eMWLUk=",
+      "is_superuser": true,
+      "is_staff": true,
+      "is_active": true
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 2,
+    "fields": {
+      "username": "admin2",
+      "password": "pbkdf2_sha256$1000000$4ztoOmOdyi2xBasKu70yNe$xqnxqcK2Iy3cOCwK4DlL0SpiQOzVvRxxNS7S4eMWLUk=",
+      "is_superuser": true,
+      "is_staff": true,
+      "is_active": true
+    }
+  },
+
+  {
+    "model": "auth.user",
+    "pk": 3,
+    "fields": {
+      "username": "trustee1",
+      "password": "pbkdf2_sha256$1000000$TwheIX39GPODTixzmKJxtL$xalEttEbPwRLROsu4lTZ6MVi+y2zh9ir+wT66zcaQWY=",
+      "is_staff": false,
+      "is_active": true
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 4,
+    "fields": {
+      "username": "trustee2",
+      "password": "pbkdf2_sha256$1000000$TwheIX39GPODTixzmKJxtL$xalEttEbPwRLROsu4lTZ6MVi+y2zh9ir+wT66zcaQWY=",
+      "is_staff": false,
+      "is_active": true
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 5,
+    "fields": {
+      "username": "trustee3",
+      "password": "pbkdf2_sha256$1000000$TwheIX39GPODTixzmKJxtL$xalEttEbPwRLROsu4lTZ6MVi+y2zh9ir+wT66zcaQWY=",
+      "is_staff": false,
+      "is_active": true
+    }
+  },
+
+  {
+    "model": "auth.user",
+    "pk": 6,
+    "fields": {
+      "username": "borrower1",
+      "password": "pbkdf2_sha256$1000000$kSkyzwiZwxV6e0rurACDkM$rvsPE5iop9LsqBBO9OgyJZTGx0yObMQp3yL+sjdqtbQ=",
+      "is_staff": false,
+      "is_active": true
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 7,
+    "fields": {
+      "username": "borrower2",
+      "password": "pbkdf2_sha256$1000000$kSkyzwiZwxV6e0rurACDkM$rvsPE5iop9LsqBBO9OgyJZTGx0yObMQp3yL+sjdqtbQ=",
+      "is_staff": false,
+      "is_active": true
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 8,
+    "fields": {
+      "username": "borrower3",
+      "password": "pbkdf2_sha256$1000000$kSkyzwiZwxV6e0rurACDkM$rvsPE5iop9LsqBBO9OgyJZTGx0yObMQp3yL+sjdqtbQ=",
+      "is_staff": false,
+      "is_active": true
+    }
+  },
+
+  {
+    "model": "auth.user",
+    "pk": 9,
+    "fields": {
+      "username": "donor1",
+      "password": "pbkdf2_sha256$1000000$lV6QK15LGz8toLVmBBKXP8$02UKNygai9XYawlWywonAt3YmAukKhzI6XYYfUf5W34=",
+      "is_staff": false,
+      "is_active": true
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 10,
+    "fields": {
+      "username": "donor2",
+      "password": "pbkdf2_sha256$1000000$lV6QK15LGz8toLVmBBKXP8$02UKNygai9XYawlWywonAt3YmAukKhzI6XYYfUf5W34=",
+      "is_staff": false,
+      "is_active": true
+    }
+  },
+
+  {
+    "model": "core.userprofile",
+    "pk": 1,
+    "fields": {
+      "user": 1,
+      "role": "a3c4938e-03db-4364-a931-b8f942158a03",
+      "phone": "050-1000001"
+    }
+  },
+  {
+    "model": "core.userprofile",
+    "pk": 2,
+    "fields": {
+      "user": 2,
+      "role": "a3c4938e-03db-4364-a931-b8f942158a03",
+      "phone": "050-1000002"
+    }
+  },
+  {
+    "model": "core.userprofile",
+    "pk": 3,
+    "fields": {
+      "user": 3,
+      "role": "4a38823a-11b8-419d-a91b-d3b8a162b132",
+      "phone": "050-2000001"
+    }
+  },
+  {
+    "model": "core.userprofile",
+    "pk": 4,
+    "fields": {
+      "user": 4,
+      "role": "4a38823a-11b8-419d-a91b-d3b8a162b132",
+      "phone": "050-2000002"
+    }
+  },
+  {
+    "model": "core.userprofile",
+    "pk": 5,
+    "fields": {
+      "user": 5,
+      "role": "4a38823a-11b8-419d-a91b-d3b8a162b132",
+      "phone": "050-2000003"
+    }
+  },
+  {
+    "model": "core.userprofile",
+    "pk": 6,
+    "fields": {
+      "user": 6,
+      "role": "941eae3d-ca30-4d87-9474-5b55d5e8b219",
+      "phone": "050-3000001"
+    }
+  },
+  {
+    "model": "core.userprofile",
+    "pk": 7,
+    "fields": {
+      "user": 7,
+      "role": "941eae3d-ca30-4d87-9474-5b55d5e8b219",
+      "phone": "050-3000002"
+    }
+  },
+  {
+    "model": "core.userprofile",
+    "pk": 8,
+    "fields": {
+      "user": 8,
+      "role": "941eae3d-ca30-4d87-9474-5b55d5e8b219",
+      "phone": "050-3000003"
+    }
+  },
+  {
+    "model": "core.userprofile",
+    "pk": 9,
+    "fields": {
+      "user": 9,
+      "role": "c38fa941-0ed0-4c26-8770-135b1485f9c5",
+      "phone": "050-4000001"
+    }
+  },
+  {
+    "model": "core.userprofile",
+    "pk": 10,
+    "fields": {
+      "user": 10,
+      "role": "c38fa941-0ed0-4c26-8770-135b1485f9c5",
+      "phone": "050-4000002"
+    }
+  },
+
+  {
+    "model": "core.trustee",
+    "pk": 1,
+    "fields": {
+      "user": 3,
+      "community": "רמות",
+      "notes": "נאמן ראשי"
+    }
+  },
+  {
+    "model": "core.trustee",
+    "pk": 2,
+    "fields": {
+      "user": 4,
+      "community": "הר נוף",
+      "notes": ""
+    }
+  },
+  {
+    "model": "core.trustee",
+    "pk": 3,
+    "fields": {
+      "user": 5,
+      "community": "פסגת זאב",
+      "notes": ""
+    }
+  },
+
+  {
+    "model": "core.borrower",
+    "pk": 1,
+    "fields": {
+      "user": 6,
+      "trustee": 1,
+      "id_number": "123456781",
+      "address": "רח׳ הר חומה 12, ירושלים",
+      "created_at": "2025-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.borrower",
+    "pk": 2,
+    "fields": {
+      "user": 7,
+      "trustee": 2,
+      "id_number": "123456782",
+      "address": "רח׳ יפו 35, ירושלים",
+      "created_at": "2025-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.borrower",
+    "pk": 3,
+    "fields": {
+      "user": 8,
+      "trustee": 3,
+      "id_number": "123456783",
+      "address": "רח׳ חב״ד 4, ירושלים",
+      "created_at": "2025-01-01T00:00:00Z"
+    }
+  },
+
+  {
+    "model": "core.loanchecks",
+    "pk": 1,
+    "fields": {
+      "borrower": 1,
+      "trustee": 1,
+      "amount": "5000.00",
+      "start_date": "2025-01-01",
+      "status": "ACTIVE",
+      "num_payments": 10,
+      "check_details": "Demo checks",
+      "predefined_schedule": true,
+      "created_at": "2025-01-01T00:00:00Z"
+    }
+  }
+]
