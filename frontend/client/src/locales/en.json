@@ -1,4 +1,27 @@
 {
+  "home": {
+    "gemachLabel": "Gemach Management System",
+    "title": "Welcome to the Loan Management System",
+    "subtitle": "Here you can view all active loans, create new loans, and manage the Gemach’s operations in an organized and simple way.",
+    "statActiveLoans": "Active Loans",
+    "statThisMonth": "Loans Opened This Month",
+    "statTrustees": "Active Trustees",
+    "quickActions": "Quick Actions",
+    "activeLoansCardTitle": "Active Loans",
+    "activeLoansCardDescription": "View the list of all open loans, including borrower, trustee, and amount.",
+    "createLoanCardTitle": "Create New Loan",
+    "createLoanCardDescription": "Open a new loan for a borrower, including trustee details and repayment terms.",
+    "footerNote": "A dashboard with charts, alerts, and system insights will appear here in future versions."
+  },
+  "nav": {
+    "home": "Home",
+    "createLoan": "Create Loan",
+    "activeLoans": "Active Loans",
+    "dashboard": "Dashboard"
+  },
+  "app": {
+    "title": "Gemach"
+  },
   "loanForm": {
     "title": "New Loan",
     "sections": {

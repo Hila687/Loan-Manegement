@@ -1,4 +1,27 @@
 {
+  "home": {
+    "gemachLabel": "מערכת ניהול גמ\"ח",
+    "title": "ברוכה הבאה למערכת ניהול ההלוואות",
+    "subtitle": "כאן תוכלי לראות את כל ההלוואות הפעילות, לפתוח הלוואות חדשות ולנהל את פעילות הגמ\"ח בצורה מסודרת ונוחה.",
+    "statActiveLoans": "הלוואות פעילות",
+    "statThisMonth": "הלוואות שנפתחו החודש",
+    "statTrustees": "נאמנים פעילים",
+    "quickActions": "פעולות מהירות",
+    "activeLoansCardTitle": "הלוואות פעילות",
+    "activeLoansCardDescription": "צפי ברשימת כל ההלוואות הפתוחות, כולל לווה, נאמן וסכום.",
+    "createLoanCardTitle": "פתיחת הלוואה חדשה",
+    "createLoanCardDescription": "פתיחת הלוואה חדשה עבור לווה, כולל פרטי נאמן ותנאי החזר.",
+    "footerNote": "בעתיד יופיע כאן לוח בקרה עם גרפים, התראות ותצוגת מצב הגמ\"ח."
+  },
+    "nav": {
+    "home": "בית",
+    "createLoan": "יצירת הלוואה",
+    "activeLoans": "הלוואות פעילות",
+    "dashboard": "דשבורד"
+  },
+  "app": {
+    "title": "גמ\"ח"
+  },
   "loanForm": {
     "title": "הלוואה חדשה",
     "sections": {
