@@ -46,6 +46,14 @@ const loan = ref({
   num_payments: "",
 });
 
+// Trustee option type
+type TrusteeOption = {
+  id: string; // trustee_id from backend
+  name: string; // "first_name last_name" or username
+  community: string; // community name
+  label: string; // full display label for UI (name + community)
+};
+
 // File upload and generic UI state
 const formFile = ref<File | null>(null);
 const fileError = ref(false);
@@ -55,12 +63,15 @@ const errorTimeout = ref<ReturnType<typeof setTimeout> | null>(null);
 const success = ref<string | null>(null);
 
 // Trustees list and selection state
-const trustees = ref<Array<{ id: number; name: string }>>([]);
+const trustees = ref<TrusteeOption[]>([]);
 const trusteesLoading = ref(false);
 const trusteeSearchQuery = ref("");
 const showTrusteeDropdown = ref(false);
 const highlightedTrusteeIndex = ref(-1);
 const trusteesErrorMessage = ref("");
+
+// NEW: timeout ref for blur handling
+const trusteeBlurTimeout = ref<ReturnType<typeof setTimeout> | null>(null);
 
 // Field refs (for keyboard navigation)
 const borrowerNameRef = ref<HTMLInputElement | null>(null);
@@ -90,15 +101,53 @@ onMounted(() => {
   fetchTrustees();
 });
 
+// Normalize raw trustee from backend into UI-friendly shape
+function normalizeTrustee(raw: any): TrusteeOption {
+  const user = raw.user_details || {};
+
+  const first = (user.first_name || "").trim();
+  const last = (user.last_name || "").trim();
+  const fullName = (first + " " + last).trim();
+
+  const community = (raw.community || "").trim();
+  const username = (user.username || "").trim();
+
+  // This is what we show to the user (no id, no username)
+  let label = "";
+  if (fullName && community) {
+    label = `${fullName} – ${community}`;
+  } else if (fullName) {
+    label = fullName;
+  } else if (community) {
+    label = community;
+  } else {
+    label = "Unknown trustee";
+  }
+
+  // Internal "name" used only for searching
+  const nameForSearch = fullName || username || "Unknown trustee";
+
+  return {
+    id: String(raw.trustee_id || raw.id || ""), // stays for submit
+    name: nameForSearch,
+    community,
+    label,
+  };
+}
+
 // Filtered trustees list for search
 const filteredTrustees = computed(() => {
   if (!trusteeSearchQuery.value) return trustees.value;
-  const query = trusteeSearchQuery.value.toLowerCase();
-  return trustees.value.filter(
-    (t) =>
-      t.name.toLowerCase().includes(query) ||
-      t.id.toString().includes(query)
-  );
+  const q = trusteeSearchQuery.value.toLowerCase();
+
+  return trustees.value.filter((t) => {
+    return (
+      t.name.toLowerCase().includes(q) ||
+      t.community.toLowerCase().includes(q) ||
+      t.label.toLowerCase().includes(q) ||
+      t.id.toLowerCase().includes(q)
+    );
+  });
 });
 
 // Phone validation helper
@@ -139,7 +188,12 @@ async function fetchTrustees() {
   trusteesErrorMessage.value = "";
   try {
     const response = await api.get("/trustees/");
-    trustees.value = response.data || [];
+    const rawList = (response.data || []) as any[];
+
+    // Optional debug:
+    console.log("Trustees API response:", rawList);
+
+    trustees.value = rawList.map((item) => normalizeTrustee(item));
   } catch (e) {
     console.error("Failed to fetch trustees:", e);
     trusteesErrorMessage.value = t("loanForm.messages.trusteesLoadError");
@@ -149,10 +203,10 @@ async function fetchTrustees() {
 }
 
 // Select trustee from dropdown
-function selectTrustee(trustee: { id: number; name: string }) {
-  borrower.value.trustee_id = String(trustee.id);
-  borrower.value.trustee_name = trustee.name;
-  trusteeSearchQuery.value = trustee.name;
+function selectTrustee(trustee: TrusteeOption) {
+  borrower.value.trustee_id = trustee.id; // this is what we send to backend
+  borrower.value.trustee_name = trustee.label;
+  trusteeSearchQuery.value = trustee.label;
   showTrusteeDropdown.value = false;
   highlightedTrusteeIndex.value = -1;
   clearFieldError("trustee");
@@ -160,6 +214,12 @@ function selectTrustee(trustee: { id: number; name: string }) {
 
 // Trustee input focus handler
 function onTrusteeInputFocus() {
+  // cancel pending blur close if exists
+  if (trusteeBlurTimeout.value) {
+    clearTimeout(trusteeBlurTimeout.value);
+    trusteeBlurTimeout.value = null;
+  }
+
   showTrusteeDropdown.value = true;
   if (trustees.value.length === 0) {
     fetchTrustees();
@@ -243,8 +303,10 @@ function closeTrusteeDropdown() {
 }
 
 function onTrusteeInputBlur() {
-  setTimeout(() => {
+  // delay close so click on option still works
+  trusteeBlurTimeout.value = setTimeout(() => {
     closeTrusteeDropdown();
+    trusteeBlurTimeout.value = null;
   }, 200);
 }
 
@@ -509,7 +571,11 @@ async function submit() {
                     : 'border-[#E5E5EA] focus:border-[#007AFF] focus:ring-[#007AFF]/20',
                 ]"
                 :placeholder="t('loanForm.fields.trusteePlaceholder')"
-                @input="onTrusteeInputChange(($event.target as HTMLInputElement).value)"
+                @input="
+                  onTrusteeInputChange(
+                    ($event.target as HTMLInputElement).value
+                  )
+                "
                 @focus="onTrusteeInputFocus"
                 @blur="onTrusteeInputBlur"
                 @keydown="onTrusteeKeydown"
@@ -531,7 +597,7 @@ async function submit() {
               <!-- Trustees dropdown -->
               <div
                 v-if="showTrusteeDropdown && !borrower.trustee_id"
-                class="absolute top-full left-0 right-0 mt-1 bg-white border border-[#E5E5EA] rounded-lg shadow-lg z-20 max-h-48 overflow-y-auto"
+                class="absolute top-full left-0 right-0 mt-1 bg-white border border-[#E5E5EA] rounded-lg shadow-lg z-20 max-h-40 overflow-y-auto"
               >
                 <div
                   v-if="trusteesLoading"
@@ -548,18 +614,18 @@ async function submit() {
                     @mousedown.prevent
                     type="button"
                     :class="[
-                      'w-full px-4 py-2.5 text-left transition-colors text-sm border-b border-[#E5E5EA] last:border-b-0',
+                      'w-full px-4 py-2.5 text-sm border-b border-[#E5E5EA] last:border-b-0 transition-colors',
                       index === highlightedTrusteeIndex
                         ? 'bg-[#007AFF]/10'
                         : 'hover:bg-[#007AFF]/10',
                     ]"
                     :dir="isRTL ? 'rtl' : 'ltr'"
                   >
-                    <p class="font-medium text-black">
-                      {{ trustee.name }}
-                    </p>
-                    <p class="text-xs text-[#6B7280]">
-                      {{ t("loanForm.labels.trusteeId") }} {{ trustee.id }}
+                    <p
+                      class="font-medium text-black"
+                      :class="isRTL ? 'text-right' : 'text-left'"
+                    >
+                      {{ trustee.label }}
                     </p>
                   </button>
 
