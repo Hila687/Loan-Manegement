@@ -273,4 +273,84 @@
       "created_at": "2025-01-01T00:00:00Z"
     }
   }
+  ,
+  {
+    "model": "core.loanchecks",
+    "pk": 2,
+    "fields": {
+      "borrower": 2,
+      "trustee": 2,
+      "amount": "7500.00",
+      "start_date": "2025-02-10",
+      "status": "PENDING",
+      "num_payments": 6,
+      "check_details": "Checks pending approval",
+      "predefined_schedule": false,
+      "created_at": "2025-02-10T00:00:00Z"
+    }
+  },
+
+  {
+    "model": "core.loanchecks",
+    "pk": 3,
+    "fields": {
+      "borrower": 3,
+      "trustee": 3,
+      "amount": "8200.00",
+      "start_date": "2025-03-05",
+      "status": "PAID",
+      "num_payments": 8,
+      "check_details": "Paid checks loan",
+      "predefined_schedule": true,
+      "created_at": "2025-03-05T00:00:00Z"
+    }
+  },
+
+  {
+    "model": "core.loanstandingorder",
+    "pk": 1,
+    "fields": {
+      "borrower": 1,
+      "trustee": 1,
+      "amount": "3600.00",
+      "start_date": "2025-01-15",
+      "status": "ACTIVE",
+      "monthly_amount": "300.00",
+      "charge_day": 12,
+      "stop_date": null,
+      "created_at": "2025-01-15T00:00:00Z"
+    }
+  },
+
+  {
+    "model": "core.loanstandingorder",
+    "pk": 2,
+    "fields": {
+      "borrower": 2,
+      "trustee": 2,
+      "amount": "9000.00",
+      "start_date": "2025-02-20",
+      "status": "REJECTED",
+      "monthly_amount": "750.00",
+      "charge_day": 5,
+      "stop_date": null,
+      "created_at": "2025-02-20T00:00:00Z"
+    }
+  },
+
+  {
+    "model": "core.loanstandingorder",
+    "pk": 3,
+    "fields": {
+      "borrower": 3,
+      "trustee": 3,
+      "amount": "4200.00",
+      "start_date": "2025-03-01",
+      "status": "PENDING",
+      "monthly_amount": "350.00",
+      "charge_day": 1,
+      "stop_date": null,
+      "created_at": "2025-03-01T00:00:00Z"
+    }
+  }
 ]
