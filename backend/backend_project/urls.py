@@ -7,8 +7,8 @@ from core.views import (
     LoanStandingOrderViewSet, RoleViewSet, UserProfileViewSet
 )
 
-# Import our custom loan list view (Sprint 2)
-from core.loans_views import LoanListView
+# Import Sprint 2 loan views
+from core.loans_views import LoanListView, LoanDetailView
 
 from django.conf import settings
 from django.conf.urls.static import static
@@ -35,8 +35,11 @@ urlpatterns = [
     # All router-generated endpoints
     path('api/', include(router.urls)),
 
-    # New Sprint 2 unified loans endpoint
+    # Unified loan list endpoint
     path('api/loans/', LoanListView.as_view(), name='loan-list'),
+
+    # Full loan detail endpoint
+    path('api/loans/<uuid:loan_id>/', LoanDetailView.as_view(), name='loan-detail'),
 ]
 
 

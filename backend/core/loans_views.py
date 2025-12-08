@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from .models import LoanChecks, LoanStandingOrder
-from .serializers import LoanListSerializer
+from .serializers import LoanListSerializer, LoanDetailSerializer
 
 
 class LoanListView(APIView):
@@ -93,4 +93,41 @@ class LoanListView(APIView):
         #   3. Serialize + Return
         # ------------------------
         serializer = LoanListSerializer(unified_loans, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class LoanDetailView(APIView):
+    """
+    Returns full loan details for a given loan_id.
+    Supports both LoanChecks and LoanStandingOrder models.
+    """
+
+    def get(self, request, loan_id):
+
+        loan = None
+        loan_type = None  # Set default
+
+        # Try LoanChecks first
+        try:
+            loan = LoanChecks.objects.get(loan_id=loan_id)
+            loan_type = "checks"
+        except LoanChecks.DoesNotExist:
+            pass
+
+        # Try StandingOrder next
+        if loan is None:
+            try:
+                loan = LoanStandingOrder.objects.get(loan_id=loan_id)
+                loan_type = "standing_order"
+            except LoanStandingOrder.DoesNotExist:
+                return Response(
+                    {"detail": "Loan not found."},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+        # Serialize full details
+        serializer = LoanDetailSerializer(
+            loan,
+            context={"request": request}
+        )
+
         return Response(serializer.data, status=status.HTTP_200_OK)
