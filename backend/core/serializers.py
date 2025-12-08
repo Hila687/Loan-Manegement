@@ -41,3 +41,24 @@ class LoanStandingOrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = LoanStandingOrder
         fields = '__all__'
+        
+
+class LoanListSerializer(serializers.Serializer):
+    """
+    Serializer for unified loan list items.
+
+    This serializer is NOT tied to a specific Django model.
+    It is used to return a clean, consistent JSON structure
+    for both LoanChecks and LoanStandingOrder records.
+    """
+
+    # Basic loan fields (common to both loan types)
+    loan_id = serializers.UUIDField()  # Unique identifier of the loan
+    loan_type = serializers.CharField()  # "checks" or "standing_order"
+    amount = serializers.DecimalField(max_digits=10, decimal_places=2)  # Loan amount
+    start_date = serializers.DateField()  # When the loan starts
+    status = serializers.CharField()  # Current status (e.g., ACTIVE, PAID)
+
+    # Nested data for related entities (already prepared as dictionaries in the view)
+    borrower = serializers.DictField()  # Contains borrower info (name, phone, email, etc.)
+    trustee = serializers.DictField()   # Contains trustee info (name, community, etc.)
