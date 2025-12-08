@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, defineExpose } from "vue";
+import { computed, ref } from "vue";
 
 interface Props {
   modelValue: string | number;

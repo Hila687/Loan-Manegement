@@ -70,7 +70,7 @@ const showTrusteeDropdown = ref(false);
 const highlightedTrusteeIndex = ref(-1);
 const trusteesErrorMessage = ref("");
 
-// NEW: timeout ref for blur handling
+// timeout ref for blur handling
 const trusteeBlurTimeout = ref<ReturnType<typeof setTimeout> | null>(null);
 
 // Field refs (for keyboard navigation)
@@ -190,7 +190,6 @@ async function fetchTrustees() {
     const response = await api.get("/trustees/");
     const rawList = (response.data || []) as any[];
 
-    // Optional debug:
     console.log("Trustees API response:", rawList);
 
     trustees.value = rawList.map((item) => normalizeTrustee(item));
@@ -214,7 +213,6 @@ function selectTrustee(trustee: TrusteeOption) {
 
 // Trustee input focus handler
 function onTrusteeInputFocus() {
-  // cancel pending blur close if exists
   if (trusteeBlurTimeout.value) {
     clearTimeout(trusteeBlurTimeout.value);
     trusteeBlurTimeout.value = null;
@@ -303,7 +301,6 @@ function closeTrusteeDropdown() {
 }
 
 function onTrusteeInputBlur() {
-  // delay close so click on option still works
   trusteeBlurTimeout.value = setTimeout(() => {
     closeTrusteeDropdown();
     trusteeBlurTimeout.value = null;

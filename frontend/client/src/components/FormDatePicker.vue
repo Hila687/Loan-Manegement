@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, defineExpose, onBeforeUnmount } from "vue";
+import { ref, computed, onMounted, watch, onBeforeUnmount } from "vue";
 import flatpickr from "flatpickr";
+import "flatpickr/dist/flatpickr.min.css";
 import { Hebrew } from "flatpickr/dist/l10n/he";
 
 interface Props {
@@ -25,8 +26,11 @@ const emit = defineEmits<{
   keydown: [event: KeyboardEvent];
 }>();
 
-// Reference to the visible input
+// Reference to the visible input element
 const dateInputRef = ref<HTMLInputElement | null>(null);
+
+// Wrapper for the field – the calendar will be attached here
+const wrapperRef = ref<HTMLElement | null>(null);
 
 // Flatpickr instance
 let datePickerInstance: any = null;
@@ -50,22 +54,23 @@ onMounted(() => {
     dateFormat: "Y-m-d",
     minDate: "today",
     locale: props.locale === "he" ? "he" : "en",
+
+    // IMPORTANT:
+    // Attach the calendar inside the field wrapper instead of <body>,
+    // so it scrolls together with the form and doesn't create huge page height.
+    appendTo: wrapperRef.value ?? undefined,
+    static: true,
+    position: "auto",
+
     onChange: (selectedDates: Date[]) => {
       if (selectedDates.length > 0) {
         const date = selectedDates[0];
         emit("update:modelValue", date.toISOString().split("T")[0]);
       }
     },
-    onOpen: () => {
-      const picker = document.querySelector(".flatpickr-calendar") as HTMLElement | null;
-      if (picker && props.isRTL) {
-        picker.style.left = "auto";
-        picker.style.right = "0";
-      }
-    },
   });
 
-  // If there is already a value, sync it into the picker
+  // Sync initial value if exists
   if (props.modelValue && datePickerInstance) {
     datePickerInstance.setDate(props.modelValue, false);
   }
@@ -79,7 +84,7 @@ onBeforeUnmount(() => {
   }
 });
 
-// Watch for external modelValue changes (for example resetForm)
+// Watch for external modelValue changes (e.g. resetForm)
 watch(
   () => props.modelValue,
   (newValue) => {
@@ -127,7 +132,8 @@ defineExpose({ focus });
       {{ label }}
     </p>
 
-    <div class="relative">
+    <!-- Wrapper: calendar is appended here, not to <body> -->
+    <div class="relative" ref="wrapperRef">
       <!-- Date input -->
       <input
         ref="dateInputRef"
