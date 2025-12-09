@@ -369,7 +369,7 @@ const formatCurrency = (amount: number): string => {
   }).format(amount);
 };
 
-// Map backend type to i18n label key
+// Get loan type label key
 const getTypeLabelKey = (type: LoanType): string => {
   return type === "checks"
     ? "loanList.types.checks"
