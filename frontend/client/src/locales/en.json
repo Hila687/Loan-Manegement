@@ -13,15 +13,24 @@
     "createLoanCardDescription": "Open a new loan for a borrower, including trustee details and repayment terms.",
     "footerNote": "A dashboard with charts, alerts, and system insights will appear here in future versions."
   },
+
   "nav": {
     "home": "Home",
     "createLoan": "Create Loan",
     "activeLoans": "Active Loans",
     "dashboard": "Dashboard"
   },
+
+  "loan": {
+    "activeLoans": "Active Loans",
+    "createNewLoan": "Create New Loan",
+    "filterByType": "Filter by Type"
+  },
+
   "app": {
     "title": "Gemach"
   },
+
   "loanForm": {
     "title": "New Loan",
     "sections": {
@@ -56,7 +65,7 @@
       "t2": "Trustee 2"
     },
     "labels": {
-    "trusteeId": "Trustee ID:"
+      "trusteeId": "Trustee ID:"
     },
     "messages": {
       "validationError": "Please correct the fields marked in red",
@@ -92,9 +101,9 @@
       "role": "Role"
     },
     "buttons": {
-    "loadUsers": "Load users",
-    "retry": "Try again",
-    "refresh": "Refresh users"
+      "loadUsers": "Load users",
+      "retry": "Try again",
+      "refresh": "Refresh users"
     },
     "messages": {
       "loadFailed": "Failed to load users. Please try again later.",
@@ -104,8 +113,52 @@
       "admin": "Admin"
     }
   },
+
   "lang": {
-    "he": "עברית",
+    "he": "Hebrew",
     "en": "English"
-  }
+  },
+
+  "loanTable": {
+    "amount": "Amount",
+    "trustee": "Trustee",
+    "email": "Email",
+    "phone": "Phone",
+    "borrower": "Borrower",
+    "expand": "Details"
+  },
+
+  "loanDetails": {
+  "loanInfo": "Loan Information",
+  "borrowerInfo": "Borrower Information",
+  "name": "Name:",
+  "phone": "Phone:",
+  "email": "Email:",
+  "address": "Address:",
+  "idNumber": "ID Number:",
+  "createdAt": "Created At:",
+  "loanId": "Loan ID:",
+  "startDate": "Start Date:",
+  "status": "Status:",
+  "trustee": "Trustee:",
+  "trusteeCommunity": "Community:",
+  "trusteePhone": "Trustee Phone:",
+  "trusteeNotes": "Notes:",
+  "amount": "Amount:",
+  "loanType": "Loan Type:",
+  "numPayments": "Number of Payments:",
+  "checkDetails": "Check Details:",
+  "predefinedSchedule": "Predefined Schedule:",
+  "monthlyAmount": "Monthly Amount:",
+  "chargeDay": "Charge Day:",
+  "stopDate": "Stop Date:",
+  "tabDetails": "Details",
+  "tabSchedule": "Payment Schedule",
+  "editLoan": "Edit Loan"
+},
+"general": {
+  "yes": "Yes",
+  "no": "No"
+}
+
 }

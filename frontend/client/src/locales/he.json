@@ -13,15 +13,24 @@
     "createLoanCardDescription": "פתיחת הלוואה חדשה עבור לווה, כולל פרטי נאמן ותנאי החזר.",
     "footerNote": "בעתיד יופיע כאן לוח בקרה עם גרפים, התראות ותצוגת מצב הגמ\"ח."
   },
-    "nav": {
+
+  "nav": {
     "home": "בית",
     "createLoan": "יצירת הלוואה",
     "activeLoans": "הלוואות פעילות",
     "dashboard": "דשבורד"
   },
+
+  "loan": {
+    "activeLoans": "הלוואות פעילות",
+    "createNewLoan": "צור הלוואה חדשה",
+    "filterByType": "סנן לפי סוג"
+  },
+
   "app": {
     "title": "גמ\"ח"
   },
+
   "loanForm": {
     "title": "הלוואה חדשה",
     "sections": {
@@ -30,8 +39,8 @@
       "file": "טופס חתום"
     },
     "badges": {
-      "borrower": "3 / 1",
-      "loan": "3 / 2",
+      "borrower": "1 / 3",
+      "loan": "2 / 3",
       "file": "3 / 3"
     },
     "fields": {
@@ -56,7 +65,7 @@
       "t2": "נאמן 2"
     },
     "labels": {
-    "trusteeId": "מזהה נאמן:"
+      "trusteeId": "מזהה נאמן:"
     },
     "messages": {
       "validationError": "אנא תקנו את השדות שמסומנים בשגיאה",
@@ -70,8 +79,8 @@
       "loadingTrustees": "טוען נאמנים...",
       "trusteesLoadError": "נכשלה טעינת רשימת הנאמנים",
       "fileNotSelected": "לא בחרת קובץ",
-      "fileRequired": "קובץ נדרש. אנא העלה את הטופס החתום",
-      "uploadFailed": "העלאה נכשלה. נסה שוב",
+      "fileRequired": "קובץ נדרש. אנא העלי את הטופס החתום",
+      "uploadFailed": "העלאה נכשלה. נסי שוב",
       "success": "ההלוואה נוצרה בהצלחה",
       "genericError": "שגיאה בעת יצירת ההלוואה"
     },
@@ -96,8 +105,8 @@
       "retry": "נסה שוב",
       "refresh": "רענן משתמשים"
     },
-   "messages": {
-     "loadFailed": "טעינת המשתמשים נכשלה. אנא נסו שוב מאוחר יותר.",
+    "messages": {
+      "loadFailed": "טעינת המשתמשים נכשלה. אנא נסו שוב מאוחר יותר.",
       "errorDetails": "בקשת הרשת נכשלה. בדקו את החיבור ונסו שוב."
     },
     "roles": {
@@ -107,6 +116,49 @@
 
   "lang": {
     "he": "עברית",
-    "en": "English"
-  }
+    "en": "אנגלית"
+  },
+
+  "loanTable": {
+    "amount": "סכום",
+    "trustee": "נאמן",
+    "email": "אימייל",
+    "phone": "טלפון",
+    "borrower": "לווה",
+    "expand": "פרטים"
+  },
+
+  "loanDetails": {
+  "loanInfo": "פרטי ההלוואה",
+  "borrowerInfo": "פרטי הלווה",
+  "name": "שם:",
+  "phone": "טלפון:",
+  "email": "אימייל:",
+  "address": "כתובת:",
+  "idNumber": "תעודת זהות:",
+  "createdAt": "נוצר בתאריך:",
+  "loanId": "מספר הלוואה:",
+  "startDate": "תאריך התחלה:",
+  "status": "סטטוס:",
+  "trustee": "נאמן:",
+  "trusteeCommunity": "קהילה:",
+  "trusteePhone": "טלפון נאמן:",
+  "trusteeNotes": "הערות:",
+  "amount": "סכום:",
+  "loanType": "סוג הלוואה:",
+  "numPayments": "מספר תשלומים:",
+  "checkDetails": "פרטי שיקים:",
+  "predefinedSchedule": "לפי לוח מוגדר:",
+  "monthlyAmount": "סכום חודשי:",
+  "chargeDay": "יום חיוב:",
+  "stopDate": "תאריך סיום:",
+  "tabDetails": "פרטים",
+  "tabSchedule": "לוח תשלומים",
+  "editLoan": "עריכת הלוואה"
+},
+"general": {
+  "yes": "כן",
+  "no": "לא"
+}
+
 }
