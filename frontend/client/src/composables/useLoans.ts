@@ -1,17 +1,20 @@
+// src/composables/useLoans.ts
 import { ref, computed, watch } from "vue";
 import type { Ref, ComputedRef } from "vue";
 import loanService from "../services/loanService";
 import type { LoanListItem, LoanFilters } from "../types/loan";
+import { LoanType } from "../types/loan";
 
 /**
- * Composable for managing loans state and operations
- * Provides reactive state, fetch operations, and filtering capabilities
+ * Composable for managing loans state and operations.
+ * Provides reactive state, fetch operations, and filtering capabilities.
  */
 export function useLoans() {
   // Reactive state
   const loans: Ref<LoanListItem[]> = ref([]);
   const loading = ref(false);
-  const error: Ref<string | null> = ref(null);  
+  const error: Ref<string | null> = ref(null);
+
   const filters: Ref<LoanFilters> = ref(
     {
       type: "all",
@@ -20,13 +23,13 @@ export function useLoans() {
     } as LoanFilters
   );
 
-  // Track if initial fetch has been done
+  // Tracks if initial fetch has been done
   const initialFetchDone = ref(false);
 
   /**
-   * Fetch loans from API with current filters
+   * Fetch loans from API with current filters.
    */
-  const fetchLoans = async () => {
+  const fetchLoans = async (): Promise<void> => {
     loading.value = true;
     error.value = null;
 
@@ -62,9 +65,12 @@ export function useLoans() {
   };
 
   /**
-   * Update a specific filter and refetch loans
+   * Update a specific filter and refetch loans.
    */
-  const setFilter = (key: keyof LoanFilters, value: any) => {
+  const setFilter = <K extends keyof LoanFilters>(
+    key: K,
+    value: LoanFilters[K]
+  ): void => {
     filters.value = { ...filters.value, [key]: value };
 
     if (import.meta.env.DEV) {
@@ -75,9 +81,9 @@ export function useLoans() {
   };
 
   /**
-   * Update multiple filters at once
+   * Update multiple filters at once and refetch loans.
    */
-  const setFilters = (newFilters: Partial<LoanFilters>) => {
+  const setFilters = (newFilters: Partial<LoanFilters>): void => {
     filters.value = { ...filters.value, ...newFilters };
 
     if (import.meta.env.DEV) {
@@ -88,9 +94,9 @@ export function useLoans() {
   };
 
   /**
-   * Reset all filters to default values
+   * Reset all filters to default values and refetch loans.
    */
-  const resetFilters = () => {
+  const resetFilters = (): void => {
     filters.value = {
       type: "all",
       status: "active",
@@ -105,17 +111,17 @@ export function useLoans() {
   };
 
   /**
-   * Clear search filter only
+   * Clear search filter only and refetch loans.
    */
-  const clearSearch = () => {
+  const clearSearch = (): void => {
     filters.value = { ...filters.value, search: undefined };
     fetchLoans();
   };
 
   /**
-   * Retry fetching after error
+   * Retry fetching after error.
    */
-  const retry = () => {
+  const retry = (): void => {
     if (import.meta.env.DEV) {
       console.log("[useLoans] Retrying fetch...");
     }
@@ -123,9 +129,9 @@ export function useLoans() {
   };
 
   /**
-   * Refresh loans (force refetch)
+   * Refresh loans (force refetch).
    */
-  const refresh = () => {
+  const refresh = (): void => {
     if (import.meta.env.DEV) {
       console.log("[useLoans] Refreshing loans...");
     }
@@ -146,17 +152,21 @@ export function useLoans() {
     return loans.value.reduce((sum, loan) => sum + (loan.amount || 0), 0);
   });
 
+  /**
+   * Aggregated loans by type for potential analytics or badges.
+   * Keys of the returned object match LoanType enum values.
+   */
   const loansByType = computed(() => {
-    const counts = {
-      checks: 0,
-      standing_orders: 0,
+    const counts: Record<LoanType, number> = {
+      [LoanType.CHECKS]: 0,
+      [LoanType.STANDING_ORDER]: 0,
     };
 
     loans.value.forEach((loan) => {
-      if (loan.type === "checks") {
-        counts.checks++;
-      } else if (loan.type === "standing_orders") {
-        counts.standing_orders++;
+      if (loan.type === LoanType.CHECKS) {
+        counts[LoanType.CHECKS]++;
+      } else if (loan.type === LoanType.STANDING_ORDER) {
+        counts[LoanType.STANDING_ORDER]++;
       }
     });
 
@@ -181,7 +191,7 @@ export function useLoans() {
     return parts.length > 0 ? parts.join(", ") : "No filters";
   });
 
-  // Debug
+  // Debug: log filter changes in dev mode
   if (import.meta.env.DEV) {
     watch(
       filters,

@@ -1,8 +1,9 @@
 // Loan Types and Interfaces
 
+// Values must match backend exactly: "checks" and "standing-order"
 export enum LoanType {
   CHECKS = "checks",
-  STANDING_ORDERS = "standing_orders",
+  STANDING_ORDER = "standing-order",
 }
 
 export enum LoanStatus {

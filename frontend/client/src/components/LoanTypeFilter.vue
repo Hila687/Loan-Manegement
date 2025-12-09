@@ -115,7 +115,7 @@
  * LoanTypeFilter
  * - Custom styled dropdown (no native <select>)
  * - Uses i18n labels from "loan.*"
- * - v-model for the selected type: "all" | "checks" | "standing"
+ * - v-model for the selected type: "all" | "checks" | "standing-order"
  * - Supports RTL via isRtl prop
  */
 
@@ -136,11 +136,16 @@ const emit = defineEmits<{
 
 const { t } = useI18n();
 
-// Options definitions with i18n keys
+/**
+ * Options definitions with i18n keys.
+ * IMPORTANT:
+ *   - "checks" must match LoanType.CHECKS and backend
+ *   - "standing-order" must match LoanType.STANDING_ORDER and backend
+ */
 const options = [
-  { value: "all", labelKey: "loan.all" },
-  { value: "checks", labelKey: "loan.checks" },
-  { value: "standing", labelKey: "loan.standingOrders" }
+  { value: "all",            labelKey: "loan.all" },
+  { value: "checks",         labelKey: "loan.checks" },
+  { value: "standing-order", labelKey: "loan.standingOrders" },
 ];
 
 // Local state
