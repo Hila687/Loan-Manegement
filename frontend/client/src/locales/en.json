@@ -1,4 +1,58 @@
 {
+  "home": {
+    "gemachLabel": "Gemach Management System",
+    "title": "Gemach Chasdei Yaakov",
+    "subtitle": "Here you can view all active loans, create new loans, and manage the Gemach’s operations in an organized and simple way.",
+    "welcome": "Welcome",
+    "welcomeMessage": "Get a quick overview of active loans and jump to the main actions you use most.",
+    "stats": {
+      "activeLoans": "Active loans",
+      "totalAmount": "Total outstanding amount"
+    },
+    "actions": {
+      "createLoan": {
+        "badge": "New loan",
+        "title": "Create new loan",
+        "description": "Open a new loan for a borrower, including trustee details and an automatic payment schedule."
+      },
+      "viewLoans": {
+        "title": "View active loans",
+        "description": "Browse and filter all open loans in the system by borrower, trustee, and status."
+      }
+    },
+    "quickActions": {
+      "dashboard": "Dashboard & analytics",
+      "dashboardDesc": "View summaries, KPIs, and key insights for the Gemach.",
+      "reports": "Reports",
+      "reportsDesc": "Generate summaries by borrower, trustee, and date range.",
+      "settings": "Settings",
+      "settingsDesc": "Manage system configuration, localization, and permissions."
+    },
+    "recentActivity": {
+      "title": "Recent activity",
+      "empty": "Recent loans, payments, and updates will appear here once the system is in use."
+    },
+    "statActiveLoans": "Active Loans",
+    "statThisMonth": "Loans Opened This Month",
+    "statTrustees": "Active Trustees",
+    "activeLoansCardTitle": "Active Loans",
+    "activeLoansCardDescription": "View the list of all open loans, including borrower, trustee, and amount.",
+    "createLoanCardTitle": "Create New Loan",
+    "createLoanCardDescription": "Open a new loan for a borrower, including trustee details and repayment terms.",
+    "footerNote": "A dashboard with charts, alerts, and system insights will appear here in future versions."
+  },
+
+  "nav": {
+    "home": "Home",
+    "createLoan": "Create Loan",
+    "activeLoans": "Active Loans",
+    "dashboard": "Dashboard"
+  },
+
+  "app": {
+    "title": "Gemach"
+  },
+
   "loanForm": {
     "title": "New Loan",
     "sections": {
@@ -33,7 +87,7 @@
       "t2": "Trustee 2"
     },
     "labels": {
-    "trusteeId": "Trustee ID:"
+      "trusteeId": "Trustee ID:"
     },
     "messages": {
       "validationError": "Please correct the fields marked in red",
@@ -69,9 +123,9 @@
       "role": "Role"
     },
     "buttons": {
-    "loadUsers": "Load users",
-    "retry": "Try again",
-    "refresh": "Refresh users"
+      "loadUsers": "Load users",
+      "retry": "Try again",
+      "refresh": "Refresh users"
     },
     "messages": {
       "loadFailed": "Failed to load users. Please try again later.",
@@ -81,6 +135,61 @@
       "admin": "Admin"
     }
   },
+
+"loanList": {
+  "title": "Active loans",
+  "subtitle": "View and manage all active loans in the Gemach, with search, filters, and quick actions.",
+
+  "stats": {
+    "totalLoans": "Total loans",
+    "totalAmount": "Total outstanding amount",
+    "filtered": "Filters status",
+    "active": "Filters applied",
+    "none": "No filters"
+  },
+
+  "search": {
+    "placeholder": "Search by borrower, trustee, phone, or email..."
+  },
+
+  "table": {
+    "borrower": "Borrower",
+    "email": "Email",
+    "trustee": "Trustee",
+    "amount": "Amount",
+    "type": "Loan type"
+  },
+
+  "types": {
+    "checks": "Checks",
+    "standingOrders": "Standing orders"
+  },
+
+  "filters": {
+    "title": "Filter"
+  },
+
+  "actions": {
+    "refresh": "Refresh loans",
+    "retry": "Try again"
+  },
+
+  "messages": {
+    "loading": "Loading loans...",
+    "noLoans": "No loans to display",
+    "noLoansDesc": "When loans are created, they will appear here in the active loans list.",
+    "noFilteredLoans": "No loans match the current filters",
+    "noFilteredLoansDesc": "Try clearing one or more filters or adjusting your search term.",
+    "error": "There was a problem loading the loans."
+  }
+},
+"loan": {
+  "filterByType": "Filter by loan type",
+  "all": "All loan types",
+  "checks": "Checks",
+  "standingOrders": "Standing orders"
+},
+
   "lang": {
     "he": "עברית",
     "en": "English"
