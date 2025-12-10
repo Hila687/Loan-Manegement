@@ -6,7 +6,7 @@
     max-width="full"
   >
     <div class="flex flex-col gap-4 sm:gap-5 lg:gap-6 h-full">
-      <!-- ===== Search bar + refresh button (top of page) ===== -->
+      <!-- Top search bar + refresh button -->
       <div class="flex flex-row items-stretch gap-3 sm:gap-4">
         <!-- Search input (full width) -->
         <div class="flex-1 relative min-w-0">
@@ -94,13 +94,13 @@
         </button>
       </div>
 
-      <!-- ===== Filter row – always column, full-width filter ===== -->
+      <!-- Filter row -->
       <div class="flex flex-col gap-2">
         <p
           class="text-sm sm:text-base font-medium text-[#6B7280]"
           :class="isRTL ? 'text-right' : 'text-left'"
         >
-          {{ t("loanList.filters.title") }}
+          {{ t('loanList.filters.title') }}
         </p>
 
         <LoanTypeFilter
@@ -109,7 +109,7 @@
         />
       </div>
 
-      <!-- ===== Loan table ===== -->
+      <!-- Loan table -->
       <div
         class="rounded-xl lg:rounded-2xl border-2 border-[#E5E5EA] bg-white/80 backdrop-blur-sm overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300"
       >
@@ -135,6 +135,7 @@
   </AppLayout>
 </template>
 
+
 <script setup lang="ts">
 import { onMounted, watch, computed } from "vue";
 import { useRouter } from "vue-router";
@@ -153,7 +154,7 @@ const {
   loans,
   loading,
   error,
-  hasActiveFilters: hasActiveLoansFilters,
+  hasActiveFilters:  hasActiveLoansFilters,
   fetchLoans,
   setFilter
 } = useLoans();
@@ -161,7 +162,7 @@ const {
 const {
   selectedType,
   searchQuery,
-  hasActiveFilters: hasActiveUIFilters
+  hasActiveFilters:  hasActiveUIFilters
 } = useLoanFilters();
 
 const hasActiveFilters = computed(
@@ -169,7 +170,7 @@ const hasActiveFilters = computed(
 );
 
 const handleLoanClick = (loan: LoanListItem) => {
-  router.push(`/loans/${loan.id}`);
+  console.log("Loan clicked:", loan);
 };
 
 let searchTimeout: ReturnType<typeof setTimeout> | undefined;

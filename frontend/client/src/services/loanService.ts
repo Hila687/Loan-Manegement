@@ -1,72 +1,126 @@
 // src/services/loanService.ts
 import api from "./api";
-import type { LoanListItem, LoanFilters } from "../types/loan";
-import { LoanType } from "../types/loan";
+import {
+  LoanType,
+  type LoanListItem,
+  type Loan,
+  type LoanFilters,
+  type LoanStatus,
+  type LoanDetailsUnion,
+} from "../types/loan";
+import type { ApiLoanListItem, ApiLoanDetails } from "../types/api-loan";
 
-// This is the raw shape we expect from the backend list endpoint
-interface BackendLoanListItem {
-  id: string | number;
-  borrower: {
-    name: string;
-    phone: string;
-    email?: string | null;
+
+function mapLoanListItem(apiLoan: ApiLoanListItem): LoanListItem {
+  return {
+    id: apiLoan.loan_id,
+    type:
+      apiLoan.loan_type === "checks"
+        ? LoanType.CHECKS
+        : LoanType.STANDING_ORDER,
+    status: apiLoan.status as LoanStatus,
+    amount: Number(apiLoan.amount),
+    startDate: apiLoan.start_date,
+    borrower: {
+      name: apiLoan.borrower?.name ?? "",
+      phone: apiLoan.borrower?.phone ?? "",
+      email: apiLoan.borrower?.email ?? undefined,
+      address: apiLoan.borrower?.address,
+      idNumber: apiLoan.borrower?.id_number,
+      createdAt: apiLoan.borrower?.created_at,
+    },
+    trustee: apiLoan.trustee
+      ? {
+          name: apiLoan.trustee.name,
+          community: apiLoan.trustee.community,
+          phone: apiLoan.trustee.phone,
+          notes: apiLoan.trustee.notes,
+        }
+      : null,
   };
-  trustee: {
-    name: string;
-    community?: string | null;
-  };
-  amount: number;
-  type: LoanType;
-  status: string;
-  start_date: string;
-  num_payments: number;
 }
 
-/**
- * Resolve the correct backend endpoint for loans based on filters.
- */
-function resolveLoansEndpoint(filters: LoanFilters): string {
-  if (filters.type === LoanType.CHECKS) {
-    return "/loans/checks/";
+function mapLoanDetails(apiLoan: ApiLoanDetails): Loan {
+  let details: LoanDetailsUnion = {};
+
+
+  if ("num_payments" in apiLoan.details) {
+    details = {
+      numPayments: apiLoan.details.num_payments,
+      checkDetails: apiLoan.details.check_details,
+      predefinedSchedule: apiLoan.details.predefined_schedule,
+    };
   }
-  if (filters.type === LoanType.STANDING_ORDER) {
-    return "/loans/standing-order/";
+ 
+  else if ("monthly_amount" in apiLoan.details) {
+    details = {
+      monthlyAmount: Number(apiLoan.details.monthly_amount),
+      chargeDay: apiLoan.details.charge_day,
+      stopDate: apiLoan.details.stop_date,
+    };
   }
-  return "/loans/";
+
+  return {
+    id: apiLoan.loan_id,
+    type:
+      apiLoan.loan_type === "checks"
+        ? LoanType.CHECKS
+        : LoanType.STANDING_ORDER,
+    status: apiLoan.status as LoanStatus,
+    amount: Number(apiLoan.amount),
+    startDate: apiLoan.start_date,
+    createdAt: apiLoan.created_at,
+    formFileUrl: apiLoan.form_file_url,
+
+    borrower: {
+      name: apiLoan.borrower.name,
+      phone: apiLoan.borrower.phone,
+      email: apiLoan.borrower.email ?? undefined,
+      address: apiLoan.borrower.address,
+      idNumber: apiLoan.borrower.id_number,
+      createdAt: apiLoan.borrower.created_at,
+    },
+
+    trustee: apiLoan.trustee
+      ? {
+          name: apiLoan.trustee.name,
+          community: apiLoan.trustee.community,
+          phone: apiLoan.trustee.phone,
+          notes: apiLoan.trustee.notes,
+        }
+      : null,
+
+    details,
+  };
 }
 
-/**
- * Fetch active loans from backend and map them into LoanListItem objects
- * used by the UI table.
- */
 async function getActiveLoans(filters: LoanFilters): Promise<LoanListItem[]> {
-  const url = resolveLoansEndpoint(filters);
   const params: Record<string, string> = {};
+
+  if (filters.status && filters.status !== "all") {
+    params.status = String(filters.status);
+  } else {
+    params.status = "ACTIVE";
+  }
+
+  if (filters.type && filters.type !== "all") {
+    params.type = filters.type;
+  }
 
   if (filters.search) {
     params.search = filters.search;
   }
 
-  const res = await api.get<BackendLoanListItem[]>(url, { params });
+  const res = await api.get<ApiLoanListItem[]>("/loans/", { params });
+  return res.data.map(mapLoanListItem);
+}
 
-  // Map backend shape -> frontend LoanListItem
-  const mapped: LoanListItem[] = res.data.map((loan) => ({
-    id: String(loan.id),
-    borrower_name: loan.borrower?.name ?? "",
-    borrower_phone: loan.borrower?.phone ?? "",
-    borrower_email: loan.borrower?.email ?? undefined,
-    trustee_name: loan.trustee?.name ?? "",
-    trustee_community: loan.trustee?.community ?? undefined,
-    amount: loan.amount,
-    type: loan.type,
-    status: loan.status as any,
-    start_date: loan.start_date,
-    num_payments: loan.num_payments,
-  }));
-
-  return mapped;
+async function getLoanDetails(id: string): Promise<Loan> {
+  const res = await api.get<ApiLoanDetails>(`/loans/${id}/`);
+  return mapLoanDetails(res.data);
 }
 
 export default {
   getActiveLoans,
+  getLoanDetails,
 };

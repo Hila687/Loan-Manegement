@@ -16,10 +16,11 @@
 
     <!-- Trigger pill -->
     <button
+      ref="triggerButton"
       type="button"
       class="flex items-center w-full rounded-full border-2 border-[#FF9500] bg-white px-4 py-2.5 shadow-sm transition-all hover:shadow-md"
       :class="isRtlComputed ? 'flex-row-reverse' : 'flex-row'"
-      @click="toggleDropdown"
+      @click.stop="toggleDropdown"
     >
       <!-- Icon -->
       <div class="flex items-center justify-center flex-shrink-0">
@@ -69,6 +70,7 @@
     <transition name="fade-scale">
       <div
         v-if="isOpen"
+        ref="dropdownMenu"
         class="absolute left-0 right-0 w-full mt-2 rounded-2xl bg-white shadow-xl 
                border border-[#E5E5EA] z-50 overflow-hidden"
       >
@@ -83,7 +85,7 @@
               ? 'bg-[#FFF7E6] text-[#FF9500] font-semibold'
               : 'text-[#111827] hover:bg-[#F3F4F6]'
           ]"
-          @click="selectOption(option.value)"
+          @click.stop="selectOption(option.value)"
         >
           <!-- Checkmark for selected option -->
           <svg
@@ -112,11 +114,16 @@
 
 <script setup lang="ts">
 /**
- * LoanTypeFilter
+ * LoanTypeFilter - Fixed Version
  * - Custom styled dropdown (no native <select>)
  * - Uses i18n labels from "loan.*"
  * - v-model for the selected type: "all" | "checks" | "standing-order"
  * - Supports RTL via isRtl prop
+ * 
+ * Fixes:
+ * - Better click outside detection using refs
+ * - Added @click.stop to prevent event propagation
+ * - Improved event handling for dropdown items
  */
 
 import { ref, watch, computed, onMounted, onBeforeUnmount } from "vue";
@@ -140,17 +147,21 @@ const { t } = useI18n();
  * Options definitions with i18n keys.
  * IMPORTANT:
  *   - "checks" must match LoanType.CHECKS and backend
- *   - "standing-order" must match LoanType.STANDING_ORDER and backend
+ *   - "standing_order" must match LoanType.STANDING_ORDER and backend
  */
 const options = [
   { value: "all",            labelKey: "loan.all" },
   { value: "checks",         labelKey: "loan.checks" },
-  { value: "standing-order", labelKey: "loan.standingOrders" },
+  { value: "standing_order", labelKey: "loan.standingOrders" },
 ];
 
 // Local state
 const localValue = ref(props.modelValue ?? "all");
 const isOpen = ref(false);
+
+// Template refs
+const triggerButton = ref<HTMLButtonElement | null>(null);
+const dropdownMenu = ref<HTMLDivElement | null>(null);
 
 // Sync with external v-model
 watch(
@@ -183,22 +194,28 @@ const closeDropdown = () => {
 const selectOption = (value: string) => {
   localValue.value = value;
   emit("update:modelValue", value);
-  isOpen.value = false;
+  closeDropdown();
 };
 
 // Close when clicking outside the component
-const handleClickOutside = () => {
-  if (isOpen.value) {
-    isOpen.value = false;
+const handleClickOutside = (event: MouseEvent) => {
+  if (!isOpen.value) return;
+
+  const target = event.target as HTMLElement;
+  const isClickOnTrigger = triggerButton.value?.contains(target);
+  const isClickOnDropdown = dropdownMenu.value?.contains(target);
+
+  if (!isClickOnTrigger && !isClickOnDropdown) {
+    closeDropdown();
   }
 };
 
 onMounted(() => {
-  window.addEventListener("click", handleClickOutside);
+  document.addEventListener("click", handleClickOutside);
 });
 
 onBeforeUnmount(() => {
-  window.removeEventListener("click", handleClickOutside);
+  document.removeEventListener("click", handleClickOutside);
 });
 </script>
 

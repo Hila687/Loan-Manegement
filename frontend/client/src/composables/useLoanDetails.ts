@@ -1,26 +1,20 @@
-// src/composables/useLoanDetails.ts
+// frontend/client/src/composables/useLoanDetails.ts
 import { ref } from "vue";
 
-export function useLoanDetails() {
-  // Holds the ID of the currently opened loan row (null = no row is open)
-  const openLoanId = ref<number | null>(null);
+const openLoanId = ref<string | null>(null);
 
-  // Toggles a loan row open/closed
-  function toggleLoan(id: number) {
-    // If this row is already open → close it
+export function useLoanDetails() {
+  const toggleLoan = (id: string) => {
     if (openLoanId.value === id) {
       openLoanId.value = null;
-    }
-    // Otherwise → open this row
-    else {
+    } else {
       openLoanId.value = id;
     }
-  }
+  };
 
-  // Returns true if the given row should be displayed as open
-  function isOpen(id: number) {
+  const isOpen = (id: string): boolean => {
     return openLoanId.value === id;
-  }
+  };
 
   return {
     openLoanId,

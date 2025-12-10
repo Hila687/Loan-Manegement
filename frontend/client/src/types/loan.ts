@@ -1,72 +1,73 @@
-// Loan Types and Interfaces
+// src/types/loan.ts
 
-// Values must match backend exactly: "checks" and "standing-order"
+export type LoanStatus = "PENDING" | "ACTIVE" | "PAID" | "REJECTED";
+
 export enum LoanType {
   CHECKS = "checks",
-  STANDING_ORDER = "standing-order",
-}
-
-export enum LoanStatus {
-  ACTIVE = "active",
-  COMPLETED = "completed",
-  CANCELLED = "cancelled",
-  PENDING = "pending",
+  STANDING_ORDER = "standing_order", 
 }
 
 export interface Borrower {
-  id?: string;
   name: string;
   phone: string;
   email?: string;
+  idNumber?: string;
   address?: string;
+  createdAt?: string;
 }
 
 export interface Trustee {
-  id: string;
   name: string;
   community?: string;
-  email?: string;
   phone?: string;
-}
-
-export interface Loan {
-  id: string;
-  borrower: Borrower;
-  trustee: Trustee;
-  amount: number;
-  start_date: string;
-  num_payments: number;
-  type: LoanType;
-  status: LoanStatus;
-  created_at: string;
-  updated_at?: string;
-  form_file_url?: string;
+  notes?: string | null;
 }
 
 export interface LoanListItem {
-  id: string;
-  borrower_name: string;
-  borrower_phone: string;
-  borrower_email?: string;
-  trustee_name: string;
-  trustee_community?: string;
+  id: string;            
+  type: LoanType;          
+  status: LoanStatus;     
+  amount: number;         
+  startDate: string;       
+
+  borrower: Borrower;
+  trustee: Trustee | null;
+}
+
+export interface LoanChecksDetails {
+  numPayments: number;
+  checkDetails?: string | null;
+  predefinedSchedule: boolean;
+}
+
+export interface LoanStandingOrderDetails {
+  monthlyAmount: number;
+  chargeDay: number;
+  stopDate?: string | null;
+}
+
+export type LoanDetailsUnion =
+  | LoanChecksDetails
+  | LoanStandingOrderDetails
+  | {};
+
+export interface Loan {
+  id: string;              // loan_id
   amount: number;
   type: LoanType;
   status: LoanStatus;
-  start_date: string;
-  num_payments: number;
+  startDate: string;
+  createdAt: string;
+  formFileUrl?: string | null;
+
+  borrower: Borrower;
+  trustee: Trustee | null;
+
+  details: LoanDetailsUnion;
 }
 
 export interface LoanFilters {
-  type?: LoanType | "all";
-  status?: LoanStatus;
+  type?: "all" | LoanType;
+  status?: LoanStatus | "all" | string;
   search?: string;
-}
-
-export interface PaginatedLoans {
-  loans: LoanListItem[];
-  total: number;
-  page: number;
-  page_size: number;
-  total_pages: number;
 }

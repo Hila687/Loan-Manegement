@@ -136,59 +136,79 @@
     }
   },
 
-"loanList": {
-  "title": "Active loans",
-  "subtitle": "View and manage all active loans in the Gemach, with search, filters, and quick actions.",
+  "loanList": {
+    "title": "Active loans",
+    "subtitle": "View and manage all active loans in the Gemach, with search, filters, and quick actions.",
 
-  "stats": {
-    "totalLoans": "Total loans",
-    "totalAmount": "Total outstanding amount",
-    "filtered": "Filters status",
-    "active": "Filters applied",
-    "none": "No filters"
+    "stats": {
+      "totalLoans": "Total loans",
+      "totalAmount": "Total outstanding amount",
+      "filtered": "Filters status",
+      "active": "Filters applied",
+      "none": "No filters"
+    },
+
+    "search": {
+      "placeholder": "Search by borrower, trustee, phone, or email..."
+    },
+    "showDetails": "Show details",
+    "hideDetails": "Hide details",
+
+    "table": {
+      "borrower": "Borrower",
+      "email": "Email",
+      "trustee": "Trustee",
+      "amount": "Amount",
+      "type": "Loan type"
+    },
+
+    "types": {
+      "checks": "Checks",
+      "standingOrders": "Standing orders"
+    },
+
+    "filters": {
+      "title": "Filter"
+    },
+
+    "actions": {
+      "refresh": "Refresh loans",
+      "retry": "Try again"
+    },
+
+    "messages": {
+      "loading": "Loading loans...",
+      "noLoans": "No loans to display",
+      "noLoansDesc": "When loans are created, they will appear here in the active loans list.",
+      "noFilteredLoans": "No loans match the current filters",
+      "noFilteredLoansDesc": "Try clearing one or more filters or adjusting your search term.",
+      "error": "There was a problem loading the loans."
+    }
   },
 
-  "search": {
-    "placeholder": "Search by borrower, trustee, phone, or email..."
-  },
-
-  "table": {
-    "borrower": "Borrower",
+  "loanDetails": {
+    "tabSchedule": "Payment schedule",
+    "tabDetails": "Loan details",
+    "borrowerInfo": "Borrower information",
+    "loanInfo": "Loan information",
+    "name": "Name",
     "email": "Email",
+    "phone": "Phone",
+    "address": "Address",
     "trustee": "Trustee",
-    "amount": "Amount",
-    "type": "Loan type"
+    "community": "Community",
+    "type": "Loan type",
+    "amount": "Loan amount",
+    "status": "Status",
+    "editButton": "Edit loan"
   },
 
-  "types": {
+  "loan": {
+    "filterByType": "Filter by loan type",
+    "all": "All loan types",
     "checks": "Checks",
     "standingOrders": "Standing orders"
   },
-
-  "filters": {
-    "title": "Filter"
-  },
-
-  "actions": {
-    "refresh": "Refresh loans",
-    "retry": "Try again"
-  },
-
-  "messages": {
-    "loading": "Loading loans...",
-    "noLoans": "No loans to display",
-    "noLoansDesc": "When loans are created, they will appear here in the active loans list.",
-    "noFilteredLoans": "No loans match the current filters",
-    "noFilteredLoansDesc": "Try clearing one or more filters or adjusting your search term.",
-    "error": "There was a problem loading the loans."
-  }
-},
-"loan": {
-  "filterByType": "Filter by loan type",
-  "all": "All loan types",
-  "checks": "Checks",
-  "standingOrders": "Standing orders"
-},
 
   "lang": {
     "he": "עברית",

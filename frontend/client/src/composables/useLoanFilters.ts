@@ -35,9 +35,9 @@ export function useLoanFilters() {
       description: "Show only check-based loans",
     },
     {
-      value: LoanType.STANDING_ORDERS,
+      value: LoanType.STANDING_ORDER,
       labelKey: "loanList.filters.standingOrders",
-      icon: "standing_orders",
+      icon: "standing_order",
       description: "Show only standing order loans",
     },
   ]);

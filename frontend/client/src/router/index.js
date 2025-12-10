@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from "vue-router";
 
 import Home from "../pages/HomePage.vue";
 import LoanList from "../pages/LoanListPage.vue";
+import LoanDetails from "../pages/LoanDetailsPage.vue";
 import TestApiPage from "../pages/TestApiPage.vue";
 import NewLoanPage from "../pages/NewLoanPage.vue";
 
@@ -11,7 +12,7 @@ const routes = [
 
   { path: "/loans", name: "LoanList", component: LoanList },
 
-  { path: "/loans/:id", name: "LoanListOpen", component: LoanList },
+  { path:  "/loans/:id", name: "LoanDetails", component: LoanDetails },
 
   { path: "/loans/new", name: "NewLoan", component: NewLoanPage },
 

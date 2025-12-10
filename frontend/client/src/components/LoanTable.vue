@@ -1,13 +1,14 @@
 <template>
   <div class="bg-white rounded-xl border border-[#E5E5EA] overflow-hidden shadow-sm">
-    <!-- Table container with scroll -->
-    <div class="overflow-x-auto">
+    <!-- Desktop Table (md and above) -->
+    <div class="hidden md:block overflow-x-auto">
       <div class="inline-block min-w-full align-middle">
         <div class="overflow-hidden">
           <table class="min-w-full divide-y divide-[#E5E5EA]">
             <!-- Table header -->
             <thead class="bg-[#F7F8FC]">
               <tr>
+                <th scope="col" class="px-4 py-3.5 w-8"></th>
                 <th
                   v-for="column in columns"
                   :key="column.key"
@@ -48,20 +49,6 @@
                       />
                     </svg>
                     <svg
-                      v-else-if="column.icon === 'trustee'"
-                      class="w-4 h-4 text-[#6B7280]"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                      />
-                    </svg>
-                    <svg
                       v-else-if="column.icon === 'amount'"
                       class="w-4 h-4 text-[#6B7280]"
                       fill="none"
@@ -86,7 +73,7 @@
                         stroke-linecap="round"
                         stroke-linejoin="round"
                         stroke-width="2"
-                        d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+                        d="M7 7h.01M7 3h5a2 2 0 011.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"
                       />
                     </svg>
                     <span class="text-[#111827]">{{ t(column.labelKey) }}</span>
@@ -97,178 +84,315 @@
 
             <!-- Table body -->
             <tbody class="divide-y divide-[#E5E5EA] bg-white">
-              <tr
-                v-for="loan in loans"
-                :key="loan.id"
-                class="transition-colors hover:bg-[#F7F8FC]/50 cursor-pointer group"
-                @click="handleRowClick(loan)"
-              >
-                <!-- Borrower Name -->
-                <td class="whitespace-nowrap px-4 py-4">
-                  <div class="flex items-center gap-3">
+              <template v-for="(loan, index) in loans" :key="loan.id ?? index">
+                <tr class="transition-colors hover:bg-[#F7F8FC]/50 group cursor-pointer">
+                  <!-- Expand Icon -->
+                  <td class="px-4 py-4 text-center">
+                    <button
+                      type="button"
+                      class="inline-flex items-center justify-center rounded-full p-1 hover:bg-[#E5E7EB] focus:outline-none"
+                      @click.stop="toggleRowExpand(index)"
+                    >
+                      <svg
+                        :class="[
+                          'w-4 h-4 text-[#6B7280] transition-transform',
+                          expandedRowIndex === index ? 'rotate-180' : ''
+                        ]"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                    </button>
+                  </td>
+
+                  <!-- Borrower Name -->
+                  <td class="whitespace-nowrap px-4 py-4">
+                    <div class="flex items-center gap-3">
+                      <div
+                        class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#007AFF]/10 transition-colors group-hover:bg-[#007AFF]/20"
+                      >
+                        <svg
+                          class="w-5 h-5 text-[#007AFF]"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                          />
+                        </svg>
+                      </div>
+                      <div class="min-w-0 flex-1">
+                        <p
+                          class="text-sm font-medium text-[#111827] truncate"
+                          :dir="isRTL ? 'rtl' : 'ltr'"
+                        >
+                          {{ loan.borrower.name }}
+                        </p>
+                        <p
+                          class="text-xs text-[#6B7280] truncate"
+                          :dir="isRTL ? 'rtl' : 'ltr'"
+                        >
+                          {{ formatPhone(loan.borrower.phone) }}
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- Email -->
+                  <td class="whitespace-nowrap px-4 py-4">
+                    <div v-if="loan.borrower.email" class="flex items-center gap-2">
+                      <svg
+                        class="w-4 h-4 text-[#6B7280] flex-shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                        />
+                      </svg>
+                      <p
+                        class="text-sm text-[#111827] truncate"
+                        :dir="isRTL ? 'rtl' : 'ltr'"
+                      >
+                        {{ loan.borrower.email }}
+                      </p>
+                    </div>
+                    <span v-else class="text-sm text-[#6B7280]">—</span>
+                  </td>
+
+                  <!-- Amount -->
+                  <td class="whitespace-nowrap px-4 py-4">
                     <div
-                      class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#007AFF]/10 transition-colors group-hover:bg-[#007AFF]/20"
+                      class="inline-flex items-center gap-1.5 rounded-full bg-[#34C759]/10 px-3 py-1.5 transition-colors group-hover:bg-[#34C759]/20"
                     >
-                      <svg
-                        class="w-5 h-5 text-[#007AFF]"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                        />
-                      </svg>
+                      <span class="text-sm font-semibold text-[#34C759]">
+                        {{ formatCurrency(loan.amount) }}
+                      </span>
                     </div>
-                    <div class="min-w-0 flex-1">
-                      <p
-                        class="text-sm font-medium text-[#111827] truncate"
-                        :dir="isRTL ? 'rtl' : 'ltr'"
-                      >
-                        {{ loan.borrower_name }}
-                      </p>
-                      <p
-                        class="text-xs text-[#6B7280] truncate"
-                        :dir="isRTL ? 'rtl' : 'ltr'"
-                      >
-                        {{ formatPhone(loan.borrower_phone) }}
-                      </p>
-                    </div>
-                  </div>
-                </td>
+                  </td>
 
-                <!-- Email -->
-                <td class="whitespace-nowrap px-4 py-4">
-                  <div v-if="loan.borrower_email" class="flex items-center gap-2">
-                    <svg
-                      class="w-4 h-4 text-[#6B7280] flex-shrink-0"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                  <!-- Type Badge -->
+                  <td class="whitespace-nowrap px-4 py-4">
+                    <span
+                      :class="[
+                        'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
+                        loan.type === 'checks'
+                          ? 'bg-[#007AFF]/10 text-[#007AFF] group-hover:bg-[#007AFF]/20'
+                          : 'bg-[#FF9500]/10 text-[#FF9500] group-hover:bg-[#FF9500]/20',
+                      ]"
                     >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                      />
-                    </svg>
-                    <p
-                      class="text-sm text-[#111827] truncate"
-                      :dir="isRTL ? 'rtl' : 'ltr'"
-                    >
-                      {{ loan.borrower_email }}
-                    </p>
-                  </div>
-                  <span v-else class="text-sm text-[#6B7280]">—</span>
-                </td>
-
-                <!-- Trustee -->
-                <td class="whitespace-nowrap px-4 py-4">
-                  <div class="min-w-0">
-                    <div class="flex items-center gap-2 mb-1">
-                      <svg
-                        class="w-4 h-4 text-[#FF9500] flex-shrink-0"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                        />
-                      </svg>
-                      <p
-                        class="text-sm font-medium text-[#111827] truncate"
-                        :dir="isRTL ? 'rtl' : 'ltr'"
-                      >
-                        {{ loan.trustee_name }}
-                      </p>
-                    </div>
-                    <p
-                      v-if="loan.trustee_community"
-                      class="text-xs text-[#6B7280] truncate"
-                      :dir="isRTL ? 'rtl' : 'ltr'"
-                    >
-                      {{ loan.trustee_community }}
-                    </p>
-                  </div>
-                </td>
-
-                <!-- Amount -->
-                <td class="whitespace-nowrap px-4 py-4">
-                  <div
-                    class="inline-flex items-center gap-1.5 rounded-full bg-[#34C759]/10 px-3 py-1.5 transition-colors group-hover:bg-[#34C759]/20"
-                  >
-                    <svg
-                      class="w-3.5 h-3.5 text-[#34C759]"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-                      />
-                    </svg>
-                    <span class="text-sm font-semibold text-[#34C759]">
-                      {{ formatCurrency(loan.amount) }}
+                      {{ t(getTypeLabelKey(loan.type)) }}
                     </span>
-                  </div>
-                </td>
+                  </td>
+                </tr>
 
-                <!-- Type Badge -->
-                <td class="whitespace-nowrap px-4 py-4">
-                  <span
-                    :class="[
-                      'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
-                      loan.type === 'checks'
-                        ? 'bg-[#007AFF]/10 text-[#007AFF] group-hover:bg-[#007AFF]/20'
-                        : 'bg-[#FF9500]/10 text-[#FF9500] group-hover:bg-[#FF9500]/20',
-                    ]"
-                  >
-                    <svg
-                      class="w-3.5 h-3.5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        v-if="loan.type === 'checks'"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                      />
-                      <path
-                        v-else
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                      />
-                    </svg>
-                    {{ t(getTypeLabelKey(loan.type)) }}
-                  </span>
-                </td>
-              </tr>
+                <!-- Expanded Details Panel Row -->
+                <tr v-if="expandedRowIndex === index" class="bg-[#F7F8FC]/30">
+                  <td :colspan="columns.length + 1" class="px-4 py-6">
+                    <LoanDetailsPanel :loan="convertToFullLoan(loan)" />
+                  </td>
+                </tr>
+              </template>
             </tbody>
           </table>
         </div>
       </div>
     </div>
 
-    <!-- Empty state -->
+    <!-- Mobile/Tablet Card View (below md) -->
+    <div class="md:hidden">
+      <div v-if="loans.length === 0 && !loading" class="flex flex-col items-center justify-center py-12 px-4">
+        <div
+          class="flex h-16 w-16 items-center justify-center rounded-full bg-[#6B7280]/10 mb-3"
+        >
+          <svg
+            class="w-8 h-8 text-[#6B7280]"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            />
+          </svg>
+        </div>
+        <p class="text-base font-semibold text-[#111827] mb-1">
+          {{ t(emptyMessage) }}
+        </p>
+        <p class="text-xs text-[#6B7280] text-center">
+          {{ t(emptyDescription) }}
+        </p>
+      </div>
+
+      <div v-else-if="loading" class="flex flex-col items-center justify-center py-12">
+        <div
+          class="h-10 w-10 animate-spin rounded-full border-4 border-[#007AFF] border-t-transparent mb-3"
+        ></div>
+        <p class="text-xs font-medium text-[#6B7280]">
+          {{ t("loanList.messages.loading") }}
+        </p>
+      </div>
+
+      <div v-else class="divide-y divide-[#E5E5EA]">
+        <div
+          v-for="(loan, index) in loans"
+          :key="loan.id ?? index"
+          class="px-4 py-4 sm:px-5 sm:py-5"
+        >
+          <!-- Card header: Borrower + Amount -->
+          <button
+            type="button"
+            class="w-full text-left mb-4 focus:outline-none"
+            @click="toggleRowExpand(index)"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex items-center gap-3 flex-1 min-w-0">
+                <div
+                  class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#007AFF]/10"
+                >
+                  <svg
+                    class="w-5 h-5 text-[#007AFF]"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
+                  </svg>
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p
+                    class="text-sm font-semibold text-[#111827] truncate"
+                    :dir="isRTL ? 'rtl' : 'ltr'"
+                  >
+                    {{ loan.borrower.name }}
+                  </p>
+                  <p
+                    class="text-xs text-[#6B7280] truncate"
+                    :dir="isRTL ? 'rtl' : 'ltr'"
+                  >
+                    {{ formatPhone(loan.borrower.phone) }}
+                  </p>
+                </div>
+              </div>
+
+              <!-- Amount Badge -->
+              <div
+                class="inline-flex items-center gap-1 rounded-full bg-[#34C759]/10 px-2.5 py-1.5 flex-shrink-0"
+              >
+                <span class="text-xs sm:text-sm font-semibold text-[#34C759]">
+                  {{ formatCurrency(loan.amount) }}
+                </span>
+              </div>
+            </div>
+          </button>
+
+          <!-- Card body: Key info -->
+          <div class="space-y-3 mb-4">
+            <!-- Email -->
+            <div v-if="loan.borrower.email" class="flex items-start gap-2">
+              <svg
+                class="w-4 h-4 text-[#6B7280] flex-shrink-0 mt-0.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                />
+              </svg>
+              <p
+                class="text-xs sm:text-sm text-[#111827] break-all"
+                :dir="isRTL ? 'rtl' : 'ltr'"
+              >
+                {{ loan.borrower.email }}
+              </p>
+            </div>
+
+            <!-- Type -->
+            <div class="flex items-center gap-2">
+              <span
+                :class="[
+                  'inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium',
+                  loan.type === 'checks'
+                    ? 'bg-[#007AFF]/10 text-[#007AFF]'
+                    : 'bg-[#FF9500]/10 text-[#FF9500]',
+                ]"
+              >
+                {{ t(getTypeLabelKey(loan.type)) }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Expand button -->
+          <button
+            type="button"
+            class="w-full text-[#007AFF] text-xs font-semibold py-2 hover:bg-[#007AFF]/5 rounded-lg transition-colors flex items-center justify-center gap-1"
+            @click="toggleRowExpand(index)"
+          >
+            <span>
+            {{
+              expandedRowIndex === index
+              ? t("loanList.hideDetails")
+              : t("loanList.showDetails")
+            }}
+            </span>
+
+            <svg
+              :class="[
+                'w-4 h-4 transition-transform',
+                expandedRowIndex === index ? 'rotate-180' : ''
+              ]"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </button>
+
+          <!-- Expanded Details -->
+          <div v-if="expandedRowIndex === index" class="mt-4 pt-4 border-t border-[#E5E5EA]">
+            <LoanDetailsPanel :loan="convertToFullLoan(loan)" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty state (desktop) -->
     <div
       v-if="loans.length === 0 && !loading"
-      class="flex flex-col items-center justify-center py-16 px-4"
+      class="hidden md:flex flex-col items-center justify-center py-16 px-4"
     >
       <div
         class="flex h-20 w-20 items-center justify-center rounded-full bg-[#6B7280]/10 mb-4"
@@ -298,7 +422,7 @@
     <!-- Loading state -->
     <div
       v-if="loading"
-      class="flex flex-col items-center justify-center py-16"
+      class="hidden md:flex flex-col items-center justify-center py-16"
     >
       <div
         class="h-12 w-12 animate-spin rounded-full border-4 border-[#007AFF] border-t-transparent mb-4"
@@ -311,8 +435,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
-import type { LoanListItem, LoanType } from "../types/loan";
+import { ref, computed } from "vue";
+import type { LoanListItem, Loan } from "../types/loan";
+import { LoanType } from "../types/loan";
+import LoanDetailsPanel from "./loan-details/LoanDetailsPanel.vue";
 
 interface Column {
   key: string;
@@ -336,20 +462,15 @@ const props = withDefaults(defineProps<Props>(), {
   emptyDescription: "loanList.messages.noLoansDesc",
 });
 
-const emit = defineEmits<{
-  rowClick: [loan: LoanListItem];
-}>();
+const expandedRowIndex = ref<number | null>(null);
 
-// Table columns configuration
 const columns = computed<Column[]>(() => [
-  { key: "borrower", labelKey: "loanList.table.borrower", minWidth: "200px", icon: "user" },
-  { key: "email", labelKey: "loanList.table.email", minWidth: "200px", icon: "email" },
-  { key: "trustee", labelKey: "loanList.table.trustee", minWidth: "180px", icon: "trustee" },
-  { key: "amount", labelKey: "loanList.table.amount", minWidth: "140px", icon: "amount" },
-  { key: "type", labelKey: "loanList.table.type", minWidth: "140px", icon: "type" },
+  { key: "borrower", labelKey: "loanList.table.borrower", minWidth: "220px", icon: "user" },
+  { key: "email", labelKey: "loanList.table.email", minWidth: "220px", icon: "email" },
+  { key: "amount", labelKey: "loanList.table.amount", minWidth: "150px", icon: "amount" },
+  { key: "type", labelKey: "loanList.table.type", minWidth: "150px", icon: "type" },
 ]);
 
-// Format phone number for display
 const formatPhone = (phone: string): string => {
   if (!phone) return "—";
   const cleaned = phone.replace(/\D/g, "");
@@ -359,7 +480,6 @@ const formatPhone = (phone: string): string => {
   return phone;
 };
 
-// Format currency
 const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat("he-IL", {
     style: "currency",
@@ -369,16 +489,47 @@ const formatCurrency = (amount: number): string => {
   }).format(amount);
 };
 
-// Get loan type label key
 const getTypeLabelKey = (type: LoanType): string => {
-  return type === "checks"
+  return type === LoanType.CHECKS
     ? "loanList.types.checks"
     : "loanList.types.standingOrders";
 };
 
-// Handle row click
-const handleRowClick = (loan: LoanListItem) => {
-  emit("rowClick", loan);
+const toggleRowExpand = (rowIndex: number) => {
+  if (expandedRowIndex.value === rowIndex) {
+    expandedRowIndex.value = null;
+  } else {
+    expandedRowIndex.value = rowIndex;
+  }
+};
+
+const convertToFullLoan = (listItem: LoanListItem): Loan => {
+  return {
+    id: listItem.id,
+    amount: listItem.amount,
+    type: listItem.type,
+    status: listItem.status,
+    startDate: listItem.startDate,
+    createdAt: listItem.borrower.createdAt ?? "",
+    formFileUrl: undefined,
+    borrower: {
+      name: listItem.borrower.name,
+      phone: listItem.borrower.phone,
+      email: listItem.borrower.email,
+      idNumber: listItem.borrower.idNumber,
+      address: listItem.borrower.address,
+      createdAt: listItem.borrower.createdAt,
+    },
+    trustee: listItem.trustee
+      ? {
+          name: listItem.trustee.name,
+          community: listItem.trustee.community,
+          phone: listItem.trustee.phone,
+          notes: listItem.trustee.notes,
+        }
+      : null,
+    details: {},
+  } as Loan;
 };
 </script>
 

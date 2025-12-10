@@ -10,28 +10,17 @@ class LoanListView(APIView):
     """
     GET /loans
 
-    This endpoint returns ONLY ACTIVE loans (for the main loan list screen).
-    It pulls data from BOTH loan tables:
-        - LoanChecks
-        - LoanStandingOrder
-
-    and unifies the output into a single consistent JSON structure.
-
-    Supported filters:
-        ?type=checks / standing_orders / all
-    (Status is NOT a filter here — always ACTIVE.)
-
-    Steps performed:
-    1. Fetch active loans from both tables
-    2. Apply optional loan-type filter
-    3. Convert each loan into a unified dictionary format
-    4. Serialize and return final JSON list
+    Returns ONLY ACTIVE loans (for the main loan list screen).
+    Supports optional filtering by loan type and **text search**.
     """
 
     def get(self, request):
 
-        # Optional type filter
+        # Optional type filter (?type=checks / standing_orders / all)
         type_param = request.GET.get("type", None)
+
+        # Optional search text (?search=yael / 050 / trustee name ...)
+        search_param = request.GET.get("search", "").strip().lower()
 
         unified_loans = []  # final combined loan list
 
@@ -68,7 +57,7 @@ class LoanListView(APIView):
         standing_qs = LoanStandingOrder.objects.filter(status="ACTIVE")
 
         # Apply type filter: include only standing orders OR all
-        if type_param and type_param not in ["all", "standing_orders"]:
+        if type_param and type_param not in ["all", "standing_orders", "standing_order"]:
             standing_qs = []
 
         for loan in standing_qs:
@@ -83,22 +72,58 @@ class LoanListView(APIView):
                     "phone": getattr(loan.borrower.user.profile, "phone", None) if loan.borrower.user else None,
                     "email": loan.borrower.user.email if loan.borrower.user else None,
                 },
-                "trustee": {
+                    "trustee": {
                     "name": loan.trustee.user.first_name if loan.trustee else None,
                     "community": loan.trustee.community if loan.trustee else None,
                 }
             })
 
+        # ----------------------------------------------------
+        #   3. Apply free-text search (if ?search= was given)
+        # ----------------------------------------------------
+        if search_param:
+            def matches(loan):
+                """
+                Returns True if the search query appears in:
+                - borrower name
+                - borrower phone
+                - borrower email
+                - trustee name
+                - trustee community
+                """
+                borrower = loan.get("borrower", {})
+                trustee = loan.get("trustee", {})
+
+                fields = [
+                    borrower.get("name") or "",
+                    borrower.get("phone") or "",
+                    borrower.get("email") or "",
+                    trustee.get("name") or "",
+                    trustee.get("community") or "",
+                ]
+
+                # Case-insensitive substring match
+                return any(search_param in str(value).lower() for value in fields)
+
+            # keep only loans that match the search
+            unified_loans = [loan for loan in unified_loans if matches(loan)]
+
         # ------------------------
-        #   3. Serialize + Return
+        #   4. Serialize + Return
         # ------------------------
         serializer = LoanListSerializer(unified_loans, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+
+
+# ------------------------------------
+#   Loan Detail View (unchanged)
+# ------------------------------------
+
 class LoanDetailView(APIView):
     """
     Returns full loan details for a given loan_id.
-    Supports both LoanChecks and LoanStandingOrder models.
+    Supports both LoanChecks and LoanStandingOrder.
     """
 
     def get(self, request, loan_id):
