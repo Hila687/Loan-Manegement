@@ -156,6 +156,7 @@
 
     "table": {
       "borrower": "Borrower",
+      "phone": "Phone",
       "email": "Email",
       "trustee": "Trustee",
       "amount": "Amount",
@@ -186,21 +187,33 @@
     }
   },
 
-  "loanDetails": {
-    "tabSchedule": "Payment schedule",
-    "tabDetails": "Loan details",
-    "borrowerInfo": "Borrower information",
-    "loanInfo": "Loan information",
-    "name": "Name",
-    "email": "Email",
-    "phone": "Phone",
-    "address": "Address",
+"loanDetails": {
+    "title": "Loan Details",
+    "tabDetails": "Details",
+    "tabSchedule": "Payment Schedule",
+
+    "borrowerInfo": "Borrower Information",
+    "loanInfo": "Loan Information",
     "trustee": "Trustee",
-    "community": "Community",
-    "type": "Loan type",
-    "amount": "Loan amount",
-    "status": "Status",
-    "editButton": "Edit loan"
+    "additionalDetails": "Additional Details:",
+
+    "name": "Name:",
+    "phone": "Phone:",
+    "email": "Email:",
+    "address": "Address:",
+    "idNumber": "ID Number:",
+    "createdAt": "Created At:",
+
+    "loanId": "Loan ID:",
+    "type": "Loan Type:",
+    "amount": "Loan Amount:",
+    "status": "Status:",
+    "startDate": "Start Date:",
+
+    "community": "Community:",
+    "notes": "Notes:",
+
+    "editButton": "Edit Loan"
   },
 
   "loan": {

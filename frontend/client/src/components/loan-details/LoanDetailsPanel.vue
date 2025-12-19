@@ -1,214 +1,165 @@
-<!-- frontend/client/src/components/loan-details/LoanDetailsPanel.vue -->
 <template>
-  <div
-    class="w-full rounded-2xl border border-[#E5E5EA] bg-white shadow-sm px-3 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-7"
-    :dir="isRTL ? 'rtl' : 'ltr'"
-  >
-    <!-- Tabs only -->
-    <div class="flex border-b border-[#E5E5EA] mb-4 sm:mb-6 -mx-3 sm:mx-0 px-3 sm:px-0">
-      <button
-        type="button"
-        class="px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium border-b-2 whitespace-nowrap"
-        :class="
-          activeTab === 'details'
-            ? 'border-[#007AFF] text-[#007AFF]'
-            : 'border-transparent text-[#6B7280] hover:text-[#111827]'
-        "
-        @click="activeTab = 'details'"
-      >
-        {{ t("loanDetails.tabDetails") }}
-      </button>
-      <button
-        type="button"
-        class="px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium border-b-2 whitespace-nowrap"
-        :class="
-          activeTab === 'schedule'
-            ? 'border-[#007AFF] text-[#007AFF]'
-            : 'border-transparent text-[#6B7280] hover:text-[#111827]'
-        "
-        @click="activeTab = 'schedule'"
-      >
-        {{ t("loanDetails.tabSchedule") }}
-      </button>
-    </div>
+  <div class="rounded-lg border bg-white shadow p-4 space-y-6">
 
-    <!-- Details Tab -->
-    <div v-if="activeTab === 'details'" class="space-y-6">
-      <!-- Borrower Info Section -->
-      <section>
-        <h3
-          class="text-xs font-semibold text-[#6B7280] uppercase tracking-wide mb-4"
-          :class="isRTL ? 'text-right' : 'text-left'"
-        >
-          {{ t("loanDetails.borrowerInfo") }}
-        </h3>
-        <div class="space-y-3">
-          <InfoRow
-            :label="t('loanDetails.name')"
-            :value="loan.borrower?.name || '—'"
-            :is-rtl="isRTL"
-          />
-          <InfoRow
-            :label="t('loanDetails.phone')"
-            :value="formatPhone(loan.borrower?.phone)"
-            :is-rtl="isRTL"
-          />
-          <InfoRow
-            :label="t('loanDetails.email')"
-            :value="loan.borrower?.email || '—'"
-            :is-rtl="isRTL"
-          />
-          <!-- NEW: borrower address -->
-          <InfoRow
-            :label="t('loanDetails.address')"
-            :value="loan.borrower?.address || '—'"
-            :is-rtl="isRTL"
-          />
-          <!-- NEW: trustee shown inside borrower details -->
-          <InfoRow
-            :label="t('loanDetails.trustee')"
-            :value="loan.trustee?.name || '—'"
-            :is-rtl="isRTL"
-          />
-        </div>
-      </section>
-
-      <!-- Loan Info Section -->
-      <section class="pt-6 border-t border-[#E5E5EA]">
-        <h3
-          class="text-xs font-semibold text-[#6B7280] uppercase tracking-wide mb-4"
-          :class="isRTL ? 'text-right' : 'text-left'"
-        >
-          {{ t("loanDetails.loanInfo") }}
-        </h3>
-        <div class="space-y-3">
-          <InfoRow
-            :label="t('loanDetails.type')"
-            :value="t(getTypeLabelKey(loan.type))"
-            :is-rtl="isRTL"
-          />
-          <InfoRow
-            :label="t('loanDetails.amount')"
-            :value="formatCurrency(loan.amount)"
-            :is-rtl="isRTL"
-            :highlight="true"
-          />
-          <InfoRow
-            :label="t('loanDetails.status')"
-            :value="loan.status"
-            :is-rtl="isRTL"
-          />
-        </div>
-      </section>
-
-      <!-- Trustee Info (if available) -->
-      <section v-if="loan.trustee?.name" class="pt-6 border-t border-[#E5E5EA]">
-        <h3
-          class="text-xs font-semibold text-[#6B7280] uppercase tracking-wide mb-4"
-          :class="isRTL ? 'text-right' : 'text-left'"
-        >
-          {{ t("loanDetails.trustee") || "Trustee" }}
-        </h3>
-        <div class="space-y-3">
-          <InfoRow
-            :label="t('loanDetails.trustee')"
-            :value="loan.trustee.name"
-            :is-rtl="isRTL"
-          />
-          <InfoRow
-            v-if="loan.trustee.community"
-            :label="t('loanDetails.community') || 'Community'"
-            :value="loan.trustee.community"
-            :is-rtl="isRTL"
-          />
-        </div>
-      </section>
-    </div>
-
-    <!-- Schedule Tab -->
-    <div v-else class="py-4">
-      <p
-        class="text-sm text-[#6B7280]"
-        :class="isRTL ? 'text-right' : 'text-left'"
-      >
-        {{ t("loanDetails.tabSchedule") }} – coming soon.
-      </p>
-    </div>
-
-    <!-- Edit Button -->
-    <div
-      class="mt-8 flex justify-end"
-      :class="isRTL ? 'flex-row-reverse' : 'flex-row'"
+    <TabsSection
+      :labels="{
+        details: t('loanDetails.tabDetails'),
+        schedule: t('loanDetails.tabSchedule')
+      }"
     >
-      <button
-        type="button"
-        class="inline-flex items-center justify-center rounded-xl px-5 py-2.5 text-sm font-medium text-white bg-[#007AFF] hover:bg-[#0060D1] active:bg-[#0051BA] transition-colors shadow-sm"
-        @click="$emit('edit', loan)"
-      >
-        {{ t("loanDetails.editButton") }}
-      </button>
+
+      <template #details>
+
+        <!-- Borrower Info Section -->
+        <section>
+          <BorrowerInfoSection :borrower="loan.borrower" />
+        </section>
+
+        <!-- Loan Info Section -->
+        <section>
+          <h2 class="text-lg font-semibold mb-2">
+            {{ t("loanDetails.loanInfo") }}
+          </h2>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-700">
+            
+            <!-- Loan Type -->
+            <div>
+              <strong>{{ t("loanDetails.type") }}</strong> {{ loan.type === "checks" ? "צ'קים" : "הוראת קבע" }}
+            </div>
+
+            <!-- Amount -->
+            <div>
+              <strong>{{ t("loanDetails.amount") }}</strong> {{ formatCurrency(loan.amount) }}
+            </div>
+
+            <!-- Status -->
+            <div>
+              <strong>{{ t("loanDetails.status") }}</strong> {{ loan.status }}
+            </div>
+
+            <!-- Start Date -->
+            <div>
+              <strong>{{ t("loanDetails.startDate") }}</strong> {{ formatDate(loan.startDate) }}
+            </div>
+
+            <!-- Created At -->
+            <div>
+              <strong>{{ t("loanDetails.createdAt") }}</strong> {{ formatDate(loan.createdAt) }}
+            </div>
+
+            <!-- Payment Details (for checks type) -->
+            <template v-if="loan.type === 'checks' && loan.details">
+              <!-- Number of Payments -->
+              <div>
+                <strong>{{ t("loanDetails.numPayments") }}</strong> {{ (loan.details as any).numPayments ?? "-" }}
+              </div>
+
+              <!-- Predefined Schedule -->
+              <div>
+                <strong>{{ t("loanDetails.predefinedSchedule") }}</strong> {{ (loan.details as any).predefinedSchedule ? t("loanDetails.yes") : t("loanDetails.no") }}
+              </div>
+
+              <!-- Check Details -->
+              <div>
+                <strong>{{ t("loanDetails.checkDetails") }}</strong> {{ (loan.details as any).checkDetails || "-" }}
+              </div>
+            </template>
+
+            <!-- Payment Details (for standing order type) -->
+            <template v-else-if="loan.type === 'standing_order' && loan.details">
+              <!-- Monthly Amount -->
+              <div>
+                <strong>{{ t("loanDetails.monthlyAmount") }}</strong> {{ formatCurrency((loan.details as any).monthlyAmount) }}
+              </div>
+
+              <!-- Charge Day -->
+              <div>
+                <strong>{{ t("loanDetails.chargeDay") }}</strong> {{ (loan.details as any).chargeDay ?? "-" }}
+              </div>
+
+              <!-- Stop Date -->
+              <div>
+                <strong>{{ t("loanDetails.stopDate") }}</strong> {{ (loan.details as any).stopDate || "-" }}
+              </div>
+            </template>
+
+          </div>
+        </section>
+
+        <!-- Trustee Section -->
+        <section v-if="loan.trustee">
+          <h2 class="text-lg font-semibold mb-2">
+            {{ t("loanDetails.trustee") }}
+          </h2>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-700">
+            
+            <!-- Name -->
+            <div>
+              <strong>{{ t("loanDetails.name") }}</strong> {{ loan.trustee.name || "-" }}
+            </div>
+
+            <!-- Phone -->
+            <div>
+              <strong>{{ t("loanDetails.phone") }}</strong> <span dir="ltr" class="text-right inline-block w-full sm:w-auto text-left">{{ loan.trustee.phone || "-" }}</span>
+            </div>
+
+            <!-- Community -->
+            <div>
+              <strong>{{ t("loanDetails.community") }}</strong> {{ loan.trustee.community || "-" }}
+            </div>
+
+            <!-- Notes -->
+            <div>
+              <strong>{{ t("loanDetails.notes") }}</strong> 
+              <span v-if="loan.trustee.notes" class="bg-yellow-50 px-2 py-0.5 rounded text-gray-800">{{ loan.trustee.notes }}</span>
+              <span v-else>-</span>
+            </div>
+
+          </div>
+        </section>
+
+      </template>
+
+      <template #schedule>
+        <div class="text-gray-500 text-center py-4 bg-gray-50 rounded">
+          <p>{{ t("loanDetails.tabSchedule") }} – בקרוב...</p>
+        </div>
+      </template>
+
+    </TabsSection>
+
+    <div class="pt-4 border-t flex justify-end">
+      <EditLoanButton :loanId="loan.id" />
     </div>
+
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import type { Loan, LoanType } from "../../types/loan";
-import { useLocale } from "../../composables/useLocale";
-import InfoRow from "./InfoRow.vue";
+import type { Loan } from "../../types/loan";
+import { useI18n } from "vue-i18n";
 
-interface Props {
+import BorrowerInfoSection from "./BorrowerInfoSection.vue";
+import TabsSection from "./TabsSection.vue";
+import EditLoanButton from "./EditLoanButton.vue";
+
+const { t } = useI18n();
+
+defineProps<{
   loan: Loan;
-}
+}>();
 
-const { loan } = defineProps<Props>();
-
-// Locale helper
-const { t, isRTL } = useLocale();
-
-// Local tab state
-const activeTab = ref<"details" | "schedule">("details");
-
-/**
- * Format phone number for display.
- */
-const formatPhone = (phone?: string): string => {
-  if (!phone) return "—";
-  const cleaned = phone.replace(/\D/g, "");
-  if (cleaned.length === 10) {
-    return cleaned.replace(/(\d{3})(\d{3})(\d{4})/, "$1-$2-$3");
-  }
-  return phone;
-};
-
-/**
- * Format numeric amount as ILS currency with no decimals.
- */
-const formatCurrency = (amount: number): string => {
+function formatCurrency(amount: number) {
   return new Intl.NumberFormat("he-IL", {
     style: "currency",
     currency: "ILS",
-    minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount);
-};
+}
 
-/**
- * Map loan type to i18n key.
- */
-const getTypeLabelKey = (type: LoanType): string => {
-  return type === "checks"
-    ? "loanList.types.checks"
-    : "loanList.types.standingOrders";
-};
+function formatDate(date?: string) {
+  return date ? new Date(date).toLocaleDateString("he-IL") : "-";
+}
 </script>
-
-<style scoped>
-button {
-  transition: all 0.2s ease;
-}
-
-button:active {
-  transform: scale(0.98);
-}
-</style>

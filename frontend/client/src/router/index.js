@@ -10,18 +10,18 @@ import NewLoanPage from "../pages/NewLoanPage.vue";
 const routes = [
   { path: "/", name: "Home", component: Home },
 
-  { path: "/loans", name: "LoanList", component: LoanList },
-
-  { path:  "/loans/:id", name: "LoanDetails", component: LoanDetails },
+  // ✅ אותו מסך גם ל-/loans וגם ל-/loans/:id
+  { path: "/loans/:id?", name: "LoanList", component: LoanList },
 
   { path: "/loans/new", name: "NewLoan", component: NewLoanPage },
+
+  // ✅ לשמור את דף הפרטים הישן בנתיב נפרד (לא חובה להשתמש בו)
+  { path: "/loans/:id/details", name: "LoanDetails", component: LoanDetails },
 
   { path: "/debug/users", name: "TestApi", component: TestApiPage },
 ];
 
-const router = createRouter({
+export default createRouter({
   history: createWebHistory(),
   routes,
 });
-
-export default router;

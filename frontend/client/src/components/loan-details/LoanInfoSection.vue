@@ -5,22 +5,32 @@
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-700">
 
-      <!-- Amount -->
       <div>
-        <strong>{{ t("loanDetails. amount") }}</strong>
+        <strong>{{ t("loanDetails.loanId") }}</strong> {{ loan.id }}
+      </div>
+
+      <div>
+        <strong>{{ t("loanDetails.type") }}</strong>
+        {{ loan.type === "checks" ? "צ'קים" : "הוראת קבע" }}
+      </div>
+
+      <div>
+        <strong>{{ t("loanDetails.amount") }}</strong>
         {{ formatCurrency(loan.amount) }}
       </div>
 
-      <!-- Type -->
       <div>
-        <strong>{{ t("loanDetails.type") }}</strong>
-        {{ loan.type === "checks" ?  "צ'קים" : "הוראות קבע" }}
+        <strong>{{ t("loanDetails.status") }}</strong> {{ loan.status }}
       </div>
 
-      <!-- Status -->
       <div>
-        <strong>{{ t("loanDetails.status") }}</strong>
-        {{ loan.status || "פעיל" }}
+        <strong>{{ t("loanDetails.startDate") }}</strong>
+        {{ formatDate(loan.startDate) }}
+      </div>
+
+      <div>
+        <strong>{{ t("loanDetails.createdAt") }}</strong>
+        {{ formatDate(loan.createdAt) }}
       </div>
 
     </div>
@@ -33,14 +43,17 @@ import { useI18n } from "vue-i18n";
 
 const { t } = useI18n();
 
-const props = defineProps<{
-  loan: Loan;
-}>();
+defineProps<{ loan: Loan }>();
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat("he-IL", {
     style: "currency",
     currency: "ILS",
+    maximumFractionDigits: 0,
   }).format(amount);
+}
+
+function formatDate(date?: string) {
+  return date ? new Date(date).toLocaleDateString("he-IL") : "-";
 }
 </script>
