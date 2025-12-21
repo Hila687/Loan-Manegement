@@ -33,3 +33,6 @@ media/
 
 # Node modules (front-end)
 node_modules/
+
+# Browser cookies
+cookies.txt
