@@ -1,9 +1,11 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.permissions import AllowAny, IsAdminUser
 
 from .models import LoanChecks, LoanStandingOrder
-from .serializers import LoanListSerializer, LoanDetailSerializer
+from .serializers import LoanListSerializer, LoanDetailSerializer, LoanUpdateSerializer
+
 
 
 class LoanListView(APIView):
@@ -39,7 +41,7 @@ class LoanListView(APIView):
                 "loan_type": "checks",
                 "amount": loan.amount,
                 "start_date": loan.start_date,
-                "status": loan.status,
+                "status": "CLOSED" if loan.status == "PAID" else "ACTIVE",
                 "borrower": {
                     "name": loan.borrower.user.first_name if loan.borrower.user else None,
                     "phone": getattr(loan.borrower.user.profile, "phone", None) if loan.borrower.user else None,
@@ -66,7 +68,7 @@ class LoanListView(APIView):
                 "loan_type": "standing_order",
                 "amount": loan.amount,
                 "start_date": loan.start_date,
-                "status": loan.status,
+                "status": "CLOSED" if loan.status == "PAID" else "ACTIVE",
                 "borrower": {
                     "name": loan.borrower.user.first_name if loan.borrower.user else None,
                     "phone": getattr(loan.borrower.user.profile, "phone", None) if loan.borrower.user else None,
@@ -120,8 +122,13 @@ class LoanListView(APIView):
 #   Loan Detail View (unchanged)
 # ------------------------------------
 
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+
+@method_decorator(csrf_exempt, name="dispatch")
 class LoanDetailView(APIView):
     """
+    GET  /api/loans/{loan_id}
     Returns full loan details for a given loan_id.
     Supports both LoanChecks and LoanStandingOrder.
     """
@@ -145,7 +152,7 @@ class LoanDetailView(APIView):
                 loan_type = "standing_order"
             except LoanStandingOrder.DoesNotExist:
                 return Response(
-                    {"detail": "Loan not found."},
+                    {"detail": "Loan not found"},
                     status=status.HTTP_404_NOT_FOUND
                 )
 
@@ -155,4 +162,35 @@ class LoanDetailView(APIView):
             context={"request": request}
         )
 
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+
+
+    """
+    PUT  /api/loans/{loan_id}  - admin only
+    """
+    def get_permissions(self):
+        if self.request.method == "PUT":
+            return [IsAdminUser()]
+        return [AllowAny()]
+
+    def put(self, request, loan_id):
+        # Find loan
+        try:
+            loan = LoanChecks.objects.get(loan_id=loan_id)
+        except LoanChecks.DoesNotExist:
+            try:
+                loan = LoanStandingOrder.objects.get(loan_id=loan_id)
+            except LoanStandingOrder.DoesNotExist:
+                return Response({"detail": "Loan not found"}, status=status.HTTP_404_NOT_FOUND)
+        serializer = LoanUpdateSerializer(
+            instance=loan,
+            data=request.data,
+            context={"request": request},
+        )
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer.save()
+        serializer = LoanDetailSerializer(loan, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
