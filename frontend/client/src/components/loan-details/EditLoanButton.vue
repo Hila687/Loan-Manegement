@@ -16,7 +16,7 @@ const { t } = useI18n();
 const router = useRouter();
 
 const props = defineProps<{
-  loanId: number;
+  loanId: string ;
 }>();
 
 const goToEdit = () => {

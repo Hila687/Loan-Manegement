@@ -223,6 +223,28 @@
     "standingOrders": "Standing orders"
   },
 
+  "editLoan": {
+    "title": "Edit Loan",
+    "cardTitle": "Edit Existing Loan",
+    "fields": {
+      "amount": "Amount",
+      "startDate": "Start Date",
+      "numPayments": "Number of Payments",
+      "trustee": "Trustee",
+      "status": "Status"
+    },
+    "placeholders": {
+      "amount": "Enter amount",
+      "startDate": "Select date",
+      "numPayments": "Enter number of payments",
+      "trustee": "Select trustee"
+    },
+    "actions": {
+      "cancel": "Cancel",
+      "save": "Save"
+    }
+  },
+
   "lang": {
     "he": "עברית",
     "en": "English"

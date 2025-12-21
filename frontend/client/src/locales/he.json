@@ -226,6 +226,28 @@
     "standingOrders": "הלוואות בהוראת קבע"
   },
 
+  "editLoan": {
+    "title": "עריכת הלוואה",
+    "cardTitle": "עריכת הלוואה קיימת",
+    "fields": {
+      "amount": "סכום",
+      "startDate": "תאריך התחלה",
+      "numPayments": "מספר תשלומים",
+      "trustee": "נאמן",
+      "status": "סטטוס"
+    },
+    "placeholders": {
+      "amount": "הכניסי סכום",
+      "startDate": "בחרי תאריך",
+      "numPayments": "הכניסי מספר תשלומים",
+      "trustee": "בחרי נאמן"
+    },
+    "actions": {
+      "cancel": "ביטול",
+      "save": "שמירה"
+    }
+  },
+
   "lang": {
     "he": "עברית",
     "en": "English"

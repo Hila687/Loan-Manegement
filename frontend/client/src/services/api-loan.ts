@@ -2,7 +2,7 @@ import api from "./api"; // axios instance
 import { adaptLoanListItem, adaptLoanDetails } from "../adapters/loanAdapter";
 
 export async function fetchLoans(type: string = "all") {
-  const response = await api.get("/api/loans/", {
+  const response = await api.get("/loans/", {
     params: { type }
   });
 
@@ -10,6 +10,6 @@ export async function fetchLoans(type: string = "all") {
 }
 
 export async function fetchLoanDetails(loanId: string) {
-  const response = await api.get(`/api/loans/${loanId}/`);
+  const response = await api.get(`/loans/${loanId}/`);
   return adaptLoanDetails(response.data);
 }
