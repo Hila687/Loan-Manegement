@@ -113,7 +113,7 @@
       <div
         class="rounded-xl lg:rounded-2xl border-2 border-[#E5E5EA] bg-white/80 backdrop-blur-sm overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300"
       >
-        <LoanTable
+      <LoanTable
           :loans="loans"
           :loading="loading"
           :isRTL="isRTL"
@@ -128,7 +128,8 @@
               ? 'loanList.messages.noFilteredLoansDesc'
               : 'loanList.messages.noLoansDesc'
           "
-          @row-click="handleLoanClick"
+          :opened-loan-id="openedLoanId"
+          @toggle-loan="handleToggleLoan"
         />
       </div>
     </div>
@@ -136,9 +137,10 @@
 </template>
 
 
+
 <script setup lang="ts">
 import { onMounted, watch, computed } from "vue";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import { useLocale } from "../composables/useLocale";
 import { useLoans } from "../composables/useLoans";
 import { useLoanFilters } from "../composables/useLoanFilters";
@@ -149,6 +151,17 @@ import type { LoanListItem } from "../types/loan";
 
 const { t, isRTL } = useLocale();
 const router = useRouter();
+
+const route = useRoute();
+
+const openedLoanId = computed(() =>
+  typeof route.params.id === "string" ? route.params.id : null
+);
+
+const handleToggleLoan = (loanId: string | null) => {
+  if (loanId) router.push(`/loans/${loanId}`);
+  else router.push("/loans");
+};
 
 const {
   loans,

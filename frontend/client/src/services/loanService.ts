@@ -10,7 +10,6 @@ import {
 } from "../types/loan";
 import type { ApiLoanListItem, ApiLoanDetails } from "../types/api-loan";
 
-
 function mapLoanListItem(apiLoan: ApiLoanListItem): LoanListItem {
   return {
     id: apiLoan.loan_id,
@@ -21,14 +20,16 @@ function mapLoanListItem(apiLoan: ApiLoanListItem): LoanListItem {
     status: apiLoan.status as LoanStatus,
     amount: Number(apiLoan.amount),
     startDate: apiLoan.start_date,
+
     borrower: {
-      name: apiLoan.borrower?.name ?? "",
-      phone: apiLoan.borrower?.phone ?? "",
-      email: apiLoan.borrower?.email ?? undefined,
-      address: apiLoan.borrower?.address,
-      idNumber: apiLoan.borrower?.id_number,
-      createdAt: apiLoan.borrower?.created_at,
+      name: apiLoan.borrower.name,
+      phone: apiLoan.borrower.phone,
+      email: apiLoan.borrower.email ?? undefined,
+      address: apiLoan.borrower.address,
+      idNumber: apiLoan.borrower.id_number,
+      createdAt: apiLoan.borrower.created_at,
     },
+
     trustee: apiLoan.trustee
       ? {
           name: apiLoan.trustee.name,
@@ -43,16 +44,13 @@ function mapLoanListItem(apiLoan: ApiLoanListItem): LoanListItem {
 function mapLoanDetails(apiLoan: ApiLoanDetails): Loan {
   let details: LoanDetailsUnion = {};
 
-
   if ("num_payments" in apiLoan.details) {
     details = {
       numPayments: apiLoan.details.num_payments,
-      checkDetails: apiLoan.details.check_details,
       predefinedSchedule: apiLoan.details.predefined_schedule,
+      checkDetails: apiLoan.details.check_details,
     };
-  }
- 
-  else if ("monthly_amount" in apiLoan.details) {
+  } else if ("monthly_amount" in apiLoan.details) {
     details = {
       monthlyAmount: Number(apiLoan.details.monthly_amount),
       chargeDay: apiLoan.details.charge_day,

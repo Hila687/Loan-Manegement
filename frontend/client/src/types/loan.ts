@@ -1,10 +1,8 @@
-// src/types/loan.ts
-
 export type LoanStatus = "PENDING" | "ACTIVE" | "PAID" | "REJECTED";
 
 export enum LoanType {
   CHECKS = "checks",
-  STANDING_ORDER = "standing_order", 
+  STANDING_ORDER = "standing_order",
 }
 
 export interface Borrower {
@@ -23,21 +21,25 @@ export interface Trustee {
   notes?: string | null;
 }
 
+/* -------- LIST -------- */
+
 export interface LoanListItem {
-  id: string;            
-  type: LoanType;          
-  status: LoanStatus;     
-  amount: number;         
-  startDate: string;       
+  id: string;
+  type: LoanType;
+  status: LoanStatus;
+  amount: number;
+  startDate: string;
 
   borrower: Borrower;
   trustee: Trustee | null;
 }
 
+/* -------- DETAILS -------- */
+
 export interface LoanChecksDetails {
-  numPayments: number;
-  checkDetails?: string | null;
-  predefinedSchedule: boolean;
+  numPayments: number;              // מספר תשלומים
+  predefinedSchedule: boolean;      // לפי לוח מוגדר
+  checkDetails?: string | null;     // פרטי צ'קים
 }
 
 export interface LoanStandingOrderDetails {
@@ -52,7 +54,7 @@ export type LoanDetailsUnion =
   | {};
 
 export interface Loan {
-  id: string;              // loan_id
+  id: string;
   amount: number;
   type: LoanType;
   status: LoanStatus;
