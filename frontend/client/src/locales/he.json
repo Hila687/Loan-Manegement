@@ -223,7 +223,12 @@
     "filterByType": "סינון לפי סוג הלוואה",
     "all": "כל סוגי ההלוואות",
     "checks": "הלוואות בצ'קים",
-    "standingOrders": "הלוואות בהוראת קבע"
+    "standingOrders": "הלוואות בהוראת קבע",
+
+    "types": {
+      "checks": "צ'קים",
+      "standingOrder": "הוראת קבע"
+    }
   },
 
   "editLoan": {

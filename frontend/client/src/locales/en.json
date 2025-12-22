@@ -220,7 +220,12 @@
     "filterByType": "Filter by loan type",
     "all": "All loan types",
     "checks": "Checks",
-    "standingOrders": "Standing orders"
+    "standingOrders": "Standing orders",
+
+    "types": {
+      "checks": "Checks",
+      "standingOrder": "Standing Order"
+    }
   },
 
   "editLoan": {

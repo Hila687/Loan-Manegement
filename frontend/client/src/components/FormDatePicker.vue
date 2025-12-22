@@ -52,7 +52,7 @@ onMounted(() => {
   datePickerInstance = flatpickr(dateInputRef.value, {
     mode: "single",
     dateFormat: "Y-m-d",
-    minDate: "today",
+    //minDate: "today",
     locale: props.locale === "he" ? "he" : "en",
 
     // IMPORTANT:
