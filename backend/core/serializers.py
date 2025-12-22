@@ -76,6 +76,8 @@ class LoanDetailSerializer(serializers.Serializer):
     status = serializers.SerializerMethodField()
     created_at = serializers.DateTimeField()
     form_file_url = serializers.SerializerMethodField()
+    trustee_id = serializers.SerializerMethodField()
+
 
     # Borrower full details
     borrower = serializers.SerializerMethodField()
@@ -147,6 +149,12 @@ class LoanDetailSerializer(serializers.Serializer):
             "notes": trustee.notes,
         }
 
+    # ----------------------------------------------------
+    # Trustee ID (for frontend edit support)
+    # ----------------------------------------------------
+    def get_trustee_id(self, obj):
+        return str(obj.trustee_id) if obj.trustee_id else None
+    
     # ----------------------------------------------------
     # Dynamic loan-type-specific details
     # ----------------------------------------------------
