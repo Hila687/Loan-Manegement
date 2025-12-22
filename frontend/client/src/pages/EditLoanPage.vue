@@ -10,6 +10,9 @@
     import PrimaryButton from "../components/PrimaryButton.vue";
     
     import { fetchLoanDetails } from "../services/api-loan";
+    import api from "../services/api";
+    import { updateLoan } from "../services/api-loan";
+
     
     const { t, locale, isRTL } = useLocale();
     const router = useRouter();
@@ -51,6 +54,28 @@
             : t("loan.types.standingOrder");
         });
 
+        const saving = ref(false);
+
+        const fieldErrors = ref<Record<string, string>>({});
+        function clearErrors() {
+        fieldErrors.value = {};
+        error.value = null;
+        }
+
+        function setErrorsFromBackend(data: any) {
+        // data expected: { amount: [".."], number_of_payments: [".."], ... }
+        const out: Record<string, string> = {};
+        if (data && typeof data === "object") {
+            for (const key of Object.keys(data)) {
+            const v = (data as any)[key];
+            if (Array.isArray(v) && v.length) out[key] = String(v[0]);
+            else if (typeof v === "string") out[key] = v;
+            }
+        }
+        fieldErrors.value = out;
+        }
+
+
     
     // ---- map backend loan -> edit form ----
     function mapLoanToForm(loan: any) {
@@ -58,9 +83,9 @@
       form.value.amount = String(loan.amount);
     
       // start date
-      if (loan.startDate) {
-        form.value.start_date = new Date(loan.startDate);
-      }
+      // start date (KEEP AS "YYYY-MM-DD")
+      form.value.start_date = loan.startDate ? String(loan.startDate) : "";
+
     
       // status
       form.value.status = loan.status;
@@ -82,9 +107,50 @@
         form.value.number_of_payments = "";
       }
     
-      // trustee (FE2: display only)
-      form.value.trustee_id = loan.trustee_id ?? "";
+      // trustee 
+      form.value.trustee_id = loan.trustee_id
+        ? String(loan.trustee_id)
+        : "";
+
     }
+
+   
+    type TrusteeOption = { id: string; label: string };
+
+    const trustees = ref<TrusteeOption[]>([]);
+    const trusteesLoading = ref(false);
+    const trusteesError = ref<string | null>(null);
+
+    function normalizeTrustee(raw: any): TrusteeOption {
+    const user = raw.user_details || {};
+    const first = (user.first_name || "").trim();
+    const last = (user.last_name || "").trim();
+    const fullName = (first + " " + last).trim();
+
+    const community = (raw.community || "").trim();
+    const label =
+        fullName && community ? `${fullName} – ${community}` :
+        fullName ? fullName :
+        community ? community :
+        "Unknown trustee";
+
+    return { id: String(raw.trustee_id || raw.id || ""), label };
+    }
+
+    async function fetchTrustees() {
+    trusteesLoading.value = true;
+    trusteesError.value = null;
+    try {
+        const res = await api.get("/trustees/");
+        trustees.value = (res.data || []).map((x: any) => normalizeTrustee(x));
+    } catch (e) {
+        console.error("[EditLoan] Failed to fetch trustees", e);
+        trusteesError.value = "Failed to load trustees";
+    } finally {
+        trusteesLoading.value = false;
+    }
+    }
+
     
     // ---- lifecycle ----
     onMounted(async () => {
@@ -92,9 +158,9 @@
       error.value = null;
     
       try {
+        await fetchTrustees();
         const loan = await fetchLoanDetails(loanId.value);
-        loanData.value = loan;
-    
+        loanData.value = loan;   
         mapLoanToForm(loan);
       } catch (e) {
         console.error("[EditLoan] Failed to load loan", e);
@@ -109,10 +175,48 @@
       router.back();
     }
     
-    function onSave() {
-      // FE3 will implement PUT
-      console.log("[EditLoan] Save clicked", loanId.value, form.value);
+    async function onSave() {
+        if (saving.value) return;
+
+        clearErrors();
+        saving.value = true;
+
+        try {
+            const payload = {
+            amount: Number(form.value.amount),
+            start_date:
+            form.value.start_date instanceof Date
+                ? form.value.start_date.toISOString().slice(0, 10)
+                : String(form.value.start_date),
+
+            number_of_payments: Number(form.value.number_of_payments),
+            trustee_id: String(form.value.trustee_id),
+            status: form.value.status as "ACTIVE" | "CLOSED" | "OVERDUE",
+            };
+
+            await updateLoan(loanId.value, payload);
+
+            router.back();
+        } catch (e: any) {
+            console.error("[EditLoan] PUT failed", e);
+
+            const status = e?.response?.status;
+            console.log("[EditLoan] status:", status);
+            console.log("[EditLoan] response data:", e?.response?.data);
+            console.log("[EditLoan] request url:", e?.config?.url);
+            console.log("[EditLoan] request payload:", e?.config?.data);
+            if (status === 400) {
+            setErrorsFromBackend(e.response.data);
+            } else if (status === 404) {
+            error.value = "Loan not found";
+            } else {
+            error.value = "Failed to save changes";
+            }
+        } finally {
+            saving.value = false;
+        }
     }
+
     </script>
     
     <template>
@@ -131,59 +235,72 @@
           <!-- Form -->
           <FormCard v-else :title="t('editLoan.cardTitle')" :badge="loanId">
             <FormInput
-              v-model="form.amount"
-              :label="t('editLoan.fields.amount')"
-              :placeholder="t('editLoan.placeholders.amount')"
-              icon="dollar"
-              type="number"
-              :isRTL="isRTL"
-              required
-              min="1"
-              step="1"
+                v-model="form.amount"
+                :label="t('editLoan.fields.amount')"
+                :placeholder="t('editLoan.placeholders.amount')"
+                icon="dollar"
+                type="number"
+                :isRTL="isRTL"
+                required
+                min="1"
+                step="1"
+                :hasError="!!fieldErrors.amount"
+                :errorMessage="fieldErrors.amount"
             />
+
     
             <FormDatePicker
-              v-model="form.start_date"
-              :label="t('editLoan.fields.startDate')"
-              :placeholder="t('editLoan.placeholders.startDate')"
-              :locale="formLocale"
-              :isRTL="isRTL"
-              required
+                v-model="form.start_date"
+                :label="t('editLoan.fields.startDate')"
+                :placeholder="t('editLoan.placeholders.startDate')"
+                :locale="formLocale"
+                :isRTL="isRTL"
+                required
+                :hasError="!!fieldErrors.start_date"
+                :errorMessage="fieldErrors.start_date"
             />
+
     
             <FormInput
-              v-model="form.number_of_payments"
-              :label="t('editLoan.fields.numPayments')"
-              :placeholder="t('editLoan.placeholders.numPayments')"
-              type="number"
-              :isRTL="isRTL"
-              required
-              min="1"
-              step="1"
+                v-model="form.number_of_payments"
+                :label="t('editLoan.fields.numPayments')"
+                :placeholder="t('editLoan.placeholders.numPayments')"
+                type="number"
+                :isRTL="isRTL"
+                required
+                min="1"
+                step="1"
+                :hasError="!!fieldErrors.number_of_payments"
+                :errorMessage="fieldErrors.number_of_payments"
             />
+
     
-            <!-- Trustee (FE2 – display only) -->
-            <div class="flex flex-col">
-              <p
-                :dir="isRTL ? 'rtl' : 'ltr'"
-                :class="isRTL ? 'text-right' : 'text-left'"
-                class="pb-1.5 text-sm font-medium leading-normal text-[#6B7280]"
-              >
-                * {{ t("editLoan.fields.trustee") }}
-              </p>
-    
-              <select
-                v-model="form.trustee_id"
-                disabled
-                :dir="isRTL ? 'rtl' : 'ltr'"
-                class="h-11 w-full rounded-lg border border-[#E5E5EA] bg-gray-100 px-4 text-base"
-              >
-                <option :value="form.trustee_id">
-                  {{ trusteeLabel }}
-                </option>
-                
-              </select>
-            </div>
+            <!-- Trustee -->
+            <select
+            v-model="form.trustee_id"
+            :dir="isRTL ? 'rtl' : 'ltr'"
+            class="h-11 w-full rounded-lg border border-[#E5E5EA] bg-white px-4 text-base focus:outline-0 focus:ring-2 focus:border-[#007AFF] focus:ring-[#007AFF]/20"
+            >
+            <option value="" disabled>
+                {{ trusteesLoading ? "Loading..." : "Select trustee" }}
+            </option>
+
+            <option v-for="tr in trustees" :key="tr.id" :value="tr.id">
+                {{ tr.label }}
+            </option>
+            </select>
+
+            <p v-if="trusteesError" class="mt-1 text-xs text-[#FF3B30]">
+            {{ trusteesError }}
+            </p>
+            <p
+            v-if="fieldErrors.trustee_id"
+            class="mt-1 text-xs text-[#FF3B30]"
+            >
+            {{ fieldErrors.trustee_id }}
+            </p>
+
+
     
             <!-- Status -->
             <div class="flex flex-col">
@@ -204,6 +321,13 @@
                 <option value="CLOSED">CLOSED</option>
                 <option value="OVERDUE">OVERDUE</option>
               </select>
+              <p
+                v-if="fieldErrors.status"
+                class="mt-1 text-xs text-[#FF3B30]"
+                >
+                {{ fieldErrors.status }}
+              </p>
+
             </div>           
     
             <!-- Actions + Loan Type -->
@@ -229,6 +353,7 @@
                 <PrimaryButton
                 :label="t('editLoan.actions.save')"
                 :block="false"
+                :disabled="saving"
                 @click="onSave"
                 />
             </div>

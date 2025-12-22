@@ -20,6 +20,7 @@ export function adaptLoanListItem(api: any) {
 export function adaptLoanDetails(api: any) {
   return {
     ...adaptLoanListItem(api),
+    trustee_id: api.trustee_id,
 
     details: api.details,
     startDate: api.start_date,
