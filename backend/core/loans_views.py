@@ -274,7 +274,7 @@ class LoanListView(APIView):
                 else:
                     # Create new user
                     username = f"borrower_{id_number}"
-                    user, user_created = User.objects.get_or_create(
+                    user, _ = User.objects.get_or_create(
                         username=username,
                         defaults={
                             'first_name': first_name,
@@ -321,11 +321,6 @@ class LoanListView(APIView):
                     'status': 'ACTIVE'
                 }, status=status.HTTP_201_CREATED)
                 
-        except Trustee.DoesNotExist:
-            return Response(
-                {'trustee_id': 'Trustee not found'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
         except Exception as e:
             # Log the error for debugging but don't expose details
             import logging
