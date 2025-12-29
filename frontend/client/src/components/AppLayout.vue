@@ -1,11 +1,11 @@
 <template>
-  <div :dir="dir" class="flex min-h-screen bg-gradient-to-br from-[#F7F8FC] to-[#EEF2F6]">
+  <div :dir="dir" class="flex h-screen overflow-hidden bg-gradient-to-br from-[#F7F8FC] to-[#EEF2F6]">
     <!-- Desktop Sidebar Navigation -->
     <nav
-      class="hidden lg:flex lg:flex-col w-64 xl:w-72 bg-white/80 backdrop-blur-xl border-r border-gray-200/50 min-h-screen z-40 shadow-sm"
+      class="hidden lg:flex lg:flex-col w-64 xl:w-72 bg-white/80 backdrop-blur-xl border-r border-gray-200/50 z-40 shadow-sm"
     >
       <!-- Sidebar logo / title -->
-      <div class="p-6 xl:p-8 border-b border-gray-200/50">
+      <div class="p-6 xl:p-8 border-b border-gray-200/50 flex-shrink-0">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#007AFF] to-[#0051D5] flex items-center justify-center shadow-lg shadow-[#007AFF]/20">
             <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -83,9 +83,9 @@
     </nav>
 
     <!-- Main content area -->
-    <div class="flex-1 flex flex-col min-h-0 overflow-hidden">
+    <div class="flex-1 flex flex-col h-screen overflow-hidden">
       <!-- Desktop / tablet header -->
-      <header class="hidden lg:flex items-center justify-between bg-white/60 backdrop-blur-xl px-6 xl:px-8 py-4 xl:py-5 border-b border-gray-200/50 shadow-sm">
+      <header class="hidden lg:flex items-center justify-between bg-white/60 backdrop-blur-xl px-6 xl:px-8 py-4 xl:py-5 border-b border-gray-200/50 shadow-sm flex-shrink-0">
         <div class="flex items-center gap-4">
           <button
             v-if="showBackButton"
@@ -120,7 +120,7 @@
       </header>
 
       <!-- Mobile top bar -->
-      <div class="lg:hidden flex items-center justify-between bg-white/90 backdrop-blur-xl border-b border-gray-200/50 px-4 py-3 sticky top-0 z-30 shadow-sm">
+      <div class="lg:hidden flex items-center justify-between bg-white/90 backdrop-blur-xl border-b border-gray-200/50 px-4 py-3 z-30 shadow-sm flex-shrink-0">
         <div class="flex items-center gap-3 flex-1 min-w-0">
           <button
             v-if="showBackButton"
@@ -155,8 +155,8 @@
         </div>
       </div>
 
-      <!-- Main page content -->
-      <main class="flex-1 min-h-0 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8 xl:px-10 xl:py-10">
+      <!-- Main page content - this is the only scrollable area -->
+      <main class="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8 xl:px-10 xl:py-10">
         <div class="w-full mx-auto" :class="maxWidthClass">
           <slot />
         </div>
@@ -165,7 +165,7 @@
       <!-- Desktop / tablet footer -->
       <footer
         v-if="$slots.footer || footerText"
-        class="hidden lg:block px-6 xl:px-8 py-4 xl:py-5 bg-white/60 backdrop-blur-xl border-t border-gray-200/50"
+        class="hidden lg:block px-6 xl:px-8 py-4 xl:py-5 bg-white/60 backdrop-blur-xl border-t border-gray-200/50 flex-shrink-0"
       >
         <div class="w-full mx-auto" :class="maxWidthClass">
           <slot name="footer">
@@ -179,7 +179,7 @@
       <!-- Mobile / tablet footer -->
       <footer
         v-if="$slots.footer || footerText"
-        class="lg:hidden px-4 py-3 bg-white/95 backdrop-blur-xl border-t border-gray-200/60"
+        class="lg:hidden px-4 py-3 bg-white/95 backdrop-blur-xl border-t border-gray-200/60 flex-shrink-0"
       >
         <div class="w-full mx-auto" :class="maxWidthClass">
           <slot name="footer">
@@ -204,7 +204,7 @@
     <transition name="slide">
       <div
         v-if="mobileMenuOpen"
-        class="lg:hidden fixed right-0 top-0 bottom-0 w-72 sm:w-80 bg-white shadow-2xl z-50"
+        class="lg:hidden fixed right-0 top-0 bottom-0 w-72 sm:w-80 bg-white shadow-2xl z-50 overflow-y-auto"
       >
         <div class="p-6 border-b border-gray-200/50 flex items-center justify-between">
           <div class="flex items-center gap-3">
@@ -227,7 +227,7 @@
           </button>
         </div>
 
-        <div class="p-4 space-y-1.5 overflow-y-auto" style="max-height: calc(100vh - 100px)">
+        <div class="p-4 space-y-1.5">
           <router-link
             to="/"
             class="flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-200 group"

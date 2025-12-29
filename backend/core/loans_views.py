@@ -2,8 +2,12 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAdminUser
+from django.db import transaction
+from django.contrib.auth.models import User
+from decimal import Decimal
+from datetime import datetime
 
-from .models import LoanChecks, LoanStandingOrder
+from .models import LoanChecks, LoanStandingOrder, Borrower, Trustee
 from .serializers import LoanListSerializer, LoanDetailSerializer, LoanUpdateSerializer
 
 
@@ -115,6 +119,193 @@ class LoanListView(APIView):
         # ------------------------
         serializer = LoanListSerializer(unified_loans, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    
+    def post(self, request):
+        """
+        POST /api/loans/
+        
+        Creates a new loan based on the contract:
+        {
+          "loan_type": "checks" | "standing_order",
+          "borrower": {
+            "id_number": "string",
+            "first_name": "string",
+            "last_name": "string",
+            "phone": "string",
+            "email": "string",
+            "address": "string"
+          },
+          "loan": {
+            "amount": number,
+            "num_payments": number,
+            "start_date": "YYYY-MM-DD"
+          },
+          "trustee_id": "UUID"
+        }
+        
+        Returns 201 Created with:
+        {
+          "loan_id": "UUID",
+          "loan_type": "checks" | "standing_order",
+          "status": "ACTIVE"
+        }
+        """
+        try:
+            with transaction.atomic():
+                # Validate required fields
+                loan_type = request.data.get('loan_type')
+                borrower_data = request.data.get('borrower', {})
+                loan_data = request.data.get('loan', {})
+                trustee_id = request.data.get('trustee_id')
+                
+                # Validate loan_type
+                if loan_type not in ['checks', 'standing_order']:
+                    return Response(
+                        {'loan_type': 'Must be either "checks" or "standing_order"'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                # Validate borrower fields
+                id_number = borrower_data.get('id_number')
+                if not id_number:
+                    return Response(
+                        {'borrower.id_number': 'This field is required'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                first_name = borrower_data.get('first_name', '')
+                last_name = borrower_data.get('last_name', '')
+                phone = borrower_data.get('phone', '')
+                email = borrower_data.get('email', '')
+                address = borrower_data.get('address', '')
+                
+                # Validate loan fields
+                amount = loan_data.get('amount')
+                num_payments = loan_data.get('num_payments')
+                start_date = loan_data.get('start_date')
+                
+                if not amount or Decimal(str(amount)) <= 0:
+                    return Response(
+                        {'loan.amount': 'Must be greater than 0'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                if not num_payments or int(num_payments) < 1:
+                    return Response(
+                        {'loan.num_payments': 'Must be at least 1'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                if not start_date:
+                    return Response(
+                        {'loan.start_date': 'This field is required'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                # Validate trustee
+                if not trustee_id:
+                    return Response(
+                        {'trustee_id': 'This field is required'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                try:
+                    trustee = Trustee.objects.get(trustee_id=trustee_id)
+                except Trustee.DoesNotExist:
+                    return Response(
+                        {'trustee_id': 'Trustee not found'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                # Find or create Borrower by id_number
+                borrower, created = Borrower.objects.get_or_create(
+                    id_number=id_number,
+                    defaults={
+                        'address': address,
+                        'trustee': trustee
+                    }
+                )
+                
+                # Update borrower details if already exists
+                if not created:
+                    borrower.address = address
+                    borrower.trustee = trustee
+                    borrower.save()
+                
+                # Create or update associated User for borrower
+                if borrower.user:
+                    user = borrower.user
+                    user.first_name = first_name
+                    user.last_name = last_name
+                    user.email = email
+                    user.save()
+                    
+                    # Update phone in user profile if exists
+                    if hasattr(user, 'profile'):
+                        user.profile.phone = phone
+                        user.profile.save()
+                else:
+                    # Create new user
+                    username = f"borrower_{id_number}"
+                    user, user_created = User.objects.get_or_create(
+                        username=username,
+                        defaults={
+                            'first_name': first_name,
+                            'last_name': last_name,
+                            'email': email
+                        }
+                    )
+                    borrower.user = user
+                    borrower.save()
+                    
+                    # Create user profile with phone
+                    from .models import UserProfile
+                    profile, _ = UserProfile.objects.get_or_create(user=user)
+                    profile.phone = phone
+                    profile.save()
+                
+                # Calculate monthly_amount and charge_day
+                amount_decimal = Decimal(str(amount))
+                num_payments_int = int(num_payments)
+                monthly_amount = amount_decimal / num_payments_int
+                
+                # Parse start_date to get charge_day
+                start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
+                charge_day = start_date_obj.day
+                
+                # Create loan based on type
+                if loan_type == 'checks':
+                    loan = LoanChecks.objects.create(
+                        borrower=borrower,
+                        trustee=trustee,
+                        amount=amount_decimal,
+                        start_date=start_date_obj,
+                        num_payments=num_payments_int,
+                        status='ACTIVE'
+                    )
+                else:  # standing_order
+                    loan = LoanStandingOrder.objects.create(
+                        borrower=borrower,
+                        trustee=trustee,
+                        amount=amount_decimal,
+                        start_date=start_date_obj,
+                        monthly_amount=monthly_amount,
+                        charge_day=charge_day,
+                        status='ACTIVE'
+                    )
+                
+                return Response({
+                    'loan_id': str(loan.loan_id),
+                    'loan_type': loan_type,
+                    'status': 'ACTIVE'
+                }, status=status.HTTP_201_CREATED)
+                
+        except Exception as e:
+            return Response(
+                {'detail': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 

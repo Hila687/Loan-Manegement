@@ -285,6 +285,7 @@
 import { ref, onMounted } from "vue";
 import { useLocale } from "../composables/useLocale";
 import AppLayout from "../components/AppLayout.vue";
+import api from "../services/api";
 
 const { t, isRTL } = useLocale();
 
@@ -302,9 +303,19 @@ const formatCurrency = (amount: number): string => {
 };
 
 onMounted(async () => {
-  stats.value = {
-    activeLoans: 0,
-    totalAmount: 0,
-  };
+  try {
+    const response = await api.get("/dashboard/loan-summary/");
+    stats.value = {
+      activeLoans: response.data.active_loans_count || 0,
+      totalAmount: response.data.total_active_loans_amount || 0,
+    };
+  } catch (error) {
+    console.error("Failed to fetch loan summary:", error);
+    // Keep default values (0, 0) on error
+    stats.value = {
+      activeLoans: 0,
+      totalAmount: 0,
+    };
+  }
 });
 </script>

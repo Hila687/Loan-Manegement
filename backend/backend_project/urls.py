@@ -10,6 +10,9 @@ from core.views import (
 # Import Sprint 2 loan views
 from core.loans_views import LoanListView, LoanDetailView
 
+# Import dashboard views
+from core.dashboard_views import LoanSummaryView
+
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -40,6 +43,9 @@ urlpatterns = [
 
     # Full loan detail endpoint
     path('api/loans/<uuid:loan_id>/', LoanDetailView.as_view(), name='loan-detail'),
+
+    # Dashboard loan summary endpoint
+    path('api/dashboard/loan-summary/', LoanSummaryView.as_view(), name='loan-summary'),
 ]
 
 
