@@ -4,10 +4,10 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAdminUser
 from django.db import transaction
 from django.contrib.auth.models import User
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from datetime import datetime
 
-from .models import LoanChecks, LoanStandingOrder, Borrower, Trustee
+from .models import LoanChecks, LoanStandingOrder, Borrower, Trustee, UserProfile
 from .serializers import LoanListSerializer, LoanDetailSerializer, LoanUpdateSerializer
 
 
@@ -185,21 +185,47 @@ class LoanListView(APIView):
                 num_payments = loan_data.get('num_payments')
                 start_date = loan_data.get('start_date')
                 
-                if not amount or Decimal(str(amount)) <= 0:
+                # Validate and convert amount
+                try:
+                    amount_decimal = Decimal(str(amount))
+                    if amount_decimal <= 0:
+                        return Response(
+                            {'loan.amount': 'Must be greater than 0'},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                except (InvalidOperation, TypeError, ValueError):
                     return Response(
-                        {'loan.amount': 'Must be greater than 0'},
+                        {'loan.amount': 'Invalid amount value'},
                         status=status.HTTP_400_BAD_REQUEST
                     )
                 
-                if not num_payments or int(num_payments) < 1:
+                # Validate and convert num_payments
+                try:
+                    num_payments_int = int(num_payments)
+                    if num_payments_int < 1:
+                        return Response(
+                            {'loan.num_payments': 'Must be at least 1'},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                except (TypeError, ValueError):
                     return Response(
-                        {'loan.num_payments': 'Must be at least 1'},
+                        {'loan.num_payments': 'Invalid number of payments'},
                         status=status.HTTP_400_BAD_REQUEST
                     )
                 
+                # Validate start_date
                 if not start_date:
                     return Response(
                         {'loan.start_date': 'This field is required'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                # Parse start_date
+                try:
+                    start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
+                except (ValueError, TypeError):
+                    return Response(
+                        {'loan.start_date': 'Invalid date format. Use YYYY-MM-DD'},
                         status=status.HTTP_400_BAD_REQUEST
                     )
                 
@@ -260,18 +286,12 @@ class LoanListView(APIView):
                     borrower.save()
                     
                     # Create user profile with phone
-                    from .models import UserProfile
                     profile, _ = UserProfile.objects.get_or_create(user=user)
                     profile.phone = phone
                     profile.save()
                 
                 # Calculate monthly_amount and charge_day
-                amount_decimal = Decimal(str(amount))
-                num_payments_int = int(num_payments)
                 monthly_amount = amount_decimal / num_payments_int
-                
-                # Parse start_date to get charge_day
-                start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
                 charge_day = start_date_obj.day
                 
                 # Create loan based on type
@@ -301,9 +321,18 @@ class LoanListView(APIView):
                     'status': 'ACTIVE'
                 }, status=status.HTTP_201_CREATED)
                 
-        except Exception as e:
+        except Trustee.DoesNotExist:
             return Response(
-                {'detail': str(e)},
+                {'trustee_id': 'Trustee not found'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            # Log the error for debugging but don't expose details
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error creating loan: {str(e)}")
+            return Response(
+                {'detail': 'An error occurred while creating the loan'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
