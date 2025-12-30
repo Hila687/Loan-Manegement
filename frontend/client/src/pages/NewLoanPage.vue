@@ -493,7 +493,7 @@ async function submit() {
       trustee_id: borrower.value.trustee_id,
     };
 
-    await api.post("/api/loans/", payload);
+    await api.post("/loans/", payload);
 
     resetForm();
     router.push("/loans");
