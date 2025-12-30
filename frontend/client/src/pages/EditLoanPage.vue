@@ -184,10 +184,9 @@
         try {
             const payload = {
             amount: Number(form.value.amount),
-            start_date:
-            form.value.start_date instanceof Date
-                ? form.value.start_date.toISOString().slice(0, 10)
-                : String(form.value.start_date),
+
+            // FIX: start_date is stored as "YYYY-MM-DD" string, so no Date instanceof needed
+            start_date: String(form.value.start_date),
 
             number_of_payments: Number(form.value.number_of_payments),
             trustee_id: String(form.value.trustee_id),
@@ -276,29 +275,46 @@
 
     
             <!-- Trustee -->
-            <select
-            v-model="form.trustee_id"
-            :dir="isRTL ? 'rtl' : 'ltr'"
-            class="h-11 w-full rounded-lg border border-[#E5E5EA] bg-white px-4 text-base focus:outline-0 focus:ring-2 focus:border-[#007AFF] focus:ring-[#007AFF]/20"
+          <div class="flex flex-col gap-2">
+            <!-- Trustee Section Title -->
+            <h2
+              class="pt-2 text-lg font-semibold"
+              :dir="isRTL ? 'rtl' : 'ltr'"
+              :class="isRTL ? 'text-right' : 'text-left'"
+              >
+              {{ t("editLoan.sections.trustee") }}
+            </h2>
+            <!-- Field label -->
+            <p
+              :dir="isRTL ? 'rtl' : 'ltr'"
+              :class="isRTL ? 'text-right' : 'text-left'"
+              class="pb-1.5 text-sm font-medium leading-normal text-[#6B7280]"
             >
-            <option value="" disabled>
-                {{ trusteesLoading ? "Loading..." : "Select trustee" }}
-            </option>
+             * {{ t("editLoan.fields.trustee") }}
+            </p>
 
-            <option v-for="tr in trustees" :key="tr.id" :value="tr.id">
+            <select
+              v-model="form.trustee_id"
+              :dir="isRTL ? 'rtl' : 'ltr'"
+              class="h-11 w-full rounded-lg border border-[#E5E5EA] bg-white px-4 text-base focus:outline-0 focus:ring-2 focus:border-[#007AFF] focus:ring-[#007AFF]/20"
+            >
+              <option value="" disabled>
+                {{ trusteesLoading ? "Loading..." : t("editLoan.placeholders.trustee") }}
+              </option>
+
+              <option v-for="tr in trustees" :key="tr.id" :value="tr.id">
                 {{ tr.label }}
-            </option>
+              </option>
             </select>
 
             <p v-if="trusteesError" class="mt-1 text-xs text-[#FF3B30]">
-            {{ trusteesError }}
+              {{ trusteesError }}
             </p>
-            <p
-            v-if="fieldErrors.trustee_id"
-            class="mt-1 text-xs text-[#FF3B30]"
-            >
-            {{ fieldErrors.trustee_id }}
+
+            <p v-if="fieldErrors.trustee_id" class="mt-1 text-xs text-[#FF3B30]">
+              {{ fieldErrors.trustee_id }}
             </p>
+          </div>  
 
 
     
@@ -363,4 +379,3 @@
         </div>
       </AppLayout>
     </template>
-    

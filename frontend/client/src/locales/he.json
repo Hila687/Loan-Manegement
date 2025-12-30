@@ -66,8 +66,14 @@
       "file": "3 / 3"
     },
     "fields": {
-      "borrowerName": "שם הלווה",
-      "borrowerNamePlaceholder": "הכנס שם מלא",
+      "borrowerFirstName": "שם פרטי",
+      "borrowerFirstNamePlaceholder": "הכנס שם פרטי",
+      "borrowerLastName": "שם משפחה",
+      "borrowerLastNamePlaceholder": "הכנס שם משפחה",
+      "borrowerIdNumber": "מספר זהות",
+      "borrowerIdNumberPlaceholder": "הכנס מספר זהות",
+      "borrowerEmail": "אימייל",
+      "borrowerEmailPlaceholder": "הכנס אימייל",
       "borrowerPhone": "טלפון",
       "borrowerPhonePlaceholder": "הכנס מספר טלפון",
       "borrowerAddress": "כתובת",
@@ -80,7 +86,12 @@
       "startDatePlaceholder": "בחר תאריך",
       "numPayments": "מספר תשלומים",
       "numPaymentsPlaceholder": "לדוג׳ 25",
-      "signedForm": "טופס חתום"
+      "signedForm": "טופס חתום",
+      "loanType": "סוג הלוואה"
+    },
+    "loanTypes": {
+      "checks": "צ׳קים",
+      "standingOrder": "הוראת קבע"
     },
     "trustees": {
       "t1": "נאמן 1",
@@ -93,6 +104,7 @@
       "validationError": "אנא תקנו את השדות שמסומנים בשגיאה",
       "requiredFieldsError": "אנא מלאו את כל השדות הנדרשים",
       "nameRequired": "שם הוא שדה חובה",
+      "idNumberRequired": "מספר זהות הוא שדה חובה",
       "phoneInvalid": "מספר הטלפון אינו תקין",
       "amountInvalid": "הסכום חייב להיות גדול מאפס",
       "startDateInvalid": "תאריך ההתחלה אינו תקין",
@@ -149,7 +161,7 @@
     },
 
     "search": {
-      "placeholder": "חיפוש לפי לווה, נאמן, טלפון או אימייל..."
+      "placeholder": "חיפוש לפי לווה, נאמן, טלפון או אימייל"
     },
     "showDetails": "הצג פרטים",
     "hideDetails": "הסתר פרטים",
@@ -234,6 +246,9 @@
   "editLoan": {
     "title": "עריכת הלוואה",
     "cardTitle": "עריכת הלוואה קיימת",
+    "sections": {
+      "trustee": "פרטי נאמן"
+    },
     "fields": {
       "amount": "סכום",
       "startDate": "תאריך התחלה",

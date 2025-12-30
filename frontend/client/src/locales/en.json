@@ -66,8 +66,14 @@
       "file": "3 / 3"
     },
     "fields": {
-      "borrowerName": "Borrower Name",
-      "borrowerNamePlaceholder": "Enter full name",
+      "borrowerFirstName": "First Name",
+      "borrowerFirstNamePlaceholder": "Enter first name",
+      "borrowerLastName": "Last Name",
+      "borrowerLastNamePlaceholder": "Enter last name",
+      "borrowerIdNumber": "ID Number",
+      "borrowerIdNumberPlaceholder": "Enter ID number",
+      "borrowerEmail": "Email",
+      "borrowerEmailPlaceholder": "Enter email",
       "borrowerPhone": "Phone",
       "borrowerPhonePlaceholder": "Enter phone number",
       "borrowerAddress": "Address",
@@ -80,7 +86,12 @@
       "startDatePlaceholder": "Select date",
       "numPayments": "Number of Payments",
       "numPaymentsPlaceholder": "e.g., 25",
-      "signedForm": "Signed Form"
+      "signedForm": "Signed Form",
+      "loanType": "Loan Type"
+    },
+    "loanTypes": {
+      "checks": "Checks",
+      "standingOrder": "Standing Order"
     },
     "trustees": {
       "t1": "Trustee 1",
@@ -93,6 +104,7 @@
       "validationError": "Please correct the fields marked in red",
       "requiredFieldsError": "Please fill in all required fields",
       "nameRequired": "Name is required",
+      "idNumberRequired": "ID number is required",
       "phoneInvalid": "Invalid phone number",
       "amountInvalid": "Amount must be greater than 0",
       "startDateInvalid": "Start date is required",
@@ -149,7 +161,7 @@
     },
 
     "search": {
-      "placeholder": "Search by borrower, trustee, phone, or email..."
+      "placeholder": "Search by borrower, trustee, phone, or email"
     },
     "showDetails": "Show details",
     "hideDetails": "Hide details",
@@ -231,6 +243,9 @@
   "editLoan": {
     "title": "Edit Loan",
     "cardTitle": "Edit Existing Loan",
+    "sections": {
+      "trustee": "Trustee Details"
+    },
     "fields": {
       "amount": "Amount",
       "startDate": "Start Date",

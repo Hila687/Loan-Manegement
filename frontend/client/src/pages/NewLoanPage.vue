@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from "vue";
 import { useLocale } from "../composables/useLocale";
 import { useFormValidation } from "../composables/useFormValidation";
 import { useFormFields } from "../composables/useFormFields";
+import { useRouter } from "vue-router";
 import AppLayout from "../components/AppLayout.vue";
 import FormCard from "../components/FormCard.vue";
 import FormInput from "../components/FormInput.vue";
@@ -11,6 +12,9 @@ import api from "../services/api";
 
 // Localization: text function, current locale ref, RTL flag
 const { t, locale, isRTL } = useLocale();
+
+// Vue Router instance
+const router = useRouter();
 
 // Narrowed locale for FormDatePicker (only "he" or "en")
 const formLocale = computed<"he" | "en">(() =>
@@ -32,8 +36,11 @@ const { registerField, focusNextField, focusPreviousField } =
 
 // Borrower data
 const borrower = ref({
-  name: "",
+  first_name: "",
+  last_name: "",
+  id_number: "",
   phone: "",
+  email: "",       // nullable
   address: "",
   trustee_id: "",
   trustee_name: "",
@@ -41,10 +48,12 @@ const borrower = ref({
 
 // Loan data
 const loan = ref({
+  loan_type: "checks" as "checks" | "standing_order",
   amount: "",
   start_date: "",
   num_payments: "",
 });
+
 
 // Trustee option type
 type TrusteeOption = {
@@ -74,7 +83,10 @@ const trusteesErrorMessage = ref("");
 const trusteeBlurTimeout = ref<ReturnType<typeof setTimeout> | null>(null);
 
 // Field refs (for keyboard navigation)
-const borrowerNameRef = ref<HTMLInputElement | null>(null);
+const borrowerFirstNameRef = ref<HTMLInputElement | null>(null);
+const borrowerLastNameRef = ref<HTMLInputElement | null>(null);
+const borrowerIdNumberRef = ref<HTMLInputElement | null>(null);
+const borrowerEmailRef = ref<HTMLInputElement | null>(null);
 const borrowerPhoneRef = ref<HTMLInputElement | null>(null);
 const borrowerAddressRef = ref<HTMLInputElement | null>(null);
 const trusteeInputRef = ref<HTMLInputElement | null>(null);
@@ -85,14 +97,17 @@ const datePickerRef = ref<HTMLInputElement | null>(null);
 
 // Fields configuration for ordered navigation
 const fields = [
-  { name: "borrowerName", ref: borrowerNameRef, order: 0 },
-  { name: "borrowerPhone", ref: borrowerPhoneRef, order: 1 },
-  { name: "borrowerAddress", ref: borrowerAddressRef, order: 2 },
-  { name: "trustee", ref: trusteeInputRef, order: 3 },
-  { name: "amount", ref: amountRef, order: 4 },
-  { name: "startDate", ref: datePickerRef, order: 5 },
-  { name: "numPayments", ref: numPaymentsRef, order: 6 },
-  { name: "file", ref: fileInputRef, order: 7 },
+  { name: "borrowerFirstName", ref: borrowerFirstNameRef, order: 0 },
+  { name: "borrowerLastName", ref: borrowerLastNameRef, order: 1 },
+  { name: "borrowerIdNumber", ref: borrowerIdNumberRef, order: 2 },
+  { name: "borrowerPhone", ref: borrowerPhoneRef, order: 3 },
+  { name: "borrowerEmail", ref: borrowerEmailRef, order: 4 },
+  { name: "borrowerAddress", ref: borrowerAddressRef, order: 5 },
+  { name: "trustee", ref: trusteeInputRef, order: 6 },
+  { name: "amount", ref: amountRef, order: 7 },
+  { name: "startDate", ref: datePickerRef, order: 8 },
+  { name: "numPayments", ref: numPaymentsRef, order: 9 },
+  { name: "file", ref: fileInputRef, order: 10 },
 ];
 
 // Register fields and fetch trustees on mount
@@ -319,13 +334,16 @@ function onFileChange(event: Event) {
 // Reset all form data and state
 function resetForm() {
   borrower.value = {
-    name: "",
+    first_name: "",
+    last_name: "",
+    id_number: "",
     phone: "",
+    email: "",
     address: "",
     trustee_id: "",
     trustee_name: "",
   };
-  loan.value = { amount: "", start_date: "", num_payments: "" };
+  loan.value = { loan_type: "checks", amount: "", start_date: "", num_payments: "" };
   formFile.value = null;
   fileError.value = false;
   error.value = null;
@@ -346,6 +364,50 @@ function showErrorMessage() {
     error.value = null;
   }, 2000);
 }
+function setErrorsFromBackend(data: any) {
+  if (!data || typeof data !== "object") return;
+
+  for (const key of Object.keys(data)) {
+    const v = (data as any)[key];
+
+    // allow both array-of-messages and string
+    const msg =
+      Array.isArray(v) && v.length ? String(v[0]) :
+      typeof v === "string" ? v :
+      null;
+
+    if (!msg) continue;
+
+    // borrower nested errors
+    if (key === "borrower" && typeof v === "object") {
+      for (const bKey of Object.keys(v)) {
+        const bv = (v as any)[bKey];
+        const bMsg =
+          Array.isArray(bv) && bv.length ? String(bv[0]) :
+          typeof bv === "string" ? bv :
+          null;
+        if (bMsg) setFieldError(bKey, bMsg);
+      }
+      continue;
+    }
+
+    // loan nested errors
+    if (key === "loan" && typeof v === "object") {
+      for (const lKey of Object.keys(v)) {
+        const lv = (v as any)[lKey];
+        const lMsg =
+          Array.isArray(lv) && lv.length ? String(lv[0]) :
+          typeof lv === "string" ? lv :
+          null;
+        if (lMsg) setFieldError(lKey, lMsg);
+      }
+      continue;
+    }
+
+    // top-level field errors
+    setFieldError(key, msg);
+  }
+}
 
 // Submit form to backend
 async function submit() {
@@ -356,11 +418,20 @@ async function submit() {
   let hasErrors = false;
 
   // Borrower name validation
-  if (!borrower.value.name || borrower.value.name.trim() === "") {
-    setFieldError("name", t("loanForm.messages.nameRequired"));
+  if (!borrower.value.first_name.trim()) {
+    setFieldError("first_name", t("loanForm.messages.nameRequired"));
     hasErrors = true;
   }
 
+  if (!borrower.value.last_name.trim()) {
+    setFieldError("last_name", t("loanForm.messages.nameRequired"));
+    hasErrors = true;
+  }
+  // Borrower ID number validation
+  if (!borrower.value.id_number.trim()) {
+    setFieldError("id_number", t("loanForm.messages.idNumberRequired"));
+    hasErrors = true;
+  }
   // Borrower phone validation
   if (!borrower.value.phone || !isValidPhone(borrower.value.phone)) {
     setFieldError("phone", t("loanForm.messages.phoneInvalid"));
@@ -387,20 +458,12 @@ async function submit() {
 
   // Number of payments validation
   if (!loan.value.num_payments || parseInt(loan.value.num_payments) <= 0) {
-    setFieldError(
-      "num_payments",
-      t("loanForm.messages.numPaymentsInvalid")
-    );
+    setFieldError("num_payments", t("loanForm.messages.numPaymentsInvalid"));
     hasErrors = true;
   }
 
-  // File validation
-  if (!formFile.value) {
-    setFieldError("file", t("loanForm.messages.fileRequired"));
-    fileError.value = true;
-    hasErrors = true;
-  }
-
+  // NOTE (Sprint 4): signed form upload is NOT part of Create Loan flow
+  // so we do NOT block submit if formFile is missing (FE-2 aligns payload contract).
   // If any validation failed, show banner and exit
   if (hasErrors) {
     error.value = t("loanForm.messages.requiredFieldsError");
@@ -408,39 +471,52 @@ async function submit() {
     return;
   }
 
-  // Send form data to backend
   loading.value = true;
   try {
-    const formData = new FormData();
-    formData.append("borrower_name", borrower.value.name);
-    formData.append("borrower_phone", borrower.value.phone);
-    formData.append("borrower_address", borrower.value.address);
-    formData.append("trustee_id", borrower.value.trustee_id);
-    formData.append("amount", loan.value.amount);
-    formData.append("start_date", loan.value.start_date);
-    formData.append("num_payments", loan.value.num_payments);
-    if (formFile.value) {
-      formData.append("form_file", formFile.value);
-    }
+    const payload = {
+      loan_type: loan.value.loan_type as "checks" | "standing_order",
 
-    await api.post("/loans/", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+      borrower: {
+        id_number: borrower.value.id_number,
+        first_name: borrower.value.first_name,
+        last_name: borrower.value.last_name,
+        phone: borrower.value.phone,
+        email: borrower.value.email || "",
+        address: borrower.value.address,
+      },
 
-    success.value = t("loanForm.messages.success");
+      loan: {
+        amount: Number(loan.value.amount),
+        num_payments: Number(loan.value.num_payments),
+        start_date: String(loan.value.start_date),
+      },
+      trustee_id: borrower.value.trustee_id,
+    };
+
+    await api.post("/api/loans/", payload);
+
     resetForm();
+    router.push("/loans");
   } catch (e: any) {
     console.error(e);
-    error.value =
-      e?.response?.data?.detail ||
-      t("loanForm.messages.genericError");
+
+    const status = e?.response?.status;
+    const data = e?.response?.data;
+
+    if (status === 400 && data) {
+      setErrorsFromBackend(data);
+      error.value = t("loanForm.messages.requiredFieldsError");
+   } else {
+      error.value = data?.detail || t("loanForm.messages.genericError");
+    }
+
     showErrorMessage();
   } finally {
     loading.value = false;
   }
 }
-</script>
 
+</script>
 <template>
   <AppLayout
     :title="t('loanForm.title')"
@@ -468,19 +544,50 @@ async function submit() {
           :title="t('loanForm.sections.borrower')"
           :badge="t('loanForm.badges.borrower')"
         >
-          <!-- Borrower Name -->
+          <!-- Borrower First Name -->
           <FormInput
-            ref="borrowerNameRef"
-            v-model="borrower.name"
-            :label="t('loanForm.fields.borrowerName')"
-            :placeholder="t('loanForm.fields.borrowerNamePlaceholder')"
+            ref="borrowerFirstNameRef"
+            v-model="borrower.first_name"
+            :label="t('loanForm.fields.borrowerFirstName')"
+            :placeholder="t('loanForm.fields.borrowerFirstNamePlaceholder')"
             icon="user"
             :isRTL="isRTL"
             :required="true"
-            :hasError="validationErrors.name"
-            :errorMessage="fieldErrorMessages.name"
-            @keydown="handleFieldKeydown('borrowerName', $event)"
-            @input="clearFieldError('name')"
+            :hasError="validationErrors.first_name"
+            :errorMessage="fieldErrorMessages.first_name"
+            @keydown="handleFieldKeydown('borrowerFirstName', $event)"
+            @input="clearFieldError('first_name')"
+          />
+
+          <!-- Borrower Last Name -->
+          <FormInput
+            ref="borrowerLastNameRef"
+            v-model="borrower.last_name"
+            :label="t('loanForm.fields.borrowerLastName')"
+            :placeholder="t('loanForm.fields.borrowerLastNamePlaceholder')"
+            icon="user"
+            :isRTL="isRTL"
+            :required="true"
+            :hasError="validationErrors.last_name"
+            :errorMessage="fieldErrorMessages.last_name"
+            @keydown="handleFieldKeydown('borrowerLastName', $event)"
+            @input="clearFieldError('last_name')"
+          />
+
+          <!-- Borrower ID Number -->
+          <FormInput
+            ref="borrowerIdNumberRef"
+            v-model="borrower.id_number"
+            :label="t('loanForm.fields.borrowerIdNumber')"
+            :placeholder="t('loanForm.fields.borrowerIdNumberPlaceholder')"
+            type="text"
+            icon="user"
+            :isRTL="isRTL"
+            :required="true"
+            :hasError="validationErrors.id_number"
+            :errorMessage="fieldErrorMessages.id_number"
+            @keydown="handleFieldKeydown('borrowerIdNumber', $event)"
+            @input="clearFieldError('id_number')"
           />
 
           <!-- Borrower Phone -->
@@ -498,6 +605,21 @@ async function submit() {
             inputMode="tel"
             @input="onPhoneInput"
             @keydown="handleFieldKeydown('borrowerPhone', $event)"
+          />
+
+          <!-- Borrower Email (nullable) -->
+          <FormInput
+            ref="borrowerEmailRef"
+            v-model="borrower.email"
+            :label="t('loanForm.fields.borrowerEmail')"
+            :placeholder="t('loanForm.fields.borrowerEmailPlaceholder')"
+            type="email"
+            :isRTL="isRTL"
+            :required="false"
+            :hasError="validationErrors.email"
+            :errorMessage="fieldErrorMessages.email"
+            @keydown="handleFieldKeydown('borrowerEmail', $event)"
+            @input="clearFieldError('email')"
           />
 
           <!-- Borrower Address -->
@@ -527,7 +649,7 @@ async function submit() {
               >
                 *
               </span>
-              {{ t("loanForm.fields.trustee") }}
+              {{ t('loanForm.fields.trustee') }}
             </p>
 
             <div class="relative">
@@ -568,11 +690,7 @@ async function submit() {
                     : 'border-[#E5E5EA] focus:border-[#007AFF] focus:ring-[#007AFF]/20',
                 ]"
                 :placeholder="t('loanForm.fields.trusteePlaceholder')"
-                @input="
-                  onTrusteeInputChange(
-                    ($event.target as HTMLInputElement).value
-                  )
-                "
+                @input="onTrusteeInputChange(($event.target as HTMLInputElement).value)"
                 @focus="onTrusteeInputFocus"
                 @blur="onTrusteeInputBlur"
                 @keydown="onTrusteeKeydown"
@@ -600,7 +718,7 @@ async function submit() {
                   v-if="trusteesLoading"
                   class="px-4 py-3 text-center text-sm text-[#6B7280]"
                 >
-                  {{ t("loanForm.messages.loadingTrustees") }}
+                  {{ t('loanForm.messages.loadingTrustees') }}
                 </div>
 
                 <template v-else>
@@ -630,7 +748,7 @@ async function submit() {
                     v-if="filteredTrustees.length === 0"
                     class="px-4 py-3 text-center text-sm text-[#6B7280]"
                   >
-                    {{ t("loanForm.messages.noTrustees") }}
+                    {{ t('loanForm.messages.noTrustees') }}
                   </div>
                 </template>
               </div>
@@ -692,6 +810,27 @@ async function submit() {
           :title="t('loanForm.sections.loan')"
           :badge="t('loanForm.badges.loan')"
         >
+          <!-- Loan Type -->
+          <div class="flex flex-col">
+            <p
+              :dir="isRTL ? 'rtl' : 'ltr'"
+              :class="isRTL ? 'text-right' : 'text-left'"
+              class="pb-1.5 xl:pb-2 text-sm font-medium leading-normal text-[#6B7280]"
+            >
+              <span class="text-[#007AFF]">*</span>
+              {{ t('loanForm.fields.loanType') }}
+            </p>
+
+            <select
+              v-model="loan.loan_type"
+              :dir="isRTL ? 'rtl' : 'ltr'"
+              class="h-11 xl:h-12 w-full rounded-lg border border-[#E5E5EA] bg-white px-4 text-base focus:outline-0 focus:ring-2 focus:border-[#007AFF] focus:ring-[#007AFF]/20"
+            >
+              <option value="checks">{{ t('loanForm.loanTypes.checks') }}</option>
+              <option value="standing_order">{{ t('loanForm.loanTypes.standingOrder') }}</option>
+            </select>
+          </div>
+
           <!-- Loan amount -->
           <FormInput
             ref="amountRef"
@@ -777,10 +916,10 @@ async function submit() {
                 </div>
                 <p class="mt-3 font-medium text-sm xl:text-base">
                   <span class="text-[#007AFF]">*</span>
-                  {{ t("loanForm.fields.signedForm") }}
+                  {{ t('loanForm.fields.signedForm') }}
                 </p>
                 <p class="mt-1 text-xs opacity-80">
-                  {{ t("loanForm.messages.fileNotSelected") }}
+                  {{ t('loanForm.messages.fileNotSelected') }}
                 </p>
                 <input
                   ref="fileInputRef"
@@ -792,10 +931,7 @@ async function submit() {
               </label>
 
               <!-- Error state when file is required -->
-              <div
-                v-if="!formFile && fileError"
-                class="space-y-2 w-full"
-              >
+              <div v-if="!formFile && fileError" class="space-y-2 w-full">
                 <label
                   class="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#FF3B30] bg-[#FF3B30]/5 p-6 xl:p-8 text-center text-[#FF3B30] transition-colors hover:border-[#FF3B30]/80 hover:bg-[#FF3B30]/10"
                 >
@@ -820,10 +956,10 @@ async function submit() {
                   </div>
                   <p class="mt-3 font-medium text-sm xl:text-base">
                     <span class="text-[#FF3B30]">*</span>
-                    {{ t("loanForm.messages.uploadFailed") }}
+                    {{ t('loanForm.messages.uploadFailed') }}
                   </p>
                   <p class="mt-1 text-xs opacity-80">
-                    {{ t("loanForm.messages.fileNotSelected") }}
+                    {{ t('loanForm.messages.fileNotSelected') }}
                   </p>
                   <input
                     ref="fileInputRef"
@@ -834,7 +970,7 @@ async function submit() {
                   />
                 </label>
                 <p class="px-1 text-xs text-[#FF3B30]">
-                  {{ t("loanForm.messages.fileRequired") }}
+                  {{ t('loanForm.messages.fileRequired') }}
                 </p>
               </div>
 
@@ -925,14 +1061,15 @@ async function submit() {
         >
           {{
             loading
-              ? t("loanForm.buttons.submitting")
-              : t("loanForm.buttons.submit")
+              ? t('loanForm.buttons.submitting')
+              : t('loanForm.buttons.submit')
           }}
         </button>
       </div>
     </template>
   </AppLayout>
 </template>
+
 
 <style scoped>
 .slide-down-enter-active,

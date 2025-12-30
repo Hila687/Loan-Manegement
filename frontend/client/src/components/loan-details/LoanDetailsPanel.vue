@@ -15,6 +15,8 @@
           <BorrowerInfoSection :borrower="loan.borrower" />
         </section>
 
+        <div class="border-t border-gray-200 my-6" />
+
         <!-- Loan Info Section -->
         <section>
           <h2 class="text-lg font-semibold mb-2">
@@ -86,6 +88,8 @@
 
           </div>
         </section>
+
+        <div class="border-t border-gray-200 my-6" />
 
         <!-- Trustee Section -->
         <section v-if="loan.trustee">
