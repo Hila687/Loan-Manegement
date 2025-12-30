@@ -184,10 +184,9 @@
         try {
             const payload = {
             amount: Number(form.value.amount),
-            start_date:
-              form.value.start_date instanceof Date
-                ? form.value.start_date.toISOString().slice(0, 10)
-                : String(form.value.start_date),
+
+            // FIX: start_date is stored as "YYYY-MM-DD" string, so no Date instanceof needed
+            start_date: String(form.value.start_date),
 
             number_of_payments: Number(form.value.number_of_payments),
             trustee_id: String(form.value.trustee_id),
@@ -380,4 +379,3 @@
         </div>
       </AppLayout>
     </template>
-    
