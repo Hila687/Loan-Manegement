@@ -66,8 +66,14 @@
       "file": "3 / 3"
     },
     "fields": {
-      "borrowerName": "שם הלווה",
-      "borrowerNamePlaceholder": "הכנס שם מלא",
+      "borrowerFirstName": "שם פרטי",
+      "borrowerFirstNamePlaceholder": "הכנס שם פרטי",
+      "borrowerLastName": "שם משפחה",
+      "borrowerLastNamePlaceholder": "הכנס שם משפחה",
+      "borrowerIdNumber": "מספר זהות",
+      "borrowerIdNumberPlaceholder": "הכנס מספר זהות",
+      "borrowerEmail": "אימייל",
+      "borrowerEmailPlaceholder": "הכנס אימייל",
       "borrowerPhone": "טלפון",
       "borrowerPhonePlaceholder": "הכנס מספר טלפון",
       "borrowerAddress": "כתובת",
@@ -80,7 +86,12 @@
       "startDatePlaceholder": "בחר תאריך",
       "numPayments": "מספר תשלומים",
       "numPaymentsPlaceholder": "לדוג׳ 25",
-      "signedForm": "טופס חתום"
+      "signedForm": "טופס חתום",
+      "loanType": "סוג הלוואה"
+    },
+    "loanTypes": {
+      "checks": "צ׳קים",
+      "standingOrder": "הוראת קבע"
     },
     "trustees": {
       "t1": "נאמן 1",

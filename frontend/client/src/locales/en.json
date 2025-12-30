@@ -66,8 +66,14 @@
       "file": "3 / 3"
     },
     "fields": {
-      "borrowerName": "Borrower Name",
-      "borrowerNamePlaceholder": "Enter full name",
+      "borrowerFirstName": "First Name",
+      "borrowerFirstNamePlaceholder": "Enter first name",
+      "borrowerLastName": "Last Name",
+      "borrowerLastNamePlaceholder": "Enter last name",
+      "borrowerIdNumber": "ID Number",
+      "borrowerIdNumberPlaceholder": "Enter ID number",
+      "borrowerEmail": "Email",
+      "borrowerEmailPlaceholder": "Enter email",
       "borrowerPhone": "Phone",
       "borrowerPhonePlaceholder": "Enter phone number",
       "borrowerAddress": "Address",
@@ -80,7 +86,12 @@
       "startDatePlaceholder": "Select date",
       "numPayments": "Number of Payments",
       "numPaymentsPlaceholder": "e.g., 25",
-      "signedForm": "Signed Form"
+      "signedForm": "Signed Form",
+      "loanType": "Loan Type"
+    },
+    "loanTypes": {
+      "checks": "Checks",
+      "standingOrder": "Standing Order"
     },
     "trustees": {
       "t1": "Trustee 1",
