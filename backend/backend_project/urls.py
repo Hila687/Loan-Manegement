@@ -3,8 +3,13 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
 from core.views import (
-    BorrowerViewSet, TrusteeViewSet, LoanChecksViewSet, 
-    LoanStandingOrderViewSet, RoleViewSet, UserProfileViewSet
+    BorrowerViewSet,
+    TrusteeViewSet,
+    LoanChecksViewSet,
+    LoanStandingOrderViewSet,
+    RoleViewSet,
+    UserProfileViewSet,
+    DashboardLoanSummaryView,
 )
 
 # Import Sprint 2 loan views
@@ -31,7 +36,7 @@ router.register(r'loans/standing-order', LoanStandingOrderViewSet, basename='loa
 # -------------------------------
 urlpatterns = [
     path('admin/', admin.site.urls),
-    
+
     # All router-generated endpoints
     path('api/', include(router.urls)),
 
@@ -40,6 +45,13 @@ urlpatterns = [
 
     # Full loan detail endpoint
     path('api/loans/<uuid:loan_id>/', LoanDetailView.as_view(), name='loan-detail'),
+
+    # Dashboard summary endpoint
+    path(
+        'api/dashboard/loan-summary/',
+        DashboardLoanSummaryView.as_view(),
+        name='dashboard-loan-summary'
+    ),
 ]
 
 
