@@ -231,6 +231,9 @@
   "editLoan": {
     "title": "Edit Loan",
     "cardTitle": "Edit Existing Loan",
+    "sections": {
+      "trustee": "Trustee Details"
+    },
     "fields": {
       "amount": "Amount",
       "startDate": "Start Date",

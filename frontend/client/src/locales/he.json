@@ -234,6 +234,9 @@
   "editLoan": {
     "title": "עריכת הלוואה",
     "cardTitle": "עריכת הלוואה קיימת",
+    "sections": {
+      "trustee": "פרטי נאמן"
+    },
     "fields": {
       "amount": "סכום",
       "startDate": "תאריך התחלה",
