@@ -1,6 +1,9 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import Trustee, Borrower, LoanChecks, LoanStandingOrder, Role, UserProfile
+from decimal import Decimal, InvalidOperation
+#from .models import Trustee, LoanChecks, LoanStandingOrder
+
 
 # --- Role & UserProfile ---
 class RoleSerializer(serializers.ModelSerializer):
@@ -184,10 +187,6 @@ class LoanDetailSerializer(serializers.Serializer):
             return request.build_absolute_uri(obj.form_file.url) if request else obj.form_file.url
         return None
 
-from decimal import Decimal, InvalidOperation
-from rest_framework import serializers
-from .models import Trustee, LoanChecks, LoanStandingOrder
-
 class LoanUpdateSerializer(serializers.Serializer):
     """
     Contract-bound serializer for PUT /api/loans/{loan_id}
@@ -286,3 +285,37 @@ class LoanUpdateSerializer(serializers.Serializer):
     def create(self, validated_data):
         raise serializers.ValidationError({"detail": ["Create is not supported"]})
 
+# ----------------------------------------------------
+# Create Loan Request Serializers
+# Responsible for validating and normalizing incoming data
+# for the loan creation flow (POST /api/loans).
+# ----------------------------------------------------
+
+class BorrowerCreateSerializer(serializers.Serializer):
+    id_number = serializers.CharField(max_length=20)
+    first_name = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    last_name = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    phone = serializers.CharField(max_length=20, required=False, allow_blank=True)
+    email = serializers.EmailField(required=False, allow_blank=True)
+    address = serializers.CharField(max_length=255)
+
+class LoanDetailsSerializer(serializers.Serializer):
+    amount = serializers.DecimalField(max_digits=10, decimal_places=2)
+    num_payments = serializers.IntegerField()
+    start_date = serializers.DateField()
+
+    def validate_amount(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("Amount must be greater than 0")
+        return value
+
+    def validate_num_payments(self, value):
+        if value < 1:
+            raise serializers.ValidationError("Number of payments must be at least 1")
+        return value
+
+class CreateLoanRequestSerializer(serializers.Serializer):
+    loan_type = serializers.ChoiceField(choices=["checks", "standing_order"])
+    borrower = BorrowerCreateSerializer()
+    loan = LoanDetailsSerializer()
+    trustee_id = serializers.UUIDField()

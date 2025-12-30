@@ -49,6 +49,10 @@ class Borrower(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='borrower_profile', verbose_name="משתמש מקושר", null=True, blank=True)
     trustee = models.ForeignKey(Trustee, on_delete=models.SET_NULL, null=True, related_name='borrowers', verbose_name="נאמן מלווה")
     id_number = models.CharField(max_length=20, unique=True, verbose_name="תעודת זהות")
+    first_name = models.CharField(max_length=100, null=True, blank=True)
+    last_name = models.CharField(max_length=100, null=True, blank=True)
+    phone = models.CharField(max_length=20, null=True, blank=True)
+    email = models.EmailField(null=True, blank=True)
     address = models.CharField(max_length=255, verbose_name="כתובת")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="תאריך יצירה")
 
