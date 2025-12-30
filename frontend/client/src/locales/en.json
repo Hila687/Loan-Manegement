@@ -149,7 +149,7 @@
     },
 
     "search": {
-      "placeholder": "Search by borrower, trustee, phone, or email..."
+      "placeholder": "Search by borrower, trustee, phone, or email"
     },
     "showDetails": "Show details",
     "hideDetails": "Hide details",
