@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from "vue";
 import { useLocale } from "../composables/useLocale";
 import { useFormValidation } from "../composables/useFormValidation";
 import { useFormFields } from "../composables/useFormFields";
+import { useRouter } from "vue-router";
 import AppLayout from "../components/AppLayout.vue";
 import FormCard from "../components/FormCard.vue";
 import FormInput from "../components/FormInput.vue";
@@ -11,6 +12,9 @@ import api from "../services/api";
 
 // Localization: text function, current locale ref, RTL flag
 const { t, locale, isRTL } = useLocale();
+
+// Vue Router instance
+const router = useRouter();
 
 // Narrowed locale for FormDatePicker (only "he" or "en")
 const formLocale = computed<"he" | "en">(() =>
@@ -360,6 +364,50 @@ function showErrorMessage() {
     error.value = null;
   }, 2000);
 }
+function setErrorsFromBackend(data: any) {
+  if (!data || typeof data !== "object") return;
+
+  for (const key of Object.keys(data)) {
+    const v = (data as any)[key];
+
+    // allow both array-of-messages and string
+    const msg =
+      Array.isArray(v) && v.length ? String(v[0]) :
+      typeof v === "string" ? v :
+      null;
+
+    if (!msg) continue;
+
+    // borrower nested errors
+    if (key === "borrower" && typeof v === "object") {
+      for (const bKey of Object.keys(v)) {
+        const bv = (v as any)[bKey];
+        const bMsg =
+          Array.isArray(bv) && bv.length ? String(bv[0]) :
+          typeof bv === "string" ? bv :
+          null;
+        if (bMsg) setFieldError(bKey, bMsg);
+      }
+      continue;
+    }
+
+    // loan nested errors
+    if (key === "loan" && typeof v === "object") {
+      for (const lKey of Object.keys(v)) {
+        const lv = (v as any)[lKey];
+        const lMsg =
+          Array.isArray(lv) && lv.length ? String(lv[0]) :
+          typeof lv === "string" ? lv :
+          null;
+        if (lMsg) setFieldError(lKey, lMsg);
+      }
+      continue;
+    }
+
+    // top-level field errors
+    setFieldError(key, msg);
+  }
+}
 
 // Submit form to backend
 async function submit() {
@@ -447,12 +495,21 @@ async function submit() {
 
     await api.post("/api/loans/", payload);
 
-    success.value = t("loanForm.messages.success");
     resetForm();
+    router.push("/loans");
   } catch (e: any) {
-   console.error(e);
-    error.value =
-    e?.response?.data?.detail || t("loanForm.messages.genericError");
+    console.error(e);
+
+    const status = e?.response?.status;
+    const data = e?.response?.data;
+
+    if (status === 400 && data) {
+      setErrorsFromBackend(data);
+      error.value = t("loanForm.messages.requiredFieldsError");
+   } else {
+      error.value = data?.detail || t("loanForm.messages.genericError");
+    }
+
     showErrorMessage();
   } finally {
     loading.value = false;
@@ -460,7 +517,6 @@ async function submit() {
 }
 
 </script>
-
 <template>
   <AppLayout
     :title="t('loanForm.title')"
