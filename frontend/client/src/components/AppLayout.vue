@@ -1,8 +1,8 @@
 <template>
-  <div :dir="dir" class="flex min-h-screen bg-gradient-to-br from-[#F7F8FC] to-[#EEF2F6]">
+  <div :dir="dir" class="flex h-screen bg-gradient-to-br from-[#F7F8FC] to-[#EEF2F6]">
     <!-- Desktop Sidebar Navigation -->
     <nav
-      class="hidden lg:flex lg:flex-col w-64 xl:w-72 bg-white/80 backdrop-blur-xl border-r border-gray-200/50 min-h-screen z-40 shadow-sm"
+      class="hidden lg:flex lg:flex-col w-64 xl:w-72 bg-white/80 backdrop-blur-xl border-r border-gray-200/50 h-full z-40 shadow-sm"
     >
       <!-- Sidebar logo / title -->
       <div class="p-6 xl:p-8 border-b border-gray-200/50">
@@ -83,7 +83,7 @@
     </nav>
 
     <!-- Main content area -->
-    <div class="flex-1 flex flex-col min-h-0 overflow-hidden">
+    <div class="flex-1 flex flex-col h-full overflow-hidden">
       <!-- Desktop / tablet header -->
       <header class="hidden lg:flex items-center justify-between bg-white/60 backdrop-blur-xl px-6 xl:px-8 py-4 xl:py-5 border-b border-gray-200/50 shadow-sm">
         <div class="flex items-center gap-4">
@@ -156,7 +156,7 @@
       </div>
 
       <!-- Main page content -->
-      <main class="flex-1 min-h-0 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8 xl:px-10 xl:py-10">
+      <main class="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8 xl:px-10 xl:py-10">
         <div class="w-full mx-auto" :class="maxWidthClass">
           <slot />
         </div>
