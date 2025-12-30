@@ -104,6 +104,7 @@
       "validationError": "Please correct the fields marked in red",
       "requiredFieldsError": "Please fill in all required fields",
       "nameRequired": "Name is required",
+      "idNumberRequired": "ID number is required",
       "phoneInvalid": "Invalid phone number",
       "amountInvalid": "Amount must be greater than 0",
       "startDateInvalid": "Start date is required",

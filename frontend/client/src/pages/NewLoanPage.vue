@@ -369,18 +369,21 @@ async function submit() {
 
   let hasErrors = false;
 
-  // Borrower first/last name validation
-  if (!borrower.value.first_name || borrower.value.first_name.trim() === "") {
+  // Borrower name validation
+  if (!borrower.value.first_name.trim()) {
     setFieldError("first_name", t("loanForm.messages.nameRequired"));
     hasErrors = true;
   }
 
-  if (!borrower.value.last_name || borrower.value.last_name.trim() === "") {
+  if (!borrower.value.last_name.trim()) {
     setFieldError("last_name", t("loanForm.messages.nameRequired"));
     hasErrors = true;
   }
-
-
+  // Borrower ID number validation
+  if (!borrower.value.id_number.trim()) {
+    setFieldError("id_number", t("loanForm.messages.idNumberRequired"));
+    hasErrors = true;
+  }
   // Borrower phone validation
   if (!borrower.value.phone || !isValidPhone(borrower.value.phone)) {
     setFieldError("phone", t("loanForm.messages.phoneInvalid"));
@@ -407,20 +410,12 @@ async function submit() {
 
   // Number of payments validation
   if (!loan.value.num_payments || parseInt(loan.value.num_payments) <= 0) {
-    setFieldError(
-      "num_payments",
-      t("loanForm.messages.numPaymentsInvalid")
-    );
+    setFieldError("num_payments", t("loanForm.messages.numPaymentsInvalid"));
     hasErrors = true;
   }
 
-  // File validation
-  if (!formFile.value) {
-    setFieldError("file", t("loanForm.messages.fileRequired"));
-    fileError.value = true;
-    hasErrors = true;
-  }
-
+  // NOTE (Sprint 4): signed form upload is NOT part of Create Loan flow
+  // so we do NOT block submit if formFile is missing (FE-2 aligns payload contract).
   // If any validation failed, show banner and exit
   if (hasErrors) {
     error.value = t("loanForm.messages.requiredFieldsError");
@@ -428,40 +423,42 @@ async function submit() {
     return;
   }
 
-  // Send form data to backend
   loading.value = true;
   try {
-    const formData = new FormData();
-    formData.append("borrower_name",
-      `${borrower.value.first_name} ${borrower.value.last_name}`.trim()
-    );
+    const payload = {
+      loan_type: loan.value.loan_type as "checks" | "standing_order",
 
-    formData.append("borrower_phone", borrower.value.phone);
-    formData.append("borrower_address", borrower.value.address);
-    formData.append("trustee_id", borrower.value.trustee_id);
-    formData.append("amount", loan.value.amount);
-    formData.append("start_date", loan.value.start_date);
-    formData.append("num_payments", loan.value.num_payments);
-    if (formFile.value) {
-      formData.append("form_file", formFile.value);
-    }
+      borrower: {
+        id_number: borrower.value.id_number,
+        first_name: borrower.value.first_name,
+        last_name: borrower.value.last_name,
+        phone: borrower.value.phone,
+        email: borrower.value.email || "",
+        address: borrower.value.address,
+      },
 
-    await api.post("/loans/", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+      loan: {
+        amount: Number(loan.value.amount),
+        num_payments: Number(loan.value.num_payments),
+        start_date: String(loan.value.start_date),
+      },
+      trustee_id: borrower.value.trustee_id,
+    };
+
+    await api.post("/api/loans/", payload);
 
     success.value = t("loanForm.messages.success");
     resetForm();
   } catch (e: any) {
-    console.error(e);
+   console.error(e);
     error.value =
-      e?.response?.data?.detail ||
-      t("loanForm.messages.genericError");
+    e?.response?.data?.detail || t("loanForm.messages.genericError");
     showErrorMessage();
   } finally {
     loading.value = false;
   }
 }
+
 </script>
 
 <template>

@@ -104,6 +104,7 @@
       "validationError": "אנא תקנו את השדות שמסומנים בשגיאה",
       "requiredFieldsError": "אנא מלאו את כל השדות הנדרשים",
       "nameRequired": "שם הוא שדה חובה",
+      "idNumberRequired": "מספר זהות הוא שדה חובה",
       "phoneInvalid": "מספר הטלפון אינו תקין",
       "amountInvalid": "הסכום חייב להיות גדול מאפס",
       "startDateInvalid": "תאריך ההתחלה אינו תקין",
