@@ -218,7 +218,6 @@ class LoanListView(APIView):
                     trustee_id=trustee_id,
                     amount=loan_data["amount"],
                     start_date=loan_data["start_date"],
-                    num_payments=loan_data["num_payments"],
                     monthly_amount=monthly_amount,
                     charge_day=charge_day,
                     status="ACTIVE",
