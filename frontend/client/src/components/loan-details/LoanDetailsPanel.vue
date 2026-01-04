@@ -1,13 +1,7 @@
 <template>
   <div class="rounded-lg border bg-white shadow p-4 space-y-6">
 
-    <TabsSection
-      :labels="{
-        details: t('loanDetails.tabDetails'),
-        schedule: t('loanDetails.tabSchedule')
-      }"
-    >
-
+    <TabsSection @tab-change="handleTabChange">
       <template #details>
 
         <!-- Borrower Info Section -->
@@ -127,9 +121,7 @@
       </template>
 
       <template #schedule>
-        <div class="text-gray-500 text-center py-4 bg-gray-50 rounded">
-          <p>{{ t("loanDetails.tabSchedule") }} – בקרוב...</p>
-        </div>
+        <PaymentScheduleTab :loanId="loan.id" :active="activeTab === 'schedule'" />
       </template>
 
     </TabsSection>
@@ -144,12 +136,15 @@
 <script setup lang="ts">
 import type { Loan } from "../../types/loan";
 import { useI18n } from "vue-i18n";
+import { ref } from "vue";
 
 import BorrowerInfoSection from "./BorrowerInfoSection.vue";
 import TabsSection from "./TabsSection.vue";
 import EditLoanButton from "./EditLoanButton.vue";
+import PaymentScheduleTab from "./PaymentScheduleTab.vue";
 
 const { t } = useI18n();
+const activeTab = ref<"details" | "schedule">("details");
 
 defineProps<{
   loan: Loan;
@@ -165,5 +160,9 @@ function formatCurrency(amount: number) {
 
 function formatDate(date?: string) {
   return date ? new Date(date).toLocaleDateString("he-IL") : "-";
+}
+
+function handleTabChange(tab: "details" | "schedule") {
+  activeTab.value = tab;
 }
 </script>

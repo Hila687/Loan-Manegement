@@ -231,6 +231,32 @@
     "editButton": "עריכת הלוואה"
   },
 
+  "payments": {
+    "loading": "טוען לוח תשלומים...",
+    "error": "לא ניתן לטעון את לוח התשלומים.",
+    "empty": "לא נמצאו תשלומים.",
+    "openToLoad": "פתח/י את הטאב כדי לטעון את לוח התשלומים.",
+
+    "summary": {
+      "totalAmount": "סה״כ הלוואה",
+      "paidAmount": "שולם",
+      "remainingAmount": "נותר",
+      "paymentsProgress": "תשלומים"
+    },
+
+    "table": {
+      "dueDate": "תאריך לתשלום",
+      "amountDue": "סכום לתשלום",
+      "amountPaid": "סכום ששולם",
+      "status": "סטטוס"
+    },
+
+    "status": {
+      "paid": "שולם",
+      "pending": "ממתין"
+    }
+  },
+
   "loan": {
     "filterByType": "סינון לפי סוג הלוואה",
     "all": "כל סוגי ההלוואות",

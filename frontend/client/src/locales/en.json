@@ -228,6 +228,32 @@
     "editButton": "Edit Loan"
   },
 
+"payments": {
+  "loading": "Loading payment schedule...",
+  "error": "Failed to load payment schedule.",
+  "empty": "No payments found.",
+  "openToLoad": "Open the tab to load the payment schedule.",
+
+  "summary": {
+    "totalAmount": "Total Amount",
+    "paidAmount": "Paid",
+    "remainingAmount": "Remaining",
+    "paymentsProgress": "Payments"
+  },
+
+  "table": {
+    "dueDate": "Due Date",
+    "amountDue": "Amount Due",
+    "amountPaid": "Amount Paid",
+    "status": "Status"
+  },
+
+  "status": {
+    "paid": "Paid",
+    "pending": "Pending"
+  }
+},
+
   "loan": {
     "filterByType": "Filter by loan type",
     "all": "All loan types",
