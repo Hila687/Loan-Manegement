@@ -31,6 +31,38 @@ class LoanListView(APIView):
 
         unified_loans = []  # final combined loan list
 
+        def resolve_borrower_fields(borrower):
+            user = borrower.user if borrower else None
+
+            # name
+            first = (borrower.first_name or "").strip() if borrower else ""
+            last = (borrower.last_name or "").strip() if borrower else ""
+            name_from_borrower = f"{first} {last}".strip()
+            if name_from_borrower:
+                name = name_from_borrower
+            elif user:
+                name = (user.get_full_name() or "").strip()
+            else:
+                name = ""
+
+            # phone
+            if borrower and borrower.phone:
+                phone = borrower.phone
+            elif user and hasattr(user, "profile") and getattr(user.profile, "phone", None):
+                phone = user.profile.phone
+            else:
+                phone = ""
+
+            # email
+            if borrower and borrower.email:
+                email = borrower.email
+            elif user and user.email:
+                email = user.email
+            else:
+                email = ""
+
+            return name, phone, email
+        
         # -----------------------------
         #   1. Fetch ACTIVE LoanChecks
         # -----------------------------
@@ -41,6 +73,7 @@ class LoanListView(APIView):
             checks_qs = []
 
         for loan in checks_qs:
+            b_name, b_phone, b_email = resolve_borrower_fields(loan.borrower)
             unified_loans.append({
                 "loan_id": loan.loan_id,
                 "loan_type": "checks",
@@ -48,10 +81,11 @@ class LoanListView(APIView):
                 "start_date": loan.start_date,
                 "status": "CLOSED" if loan.status == "PAID" else "ACTIVE",
                 "borrower": {
-                    "name": loan.borrower.user.first_name if loan.borrower.user else None,
-                    "phone": getattr(loan.borrower.user.profile, "phone", None) if loan.borrower.user else None,
-                    "email": loan.borrower.user.email if loan.borrower.user else None,
+                    "name": b_name,
+                    "phone": b_phone,
+                    "email": b_email,
                 },
+
                 "trustee": {
                     "name": loan.trustee.user.first_name if loan.trustee else None,
                     "community": loan.trustee.community if loan.trustee else None,
@@ -68,6 +102,7 @@ class LoanListView(APIView):
             standing_qs = []
 
         for loan in standing_qs:
+            b_name, b_phone, b_email = resolve_borrower_fields(loan.borrower)
             unified_loans.append({
                 "loan_id": loan.loan_id,
                 "loan_type": "standing_order",
@@ -75,9 +110,9 @@ class LoanListView(APIView):
                 "start_date": loan.start_date,
                 "status": "CLOSED" if loan.status == "PAID" else "ACTIVE",
                 "borrower": {
-                    "name": loan.borrower.user.first_name if loan.borrower.user else None,
-                    "phone": getattr(loan.borrower.user.profile, "phone", None) if loan.borrower.user else None,
-                    "email": loan.borrower.user.email if loan.borrower.user else None,
+                    "name": b_name, 
+                    "phone": b_phone,
+                    "email": b_email,
                 },
                     "trustee": {
                     "name": loan.trustee.user.first_name if loan.trustee else None,
