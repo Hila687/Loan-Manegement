@@ -8,7 +8,7 @@
         :class="selectedTab === 'details'
           ? 'border-blue-600 text-blue-600'
           : 'border-transparent text-gray-500 hover:text-gray-700'"
-        @click="selectedTab = 'details'"
+        @click="setTab('details')"
       >
         {{ t("loanDetails.tabDetails") }}
       </button>
@@ -18,7 +18,7 @@
         :class="selectedTab === 'schedule'
           ? 'border-blue-600 text-blue-600'
           : 'border-transparent text-gray-500 hover:text-gray-700'"
-        @click="selectedTab = 'schedule'"
+        @click="setTab('schedule')"
       >
         {{ t("loanDetails.tabSchedule") }}
       </button>
@@ -32,9 +32,10 @@
       </div>
 
       <!-- Schedule Tab -->
-      <div v-if="selectedTab === 'schedule'" class="p-3 text-gray-500 italic">
-        {{ t("loanDetails.schedulePlaceholder") }}
-      </div>
+    <div v-if="selectedTab === 'schedule'" class="space-y-6">
+      <slot name="schedule"></slot>
+    </div>
+
     </div>
   </div>
 </template>
@@ -44,5 +45,17 @@ import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 
 const { t } = useI18n();
+
+const emit = defineEmits<{
+  (e: "tab-change", tab: "details" | "schedule"): void;
+}>();
+
 const selectedTab = ref<"details" | "schedule">("details");
+
+function setTab(tab: "details" | "schedule") {
+  selectedTab.value = tab;
+  emit("tab-change", tab);
+}
+
 </script>
+
