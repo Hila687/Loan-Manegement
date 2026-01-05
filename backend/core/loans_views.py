@@ -6,8 +6,11 @@ from django.db import transaction
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 
-from .models import Borrower, Trustee, LoanChecks, LoanStandingOrder
+from .models import Borrower, Trustee, LoanChecks, LoanStandingOrder,Payment
 from .serializers import LoanListSerializer, LoanDetailSerializer, LoanUpdateSerializer,CreateLoanRequestSerializer
+
+from core.payment_schedule import calculate_payment_dates
+from django.contrib.contenttypes.models import ContentType
 
 
 # ------------------------------------
@@ -164,6 +167,7 @@ class LoanListView(APIView):
     - Validate request payload
     - Locate or create Borrower
     - Create Loan by type
+    - Automatically generate payment schedule upon loan creation
     - Wrap entire flow in a transaction
     - Return success response
     """
@@ -257,6 +261,37 @@ class LoanListView(APIView):
                     charge_day=charge_day,
                     status="ACTIVE",
                 )
+
+            # ------------------------------------------------
+            # Step 5.1: Generate Payment Schedule (BE-CORE-3)
+            # ------------------------------------------------
+            
+
+            num_payments = loan_data["num_payments"]
+
+            # Calculate due dates
+            due_dates = calculate_payment_dates(
+                loan.start_date,
+                num_payments
+            )
+
+            # Calculate amount per payment
+            amount_per_payment = loan.amount / num_payments
+
+            # Prepare GenericForeignKey data
+            content_type = ContentType.objects.get_for_model(loan)
+
+            # Create Payment records
+            for due_date in due_dates:
+                Payment.objects.create(
+                    content_type=content_type,
+                    object_id=loan.loan_id,
+                    due_date=due_date,
+                    amount=amount_per_payment,
+                    amount_paid=0,
+                    status=Payment.STATUS_PENDING,
+                )
+
 
 
         # ----------------------------------------------------
