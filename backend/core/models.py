@@ -102,3 +102,73 @@ class LoanStandingOrder(Loan):
     class Meta:
         verbose_name = "הלוואה (הוראת קבע)"
         verbose_name_plural = "הלוואות (הוראת קבע)"
+
+# --- 7. מודל תשלום (Payment) ---
+class Payment(models.Model):
+    STATUS_CHOICES = [
+        ('PENDING', 'Pending'),
+        ('PAID', 'Paid'),
+    ]
+
+    payment_id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False
+    )
+
+    # קשר להלוואה – אחד מהם תמיד יהיה NULL
+    loan_checks = models.ForeignKey(
+        LoanChecks,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='payments'
+    )
+
+    loan_standing_order = models.ForeignKey(
+        LoanStandingOrder,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='payments'
+    )
+
+    due_date = models.DateField(verbose_name="תאריך לתשלום")
+
+    amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name="סכום לתשלום"
+    )
+
+    amount_paid = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        verbose_name="סכום ששולם"
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='PENDING',
+        verbose_name="סטטוס תשלום"
+    )
+
+    paid_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="תאריך תשלום בפועל"
+    )
+
+    check_number = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        verbose_name="מספר צ'ק"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Payment {self.payment_id} - {self.status}"
