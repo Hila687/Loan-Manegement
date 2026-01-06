@@ -343,7 +343,7 @@ class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Payment
         fields = [
-            "payment_id",
+            "id",
             "due_date",
             "amount",
             "amount_paid",
@@ -363,7 +363,7 @@ class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Payment
         fields = [
-            "payment_id",
+            "id",
             "due_date",
             "amount_due",
             "amount_paid",
