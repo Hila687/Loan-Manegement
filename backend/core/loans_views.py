@@ -6,8 +6,11 @@ from django.db import transaction
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 
-from .models import Borrower, Trustee, LoanChecks, LoanStandingOrder
+from .models import Borrower, Trustee, LoanChecks, LoanStandingOrder,Payment
 from .serializers import LoanListSerializer, LoanDetailSerializer, LoanUpdateSerializer,CreateLoanRequestSerializer
+
+from core.payment_schedule import calculate_payment_dates
+from django.contrib.contenttypes.models import ContentType
 
 
 # ------------------------------------
@@ -31,6 +34,38 @@ class LoanListView(APIView):
 
         unified_loans = []  # final combined loan list
 
+        def resolve_borrower_fields(borrower):
+            user = borrower.user if borrower else None
+
+            # name
+            first = (borrower.first_name or "").strip() if borrower else ""
+            last = (borrower.last_name or "").strip() if borrower else ""
+            name_from_borrower = f"{first} {last}".strip()
+            if name_from_borrower:
+                name = name_from_borrower
+            elif user:
+                name = (user.get_full_name() or "").strip()
+            else:
+                name = ""
+
+            # phone
+            if borrower and borrower.phone:
+                phone = borrower.phone
+            elif user and hasattr(user, "profile") and getattr(user.profile, "phone", None):
+                phone = user.profile.phone
+            else:
+                phone = ""
+
+            # email
+            if borrower and borrower.email:
+                email = borrower.email
+            elif user and user.email:
+                email = user.email
+            else:
+                email = ""
+
+            return name, phone, email
+        
         # -----------------------------
         #   1. Fetch ACTIVE LoanChecks
         # -----------------------------
@@ -41,6 +76,7 @@ class LoanListView(APIView):
             checks_qs = []
 
         for loan in checks_qs:
+            b_name, b_phone, b_email = resolve_borrower_fields(loan.borrower)
             unified_loans.append({
                 "loan_id": loan.loan_id,
                 "loan_type": "checks",
@@ -48,10 +84,11 @@ class LoanListView(APIView):
                 "start_date": loan.start_date,
                 "status": "CLOSED" if loan.status == "PAID" else "ACTIVE",
                 "borrower": {
-                    "name": loan.borrower.user.first_name if loan.borrower.user else None,
-                    "phone": getattr(loan.borrower.user.profile, "phone", None) if loan.borrower.user else None,
-                    "email": loan.borrower.user.email if loan.borrower.user else None,
+                    "name": b_name,
+                    "phone": b_phone,
+                    "email": b_email,
                 },
+
                 "trustee": {
                     "name": loan.trustee.user.first_name if loan.trustee else None,
                     "community": loan.trustee.community if loan.trustee else None,
@@ -68,6 +105,7 @@ class LoanListView(APIView):
             standing_qs = []
 
         for loan in standing_qs:
+            b_name, b_phone, b_email = resolve_borrower_fields(loan.borrower)
             unified_loans.append({
                 "loan_id": loan.loan_id,
                 "loan_type": "standing_order",
@@ -75,9 +113,9 @@ class LoanListView(APIView):
                 "start_date": loan.start_date,
                 "status": "CLOSED" if loan.status == "PAID" else "ACTIVE",
                 "borrower": {
-                    "name": loan.borrower.user.first_name if loan.borrower.user else None,
-                    "phone": getattr(loan.borrower.user.profile, "phone", None) if loan.borrower.user else None,
-                    "email": loan.borrower.user.email if loan.borrower.user else None,
+                    "name": b_name, 
+                    "phone": b_phone,
+                    "email": b_email,
                 },
                     "trustee": {
                     "name": loan.trustee.user.first_name if loan.trustee else None,
@@ -129,6 +167,7 @@ class LoanListView(APIView):
     - Validate request payload
     - Locate or create Borrower
     - Create Loan by type
+    - Automatically generate payment schedule upon loan creation
     - Wrap entire flow in a transaction
     - Return success response
     """
@@ -222,6 +261,37 @@ class LoanListView(APIView):
                     charge_day=charge_day,
                     status="ACTIVE",
                 )
+
+            # ------------------------------------------------
+            # Step 5.1: Generate Payment Schedule (BE-CORE-3)
+            # ------------------------------------------------
+            
+
+            num_payments = loan_data["num_payments"]
+
+            # Calculate due dates
+            due_dates = calculate_payment_dates(
+                loan.start_date,
+                num_payments
+            )
+
+            # Calculate amount per payment
+            amount_per_payment = loan.amount / num_payments
+
+            # Prepare GenericForeignKey data
+            content_type = ContentType.objects.get_for_model(loan)
+
+            # Create Payment records
+            for due_date in due_dates:
+                Payment.objects.create(
+                    content_type=content_type,
+                    object_id=loan.loan_id,
+                    due_date=due_date,
+                    amount=amount_per_payment,
+                    amount_paid=0,
+                    status=Payment.STATUS_PENDING,
+                )
+
 
 
         # ----------------------------------------------------

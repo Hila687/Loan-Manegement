@@ -130,16 +130,31 @@ class LoanDetailSerializer(serializers.Serializer):
     # ----------------------------------------------------
     def get_borrower(self, obj):
         borrower = obj.borrower
-        user = borrower.user if borrower.user else None
+        user = borrower.user if borrower and borrower.user else None
+
+        first = (borrower.first_name or "").strip()
+        last = (borrower.last_name or "").strip()
+        name_from_borrower = f"{first} {last}".strip()
+
+        name = name_from_borrower or ((user.get_full_name() or "").strip() if user else "")
+        email = borrower.email or (user.email if user else "") or ""
+
+        if borrower.phone:
+            phone = borrower.phone
+        elif user and hasattr(user, "profile") and getattr(user.profile, "phone", None):
+            phone = user.profile.phone
+        else:
+            phone = ""
 
         return {
             "id_number": borrower.id_number,
             "address": borrower.address,
-            "name": user.get_full_name() if user else "",
-            "email": user.email if user else "",
-            "phone": user.profile.phone if user and hasattr(user, "profile") else "",
-            "created_at": borrower.created_at,   # optional but useful
+            "name": name,
+            "email": email,
+            "phone": phone,
+            "created_at": borrower.created_at,
         }
+
 
     # ----------------------------------------------------
     # Trustee section
