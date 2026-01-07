@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+from core.payments_views import LoanPaymentsView
 
 from core.views import (
     BorrowerViewSet,
@@ -52,6 +53,14 @@ urlpatterns = [
         DashboardLoanSummaryView.as_view(),
         name='dashboard-loan-summary'
     ),
+
+    # Loan payments endpoint
+    path(
+    "api/loans/<uuid:loan_id>/payments/",
+    LoanPaymentsView.as_view(),
+    name="loan-payments"
+    ),
+
 ]
 
 

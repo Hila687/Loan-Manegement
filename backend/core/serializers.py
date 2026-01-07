@@ -2,6 +2,9 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import Trustee, Borrower, LoanChecks, LoanStandingOrder, Role, UserProfile
 from decimal import Decimal, InvalidOperation
+from .models import Payment
+from rest_framework import serializers
+from .models import Payment
 #from .models import Trustee, LoanChecks, LoanStandingOrder
 
 
@@ -334,3 +337,35 @@ class CreateLoanRequestSerializer(serializers.Serializer):
     borrower = BorrowerCreateSerializer()
     loan = LoanDetailsSerializer()
     trustee_id = serializers.UUIDField()
+
+
+class PaymentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Payment
+        fields = [
+            "id",
+            "due_date",
+            "amount",
+            "amount_paid",
+            "status",
+            "paid_at",
+            "check_number",
+        ]
+
+
+class PaymentSerializer(serializers.ModelSerializer):
+    amount_due = serializers.DecimalField(
+        source="amount",
+        max_digits=10,
+        decimal_places=2
+    )
+
+    class Meta:
+        model = Payment
+        fields = [
+            "id",
+            "due_date",
+            "amount_due",
+            "amount_paid",
+            "status",
+        ]
