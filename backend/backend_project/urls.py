@@ -56,7 +56,7 @@ urlpatterns = [
 
     # Loan payments endpoint
     path(
-    "api/loans/<uuid:loan_id>/payments/",
+    "api/loans/<uuid:loan_id>/payments",
     LoanPaymentsView.as_view(),
     name="loan-payments"
     ),
