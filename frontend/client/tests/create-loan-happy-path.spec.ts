@@ -65,6 +65,10 @@ test('Create loan - happy path (Member C)', async ({ page }) => {
     .getByPlaceholder(/enter phone number|טלפון/i)
     .fill('0501234567');
 
+  await page
+    .getByPlaceholder(/address|כתובת/i)
+    .fill('Test Address 123');
+      
   // Select trustee from dropdown (choose the first available option)
   const trusteeInput = page.getByPlaceholder(
     /select or type trustee|בחר.*נאמן/i
@@ -84,17 +88,19 @@ test('Create loan - happy path (Member C)', async ({ page }) => {
   await pickDate(page, '2026-02-15');
 
   await page
-    .getByPlaceholder(/e\.g\., 25|למשל/i)
+    .getByPlaceholder(/e\.g\., 25|לדוג׳/i)
     .fill('5');
 
-  // Submit the form
-  await page.getByRole('button', { name: /save|שמור/i }).click();
 
-  // Verify redirection back to the loans list
-  await expect(page).toHaveURL(/\/loans$/);
+    await page.getByRole('button', { name: /Save Loan|שמירת הלוואה/i }).click();
 
+    await expect(
+      page.getByText(/הלוואות פעילות/)
+    ).toBeVisible();
+    
   // Verify that the newly created loan appears in the list
   await expect(
-    page.getByText(new RegExp(lastName, 'i'))
+    page.getByRole('table').getByText(new RegExp(lastName, 'i'))
   ).toBeVisible();
+  
 });

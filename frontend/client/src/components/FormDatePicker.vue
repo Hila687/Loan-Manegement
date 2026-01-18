@@ -65,9 +65,16 @@ onMounted(() => {
     onChange: (selectedDates: Date[]) => {
       if (selectedDates.length > 0) {
         const date = selectedDates[0];
-        emit("update:modelValue", date.toISOString().split("T")[0]);
+
+        // Use local date parts to avoid timezone (UTC) shift that may cause off-by-one day bugs.
+        const yyyy = date.getFullYear();
+        const mm = String(date.getMonth() + 1).padStart(2, "0");
+        const dd = String(date.getDate()).padStart(2, "0");
+
+        emit("update:modelValue", `${yyyy}-${mm}-${dd}`);
       }
     },
+
   });
 
   // Sync initial value if exists
