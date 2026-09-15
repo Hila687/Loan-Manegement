@@ -40,3 +40,4 @@ cookies.txtdb_backups/
 # Local runtime and backup files
 backend/cookies.txt
 db_backups/
+backend/local-env.sh
