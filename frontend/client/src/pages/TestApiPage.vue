@@ -68,7 +68,7 @@ onMounted(loadUsers);
         <button
           type="button"
           @click="handlePrimaryClick"
-          class="flex w-full cursor-pointer items-center justify-center rounded-lg h-12 px-5 bg-[#007AFF] text-white text-sm font-semibold tracking-wide hover:bg-[#0067E0] active:bg-[#0052BA] transition-colors"
+          class="flex w-full cursor-pointer items-center justify-center rounded-lg h-12 px-5 bg-brand text-white text-sm font-semibold tracking-wide hover:bg-brand-deep active:bg-brand-deep transition-colors"
         >
           {{ users.length ? t("usersList.buttons.refresh") : t("usersList.buttons.loadUsers") }}
         </button>
@@ -78,8 +78,8 @@ onMounted(loadUsers);
           v-if="loading"
           class="flex flex-col items-center justify-center py-10"
         >
-          <div class="w-8 h-8 border-4 border-[#007AFF] border-t-transparent rounded-full animate-spin" />
-          <p class="mt-4 text-sm text-[#8A8A8E] text-center">
+          <div class="w-8 h-8 border-4 border-brand border-t-transparent rounded-full animate-spin" />
+          <p class="mt-4 text-sm text-faint text-center">
             {{ t("usersList.loading") }}
           </p>
         </div>
@@ -87,10 +87,10 @@ onMounted(loadUsers);
         <!-- Error State -->
         <div
           v-else-if="error"
-          class="flex flex-col items-center gap-3 rounded-lg bg-[rgba(255,59,48,0.08)] border border-[#FFCDD2] p-4 text-center"
+          class="flex flex-col items-center gap-3 rounded-lg bg-[rgba(255,59,48,0.08)] border border-danger-soft p-4 text-center"
         >
           <svg
-            class="w-7 h-7 text-[#FF3B30]"
+            class="w-7 h-7 text-danger"
             viewBox="0 0 20 20"
             fill="currentColor"
           >
@@ -104,19 +104,19 @@ onMounted(loadUsers);
           </svg>
 
           <!-- Error title -->
-          <h3 class="text-[#FF3B30] text-base font-bold">
+          <h3 class="text-danger text-base font-bold">
             {{ t("usersList.messages.loadFailed") }}
           </h3>
 
           <!-- Error details -->
-          <p class="text-sm text-[#1C1C1E]">
+          <p class="text-sm text-ink">
             {{ error }}
           </p>
 
           <button
             type="button"
             @click="handlePrimaryClick"
-            class="mt-2 rounded-lg h-9 px-4 bg-[#007AFF]/10 text-[#007AFF] text-sm font-semibold hover:bg-[#007AFF]/15 transition"
+            class="mt-2 rounded-lg h-9 px-4 bg-brand/10 text-brand text-sm font-semibold hover:bg-brand/15 transition"
           >
             {{ t("usersList.buttons.retry") }}
           </button>
@@ -126,12 +126,12 @@ onMounted(loadUsers);
         <div v-else class="flex flex-col">
           <!-- Header -->
           <div
-            class="flex items-center px-4 py-2 border-b-2 border-[#E5E5EA] bg-[#F9F9F9]"
+            class="flex items-center px-4 py-2 border-b-2 border-line bg-surface-muted"
           >
-            <p class="w-1/2 text-center text-[#8A8A8E] text-xs font-bold uppercase">
+            <p class="w-1/2 text-center text-faint text-xs font-bold uppercase">
               {{ t("usersList.table.username") }}
             </p>
-            <p class="w-1/2 text-center text-[#8A8A8E] text-xs font-bold uppercase">
+            <p class="w-1/2 text-center text-faint text-xs font-bold uppercase">
               {{ t("usersList.table.role") }}
             </p>
           </div>
@@ -141,19 +141,19 @@ onMounted(loadUsers);
             <div
               v-for="u in users"
               :key="u.id"
-              class="flex items-center px-4 py-3 border-b border-[#E5E5EA]"
+              class="flex items-center px-4 py-3 border-b border-line"
             >
               <!-- Username -->
               <div class="w-1/2 text-center">
-                <p class="truncate text-[#1C1C1E] text-base">{{ u.username }}</p>
-                <p class="text-xs text-[#8A8A8E]">
+                <p class="truncate text-ink text-base">{{ u.username }}</p>
+                <p class="text-xs text-faint">
                   {{ t("usersList.idLabel") }} {{ u.id }}
                 </p>
               </div>
 
               <!-- Role -->
               <div class="w-1/2 text-center">
-                <p class="truncate text-[#1C1C1E] text-base">
+                <p class="truncate text-ink text-base">
                   {{
                     u.role_name ||
                     u.role ||
@@ -167,7 +167,7 @@ onMounted(loadUsers);
           <!-- Empty state -->
           <div v-else class="flex flex-col items-center justify-center py-10 px-4 text-center">
             <svg
-              class="w-10 h-10 text-[#E5E5EA]"
+              class="w-10 h-10 text-line"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -182,7 +182,7 @@ onMounted(loadUsers);
               />
             </svg>
 
-            <p class="mt-4 text-sm text-[#8A8A8E]">
+            <p class="mt-4 text-sm text-faint">
               {{ t("usersList.noUsers") }}
             </p>
           </div>

@@ -1,9 +1,15 @@
-export type LoanStatus = "PENDING" | "ACTIVE" | "PAID" | "REJECTED";
+export type LoanStatus =
+  | "ACTIVE"
+  | "OVERDUE"
+  | "CLOSED";
+
 
 export enum LoanType {
   CHECKS = "checks",
-  STANDING_ORDER = "standing_order",
+  STANDING_ORDER =
+    "standing_order",
 }
+
 
 export interface Borrower {
   name: string;
@@ -14,6 +20,7 @@ export interface Borrower {
   createdAt?: string;
 }
 
+
 export interface Trustee {
   name: string;
   community?: string;
@@ -21,7 +28,6 @@ export interface Trustee {
   notes?: string | null;
 }
 
-/* -------- LIST -------- */
 
 export interface LoanListItem {
   id: string;
@@ -34,24 +40,26 @@ export interface LoanListItem {
   trustee: Trustee | null;
 }
 
-/* -------- DETAILS -------- */
 
 export interface LoanChecksDetails {
-  numPayments: number;              // מספר תשלומים
-  predefinedSchedule: boolean;      // לפי לוח מוגדר
-  checkDetails?: string | null;     // פרטי צ'קים
+  numPayments: number;
+  predefinedSchedule: boolean;
+  checkDetails?: string | null;
 }
 
+
 export interface LoanStandingOrderDetails {
+  numPayments: number;
   monthlyAmount: number;
   chargeDay: number;
   stopDate?: string | null;
 }
 
+
 export type LoanDetailsUnion =
   | LoanChecksDetails
-  | LoanStandingOrderDetails
-  | {};
+  | LoanStandingOrderDetails;
+
 
 export interface Loan {
   id: string;
@@ -60,16 +68,30 @@ export interface Loan {
   status: LoanStatus;
   startDate: string;
   createdAt: string;
-  formFileUrl?: string | null;
+
+  formFileUrl?:
+    | string
+    | null;
 
   borrower: Borrower;
-  trustee: Trustee | null;
 
-  details: LoanDetailsUnion;
+  trustee:
+    | Trustee
+    | null;
+
+  details:
+    LoanDetailsUnion;
 }
 
+
 export interface LoanFilters {
-  type?: "all" | LoanType;
-  status?: LoanStatus | "all" | string;
+  type?:
+    | "all"
+    | LoanType;
+
+  status?:
+    | "all"
+    | LoanStatus;
+
   search?: string;
 }

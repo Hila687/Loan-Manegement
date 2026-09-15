@@ -8,7 +8,7 @@
   >
     <!-- Top label ("Filter by loan type") -->
     <p
-      class="text-xs sm:text-sm font-medium text-[#6B7280] mb-2 flex items-center gap-2"
+      class="text-xs sm:text-sm font-medium text-muted mb-2 flex items-center gap-2"
       :class="isRtlComputed ? 'justify-end' : 'justify-start'"
     >
       <span>{{ t("loan.filterByType") }}</span>
@@ -18,14 +18,14 @@
     <button
       ref="triggerButton"
       type="button"
-      class="flex items-center w-full rounded-full border-2 border-[#FF9500] bg-white px-4 py-2.5 shadow-sm transition-all hover:shadow-md"
+      class="flex items-center w-full rounded-xl border border-line bg-white px-4 py-3 shadow-soft transition-all hover:border-brand-ring focus-within:border-brand"
       :class="isRtlComputed ? 'flex-row-reverse' : 'flex-row'"
       @click.stop="toggleDropdown"
     >
       <!-- Icon -->
       <div class="flex items-center justify-center flex-shrink-0">
         <svg
-          class="w-5 h-5 text-[#FF9500]"
+          class="w-5 h-5 text-brand"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -41,7 +41,7 @@
 
       <!-- Selected label -->
       <div
-        class="flex-1 text-sm sm:text-base font-medium text-[#111827] px-3 truncate"
+        class="flex-1 text-sm sm:text-base font-medium text-ink px-3 truncate"
         :class="isRtlComputed ? 'text-right' : 'text-left'"
       >
         {{ selectedLabel }}
@@ -50,7 +50,7 @@
       <!-- Chevron -->
       <div class="flex items-center justify-center flex-shrink-0">
         <svg
-          class="w-4 h-4 text-[#6B7280] transition-transform"
+          class="w-4 h-4 text-muted transition-transform"
           :class="isOpen ? 'rotate-180' : 'rotate-0'"
           fill="none"
           stroke="currentColor"
@@ -72,7 +72,7 @@
         v-if="isOpen"
         ref="dropdownMenu"
         class="absolute left-0 right-0 w-full mt-2 rounded-2xl bg-white shadow-xl 
-               border border-[#E5E5EA] z-50 overflow-hidden"
+               border border-line z-50 overflow-hidden"
       >
         <button
           v-for="option in options"
@@ -82,8 +82,8 @@
           :class="[
             isRtlComputed ? 'flex-row-reverse text-right' : 'flex-row text-left',
             option.value === localValue
-              ? 'bg-[#FFF7E6] text-[#FF9500] font-semibold'
-              : 'text-[#111827] hover:bg-[#F3F4F6]'
+              ? 'bg-warning-soft text-warning font-semibold'
+              : 'text-ink hover:bg-surface-muted'
           ]"
           @click.stop="selectOption(option.value)"
         >

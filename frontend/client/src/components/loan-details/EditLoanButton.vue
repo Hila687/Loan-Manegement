@@ -1,25 +1,46 @@
-<!-- src/components/loan-details/EditLoanButton.vue -->
 <template>
   <button
+    v-if="auth.isAdmin.value"
+    type="button"
+    class="w-full rounded-lg bg-brand px-4 py-2.5 font-semibold text-white transition-all hover:bg-brand-deep active:scale-95"
     @click="goToEdit"
-    class="w-full px-4 py-2.5 rounded-lg bg-[#007AFF] text-white font-semibold transition-all hover:bg-[#0051D5] active:scale-95"
   >
     {{ t("loanDetails.editButton") }}
   </button>
 </template>
 
 <script setup lang="ts">
-import { useI18n } from "vue-i18n";
-import { useRouter } from "vue-router";
+import {
+  useRouter,
+} from "vue-router";
 
-const { t } = useI18n();
-const router = useRouter();
+import {
+  useI18n,
+} from "vue-i18n";
 
-const props = defineProps<{
-  loanId: string ;
-}>();
+import {
+  useAuth,
+} from "../../composables/useAuth";
 
-const goToEdit = () => {
-  router.push(`/loans/${props.loanId}/edit`);
-};
+const props =
+  defineProps<{
+    loanId: string;
+  }>();
+
+const router =
+  useRouter();
+
+const { t } =
+  useI18n();
+
+const auth =
+  useAuth();
+
+function goToEdit() {
+  router.push(
+    `/loans/${encodeURIComponent(
+      props.loanId
+    )}/edit`
+  );
+}
 </script>

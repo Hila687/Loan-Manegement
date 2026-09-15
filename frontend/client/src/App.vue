@@ -2,7 +2,7 @@
   <div
     :dir="locale === 'he' ? 'rtl' : 'ltr'"
     :class="[
-      'min-h-screen bg-gray-50',
+      'min-h-screen bg-surface-muted',
       locale === 'he' ? 'text-right' : 'text-left'
     ]"
   >

@@ -3,14 +3,14 @@
     :class="[
       'flex items-center gap-4 pb-3',
       highlight
-        ? 'justify-between bg-[#007AFF]/5 rounded-lg px-3 py-2.5 border border-[#007AFF]/20'
-        : 'justify-between border-b border-[#F0F0F0]',
+        ? 'justify-between bg-brand/5 rounded-lg px-3 py-2.5 border border-brand/20'
+        : 'justify-between border-b border-surface-muted',
       isRtl ? 'flex-row-reverse' : 'flex-row',
     ]"
   >
     <!-- Label -->
     <span
-      class="text-sm text-[#6B7280] font-medium flex-shrink-0"
+      class="text-sm text-muted font-medium flex-shrink-0"
       :class="isRtl ? 'text-right' : 'text-left'"
     >
       {{ label }}
@@ -19,9 +19,9 @@
     <!-- Value -->
     <p
       :class="[
-        'text-sm font-semibold text-[#111827] break-words',
+        'text-sm font-semibold text-ink break-words',
         isRtl ? 'text-left' : 'text-right',
-        highlight ? 'text-[#007AFF] text-base' : '',
+        highlight ? 'text-brand text-base' : '',
       ]"
       :dir="isRtl ? 'rtl' : 'ltr'"
     >

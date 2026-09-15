@@ -1,30 +1,70 @@
-import api from "./api"; // axios instance
-import { adaptLoanListItem, adaptLoanDetails } from "../adapters/loanAdapter";
+import api from "./api";
 
-export async function fetchLoans(type: string = "all") {
-  const response = await api.get("/loans/", {
-    params: { type }
-  });
+import type {
+  ApiLoanDetails,
+  ApiLoanListItem,
+  ApiLoanUpdatePayload,
+} from "../types/api-loan";
 
-  return response.data.map((item: any) => adaptLoanListItem(item));
+
+export async function fetchLoans(
+  type:
+    | "all"
+    | "checks"
+    | "standing_order" =
+      "all",
+  search = ""
+): Promise<ApiLoanListItem[]> {
+  const response =
+    await api.get<
+      ApiLoanListItem[]
+    >(
+      "/loans/",
+      {
+        params: {
+          type,
+          ...(search
+            ? {
+                search,
+              }
+            : {}),
+        },
+      }
+    );
+
+  return Array.isArray(
+    response.data
+  )
+    ? response.data
+    : [];
 }
 
-export async function fetchLoanDetails(loanId: string) {
-  const response = await api.get(`/loans/${loanId}/`);
-  return adaptLoanDetails(response.data);
-}
 
-export async function updateLoan(
-  loanId: string,
-  payload: {
-    amount: number;
-    start_date: string;
-    number_of_payments: number;
-    trustee_id: string;
-    status: "ACTIVE" | "CLOSED" | "OVERDUE";
-  }
-) {
-  const response = await api.put(`/loans/${loanId}/`, payload);
+export async function fetchLoanDetails(
+  loanId: string
+): Promise<ApiLoanDetails> {
+  const response =
+    await api.get<ApiLoanDetails>(
+      `/loans/${encodeURIComponent(
+        loanId
+      )}/`
+    );
+
   return response.data;
 }
 
+
+export async function updateLoan(
+  loanId: string,
+  payload: ApiLoanUpdatePayload
+): Promise<ApiLoanDetails> {
+  const response =
+    await api.put<ApiLoanDetails>(
+      `/loans/${encodeURIComponent(
+        loanId
+      )}/`,
+      payload
+    );
+
+  return response.data;
+}

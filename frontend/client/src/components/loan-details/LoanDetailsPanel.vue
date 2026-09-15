@@ -1,168 +1,838 @@
 <template>
-  <div class="rounded-lg border bg-white shadow p-4 space-y-6">
-
-    <TabsSection @tab-change="handleTabChange">
+  <div
+    class="space-y-6 rounded-xl border border-line bg-white p-4 shadow-sm sm:p-5 lg:p-6"
+  >
+    <TabsSection
+      @tab-change="
+        handleTabChange
+      "
+    >
       <template #details>
-
-        <!-- Borrower Info Section -->
+        <!-- Borrower information -->
         <section>
-          <BorrowerInfoSection :borrower="loan.borrower" />
+          <BorrowerInfoSection
+            :borrower="
+              loan.borrower
+            "
+          />
         </section>
 
-        <div class="border-t border-gray-200 my-6" />
+        <div
+          class="my-6 border-t border-line"
+        ></div>
 
-        <!-- Loan Info Section -->
+        <!-- Loan information -->
         <section>
-          <h2 class="text-lg font-semibold mb-2">
-            {{ t("loanDetails.loanInfo") }}
-          </h2>
+          <div
+            class="mb-4 flex flex-wrap items-center justify-between gap-3"
+          >
+            <h2
+              class="text-lg font-semibold text-ink"
+            >
+              {{
+                t(
+                  "loanDetails.loanInfo"
+                )
+              }}
+            </h2>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-700">
-            
-            <!-- Loan Type -->
-            <div>
-              <strong>{{ t("loanDetails.type") }}</strong> {{ loan.type === "checks" ? "צ'קים" : "הוראת קבע" }}
+            <span
+              class="inline-flex rounded-full px-3 py-1 text-xs font-semibold"
+              :class="
+                loanStatusClass
+              "
+            >
+              {{
+                loanStatusLabel
+              }}
+            </span>
+          </div>
+
+          <div
+            class="grid grid-cols-1 gap-3 text-sm text-ink-soft sm:grid-cols-2"
+          >
+            <div
+              class="detail-item"
+            >
+              <span
+                class="detail-label"
+              >
+                {{
+                  t(
+                    "loanDetails.type"
+                  )
+                }}
+              </span>
+
+              <span>
+                {{
+                  loanTypeLabel
+                }}
+              </span>
             </div>
 
-            <!-- Amount -->
-            <div>
-              <strong>{{ t("loanDetails.amount") }}</strong> {{ formatCurrency(loan.amount) }}
+            <div
+              class="detail-item"
+            >
+              <span
+                class="detail-label"
+              >
+                {{
+                  t(
+                    "loanDetails.amount"
+                  )
+                }}
+              </span>
+
+              <span>
+                {{
+                  formatCurrency(
+                    loan.amount
+                  )
+                }}
+              </span>
             </div>
 
-            <!-- Status -->
-            <div>
-              <strong>{{ t("loanDetails.status") }}</strong> {{ loan.status }}
+            <div
+              class="detail-item"
+            >
+              <span
+                class="detail-label"
+              >
+                {{
+                  t(
+                    "loanDetails.startDate"
+                  )
+                }}
+              </span>
+
+              <span>
+                {{
+                  formatDate(
+                    loan.startDate
+                  )
+                }}
+              </span>
             </div>
 
-            <!-- Start Date -->
-            <div>
-              <strong>{{ t("loanDetails.startDate") }}</strong> {{ formatDate(loan.startDate) }}
+            <div
+              class="detail-item"
+            >
+              <span
+                class="detail-label"
+              >
+                {{
+                  t(
+                    "loanDetails.createdAt"
+                  )
+                }}
+              </span>
+
+              <span>
+                {{
+                  formatDate(
+                    loan.createdAt
+                  )
+                }}
+              </span>
             </div>
 
-            <!-- Created At -->
-            <div>
-              <strong>{{ t("loanDetails.createdAt") }}</strong> {{ formatDate(loan.createdAt) }}
-            </div>
+            <!-- Checks -->
+            <template
+              v-if="
+                loan.type ===
+                  'checks' &&
+                checksDetails
+              "
+            >
+              <div
+                class="detail-item"
+              >
+                <span
+                  class="detail-label"
+                >
+                  {{
+                    t(
+                      "loanDetails.numPayments"
+                    )
+                  }}
+                </span>
 
-            <!-- Payment Details (for checks type) -->
-            <template v-if="loan.type === 'checks' && loan.details">
-              <!-- Number of Payments -->
-              <div>
-                <strong>{{ t("loanDetails.numPayments") }}</strong> {{ (loan.details as any).numPayments ?? "-" }}
+                <span>
+                  {{
+                    checksDetails.numPayments
+                  }}
+                </span>
               </div>
 
-              <!-- Predefined Schedule -->
-              <div>
-                <strong>{{ t("loanDetails.predefinedSchedule") }}</strong> {{ (loan.details as any).predefinedSchedule ? t("loanDetails.yes") : t("loanDetails.no") }}
+              <div
+                class="detail-item"
+              >
+                <span
+                  class="detail-label"
+                >
+                  {{
+                    t(
+                      "loanDetails.predefinedSchedule"
+                    )
+                  }}
+                </span>
+
+                <span>
+                  {{
+                    checksDetails
+                      .predefinedSchedule
+                      ? t(
+                          "loanDetails.yes"
+                        )
+                      : t(
+                          "loanDetails.no"
+                        )
+                  }}
+                </span>
               </div>
 
-              <!-- Check Details -->
-              <div>
-                <strong>{{ t("loanDetails.checkDetails") }}</strong> {{ (loan.details as any).checkDetails || "-" }}
+              <div
+                class="detail-item sm:col-span-2"
+              >
+                <span
+                  class="detail-label"
+                >
+                  {{
+                    t(
+                      "loanDetails.checkDetails"
+                    )
+                  }}
+                </span>
+
+                <span>
+                  {{
+                    checksDetails
+                      .checkDetails ||
+                    "—"
+                  }}
+                </span>
               </div>
             </template>
 
-            <!-- Payment Details (for standing order type) -->
-            <template v-else-if="loan.type === 'standing_order' && loan.details">
-              <!-- Monthly Amount -->
-              <div>
-                <strong>{{ t("loanDetails.monthlyAmount") }}</strong> {{ formatCurrency((loan.details as any).monthlyAmount) }}
+            <!-- Standing order -->
+            <template
+              v-if="
+                loan.type ===
+                  'standing_order' &&
+                standingDetails
+              "
+            >
+              <div
+                class="detail-item"
+              >
+                <span
+                  class="detail-label"
+                >
+                  {{
+                    t(
+                      "loanDetails.numPayments"
+                    )
+                  }}
+                </span>
+
+                <span>
+                  {{
+                    standingDetails
+                      .numPayments
+                  }}
+                </span>
               </div>
 
-              <!-- Charge Day -->
-              <div>
-                <strong>{{ t("loanDetails.chargeDay") }}</strong> {{ (loan.details as any).chargeDay ?? "-" }}
+              <div
+                class="detail-item"
+              >
+                <span
+                  class="detail-label"
+                >
+                  {{
+                    t(
+                      "loanDetails.monthlyAmount"
+                    )
+                  }}
+                </span>
+
+                <span>
+                  {{
+                    formatCurrency(
+                      standingDetails
+                        .monthlyAmount
+                    )
+                  }}
+                </span>
               </div>
 
-              <!-- Stop Date -->
-              <div>
-                <strong>{{ t("loanDetails.stopDate") }}</strong> {{ (loan.details as any).stopDate || "-" }}
+              <div
+                class="detail-item"
+              >
+                <span
+                  class="detail-label"
+                >
+                  {{
+                    t(
+                      "loanDetails.chargeDay"
+                    )
+                  }}
+                </span>
+
+                <span>
+                  {{
+                    standingDetails
+                      .chargeDay
+                  }}
+                </span>
+              </div>
+
+              <div
+                class="detail-item"
+              >
+                <span
+                  class="detail-label"
+                >
+                  {{
+                    t(
+                      "loanDetails.stopDate"
+                    )
+                  }}
+                </span>
+
+                <span>
+                  {{
+                    standingDetails
+                      .stopDate
+                      ? formatDate(
+                          standingDetails
+                            .stopDate
+                        )
+                      : "—"
+                  }}
+                </span>
               </div>
             </template>
-
           </div>
         </section>
 
-        <div class="border-t border-gray-200 my-6" />
+        <div
+          class="my-6 border-t border-line"
+        ></div>
 
-        <!-- Trustee Section -->
-        <section v-if="loan.trustee">
-          <h2 class="text-lg font-semibold mb-2">
-            {{ t("loanDetails.trustee") }}
+        <!-- Signed form -->
+        <section>
+          <h2
+            class="text-lg font-semibold text-ink"
+          >
+            {{
+              signedFormTitle
+            }}
           </h2>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-700">
-            
-            <!-- Name -->
-            <div>
-              <strong>{{ t("loanDetails.name") }}</strong> {{ loan.trustee.name || "-" }}
+          <div
+            v-if="
+              loan.formFileUrl
+            "
+            class="mt-3 flex flex-col gap-3 rounded-xl border border-brand/20 bg-brand/5 p-4 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <div
+              class="flex items-start gap-3"
+            >
+              <div
+                class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-white text-brand shadow-sm"
+              >
+                <svg
+                  class="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M7 3h7l5 5v13H7a2 2 0 01-2-2V5a2 2 0 012-2zm7 0v6h6"
+                  />
+                </svg>
+              </div>
+
+              <div>
+                <p
+                  class="text-sm font-semibold text-ink"
+                >
+                  {{
+                    signedFormAvailableLabel
+                  }}
+                </p>
+
+                <p
+                  class="mt-1 text-xs text-muted"
+                >
+                  {{
+                    signedFormSecurityLabel
+                  }}
+                </p>
+              </div>
             </div>
 
-            <!-- Phone -->
-            <div>
-              <strong>{{ t("loanDetails.phone") }}</strong> <span dir="ltr" class="text-right inline-block w-full sm:w-auto text-left">{{ loan.trustee.phone || "-" }}</span>
-            </div>
-
-            <!-- Community -->
-            <div>
-              <strong>{{ t("loanDetails.community") }}</strong> {{ loan.trustee.community || "-" }}
-            </div>
-
-            <!-- Notes -->
-            <div>
-              <strong>{{ t("loanDetails.notes") }}</strong> 
-              <span v-if="loan.trustee.notes" class="bg-yellow-50 px-2 py-0.5 rounded text-gray-800">{{ loan.trustee.notes }}</span>
-              <span v-else>-</span>
-            </div>
-
+            <a
+              :href="
+                loan.formFileUrl
+              "
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex h-10 items-center justify-center rounded-lg bg-brand px-4 text-sm font-semibold text-white transition hover:bg-brand-deep"
+            >
+              {{
+                signedFormOpenLabel
+              }}
+            </a>
           </div>
+
+          <p
+            v-else
+            class="mt-3 rounded-xl border border-line bg-canvas p-4 text-sm text-muted"
+          >
+            {{
+              signedFormMissingLabel
+            }}
+          </p>
         </section>
 
+        <template
+          v-if="
+            loan.trustee
+          "
+        >
+          <div
+            class="my-6 border-t border-line"
+          ></div>
+
+          <!-- Trustee information -->
+          <section>
+            <h2
+              class="text-lg font-semibold text-ink"
+            >
+              {{
+                t(
+                  "loanDetails.trustee"
+                )
+              }}
+            </h2>
+
+            <div
+              class="mt-3 grid grid-cols-1 gap-3 text-sm text-ink-soft sm:grid-cols-2"
+            >
+              <div
+                class="detail-item"
+              >
+                <span
+                  class="detail-label"
+                >
+                  {{
+                    t(
+                      "loanDetails.name"
+                    )
+                  }}
+                </span>
+
+                <span>
+                  {{
+                    loan.trustee
+                      .name ||
+                    "—"
+                  }}
+                </span>
+              </div>
+
+              <div
+                class="detail-item"
+              >
+                <span
+                  class="detail-label"
+                >
+                  {{
+                    t(
+                      "loanDetails.phone"
+                    )
+                  }}
+                </span>
+
+                <span dir="ltr">
+                  {{
+                    loan.trustee
+                      .phone ||
+                    "—"
+                  }}
+                </span>
+              </div>
+
+              <div
+                class="detail-item"
+              >
+                <span
+                  class="detail-label"
+                >
+                  {{
+                    t(
+                      "loanDetails.community"
+                    )
+                  }}
+                </span>
+
+                <span>
+                  {{
+                    loan.trustee
+                      .community ||
+                    "—"
+                  }}
+                </span>
+              </div>
+
+              <div
+                class="detail-item"
+              >
+                <span
+                  class="detail-label"
+                >
+                  {{
+                    t(
+                      "loanDetails.notes"
+                    )
+                  }}
+                </span>
+
+                <span>
+                  {{
+                    loan.trustee
+                      .notes ||
+                    "—"
+                  }}
+                </span>
+              </div>
+            </div>
+          </section>
+        </template>
       </template>
 
       <template #schedule>
-        <PaymentScheduleTab :loanId="loan.id" :active="activeTab === 'schedule'" />
+        <PaymentScheduleTab
+          :loan-id="
+            loan.id
+          "
+          :active="
+            activeTab ===
+            'schedule'
+          "
+        />
       </template>
-
     </TabsSection>
 
-    <div class="pt-4 border-t flex justify-end">
-      <EditLoanButton :loanId="loan.id" />
+    <div
+      v-if="
+        auth.isAdmin.value
+      "
+      class="border-t border-line pt-4"
+    >
+      <EditLoanButton
+        :loan-id="
+          loan.id
+        "
+      />
     </div>
-
   </div>
 </template>
 
 <script setup lang="ts">
-import type { Loan } from "../../types/loan";
-import { useI18n } from "vue-i18n";
-import { ref } from "vue";
+import {
+  computed,
+  ref,
+} from "vue";
 
-import BorrowerInfoSection from "./BorrowerInfoSection.vue";
-import TabsSection from "./TabsSection.vue";
-import EditLoanButton from "./EditLoanButton.vue";
-import PaymentScheduleTab from "./PaymentScheduleTab.vue";
+import {
+  useI18n,
+} from "vue-i18n";
 
-const { t } = useI18n();
-const activeTab = ref<"details" | "schedule">("details");
+import {
+  useAuth,
+} from "../../composables/useAuth";
 
-defineProps<{
-  loan: Loan;
-}>();
+import type {
+  Loan,
+  LoanChecksDetails,
+  LoanStandingOrderDetails,
+} from "../../types/loan";
 
-function formatCurrency(amount: number) {
-  return new Intl.NumberFormat("he-IL", {
-    style: "currency",
-    currency: "ILS",
-    maximumFractionDigits: 0,
-  }).format(amount);
+import BorrowerInfoSection
+  from "./BorrowerInfoSection.vue";
+
+import TabsSection
+  from "./TabsSection.vue";
+
+import EditLoanButton
+  from "./EditLoanButton.vue";
+
+import PaymentScheduleTab
+  from "./PaymentScheduleTab.vue";
+
+const props =
+  defineProps<{
+    loan: Loan;
+  }>();
+
+const {
+  t,
+  locale,
+} = useI18n();
+
+const auth =
+  useAuth();
+
+const activeTab =
+  ref<
+    | "details"
+    | "schedule"
+  >(
+    "details"
+  );
+
+const isHebrew =
+  computed(
+    () =>
+      locale.value ===
+      "he"
+  );
+
+const loanTypeLabel =
+  computed(() =>
+    props.loan.type ===
+    "checks"
+      ? (
+          isHebrew.value
+            ? "צ'קים"
+            : "Checks"
+        )
+      : (
+          isHebrew.value
+            ? "הוראת קבע"
+            : "Standing order"
+        )
+  );
+
+const loanStatusLabel =
+  computed(() => {
+    if (
+      props.loan.status ===
+      "OVERDUE"
+    ) {
+      return isHebrew.value
+        ? "באיחור"
+        : "Overdue";
+    }
+
+    if (
+      props.loan.status ===
+      "CLOSED"
+    ) {
+      return isHebrew.value
+        ? "סגורה"
+        : "Closed";
+    }
+
+    return isHebrew.value
+      ? "פעילה"
+      : "Active";
+  });
+
+const loanStatusClass =
+  computed(() => {
+    if (
+      props.loan.status ===
+      "OVERDUE"
+    ) {
+      return (
+        "bg-danger/10 " +
+        "text-danger"
+      );
+    }
+
+    if (
+      props.loan.status ===
+      "CLOSED"
+    ) {
+      return (
+        "bg-success/10 " +
+        "text-success-deep"
+      );
+    }
+
+    return (
+      "bg-brand/10 " +
+      "text-brand"
+    );
+  });
+
+const checksDetails =
+  computed<LoanChecksDetails | null>(() => {
+    if (
+      props.loan.type !==
+      "checks"
+    ) {
+      return null;
+    }
+
+    const details =
+      props.loan.details;
+
+    if (
+      !(
+        "predefinedSchedule"
+        in details
+      )
+    ) {
+      return null;
+    }
+
+    return details;
+  });
+
+
+const standingDetails =
+  computed<LoanStandingOrderDetails | null>(() => {
+    if (
+      props.loan.type !==
+      "standing_order"
+    ) {
+      return null;
+    }
+
+    const details =
+      props.loan.details;
+
+    if (
+      !(
+        "monthlyAmount"
+        in details
+      )
+    ) {
+      return null;
+    }
+
+    return details;
+  });
+
+const signedFormTitle =
+  computed(() =>
+    isHebrew.value
+      ? "טופס הלוואה חתום"
+      : "Signed loan form"
+  );
+
+const signedFormAvailableLabel =
+  computed(() =>
+    isHebrew.value
+      ? "המסמך החתום שמור במערכת"
+      : "Signed document is stored"
+  );
+
+const signedFormSecurityLabel =
+  computed(() =>
+    isHebrew.value
+      ? "המסמך נפתח דרך נתיב מוגן ודורש משתמש מורשה."
+      : "The document is served through a protected authorized endpoint."
+  );
+
+const signedFormOpenLabel =
+  computed(() =>
+    isHebrew.value
+      ? "פתיחת המסמך"
+      : "Open document"
+  );
+
+const signedFormMissingLabel =
+  computed(() =>
+    isHebrew.value
+      ? "לא נמצא מסמך חתום עבור הלוואה זו."
+      : "No signed document is stored for this loan."
+  );
+
+function formatCurrency(
+  amount: number
+) {
+  return new Intl.NumberFormat(
+    isHebrew.value
+      ? "he-IL"
+      : "en-US",
+    {
+      style: "currency",
+      currency: "ILS",
+      maximumFractionDigits: 2,
+    }
+  ).format(
+    Number(
+      amount || 0
+    )
+  );
 }
 
-function formatDate(date?: string) {
-  return date ? new Date(date).toLocaleDateString("he-IL") : "-";
+function formatDate(
+  date?: string
+) {
+  if (!date) {
+    return "—";
+  }
+
+  const normalized =
+    date.length === 10
+      ? `${date}T00:00:00`
+      : date;
+
+  const value =
+    new Date(
+      normalized
+    );
+
+  if (
+    Number.isNaN(
+      value.getTime()
+    )
+  ) {
+    return date;
+  }
+
+  return value.toLocaleDateString(
+    isHebrew.value
+      ? "he-IL"
+      : "en-US"
+  );
 }
 
-function handleTabChange(tab: "details" | "schedule") {
-  activeTab.value = tab;
+function handleTabChange(
+  tab:
+    | "details"
+    | "schedule"
+) {
+  activeTab.value =
+    tab;
 }
 </script>
+
+<style scoped>
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  border-radius: 0.5rem;
+  background: var(--color-canvas);
+  padding: 0.75rem;
+}
+
+.detail-label {
+  color: var(--color-muted);
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 500;
+}
+</style>

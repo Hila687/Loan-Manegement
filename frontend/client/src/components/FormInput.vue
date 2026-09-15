@@ -94,11 +94,11 @@ defineExpose({ focus });
     <p
       :dir="labelDir"
       :class="labelAlign"
-      class="pb-1.5 xl:pb-2 text-sm font-medium leading-normal text-[#6B7280]"
+      class="pb-1.5 xl:pb-2 text-sm font-medium leading-normal text-muted"
     >
       <span
         v-if="required"
-        :class="hasError ? 'text-[#FF3B30]' : 'text-[#6B7280]'"
+        :class="hasError ? 'text-danger' : 'text-muted'"
         >*</span
       >
       {{ label }}
@@ -109,7 +109,7 @@ defineExpose({ focus });
       <span
         v-if="icon"
         :class="[
-          'pointer-events-none absolute inset-y-0 flex items-center text-[#6B7280]',
+          'pointer-events-none absolute inset-y-0 flex items-center text-muted',
           iconDir,
         ]"
       >
@@ -177,13 +177,13 @@ defineExpose({ focus });
         :step="step"
         :class="[
           'form-input flex h-11 xl:h-12 w-full min-w-0 resize-none overflow-hidden rounded-lg border',
-          'bg-white text-base font-normal leading-normal text-black placeholder:text-[#6B7280]',
+          'bg-white text-base font-normal leading-normal text-black placeholder:text-muted',
           'focus:outline-0 focus:ring-2',
           paddingClass,
           inputTextDir,
           hasError
-            ? 'border-[#FF3B30] focus:border-[#FF3B30] focus:ring-[#FF3B30]/20'
-            : 'border-[#E5E5EA] focus:border-[#007AFF] focus:ring-[#007AFF]/20',
+            ? 'border-danger focus:border-danger focus:ring-danger/20'
+            : 'border-line focus:border-brand focus:ring-brand/20',
         ]"
         @input="handleInput"
         @focus="emit('focus')"
@@ -195,7 +195,7 @@ defineExpose({ focus });
     <!-- Error Message -->
     <p
       v-if="hasError && errorMessage"
-      class="mt-1 text-xs text-[#FF3B30]"
+      class="mt-1 text-xs text-danger"
     >
       {{ errorMessage }}
     </p>

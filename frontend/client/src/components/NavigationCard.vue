@@ -5,8 +5,8 @@
       'group relative flex flex-col overflow-hidden rounded-2xl border-2 transition-all duration-300',
       'hover:scale-[1.02] hover:shadow-2xl active:scale-[0.98]',
       variant === 'primary'
-        ? 'border-[#007AFF] bg-gradient-to-br from-[#007AFF] to-[#0051D5] text-white shadow-xl shadow-[#007AFF]/30'
-        : 'border-[#E5E5EA] bg-white text-[#111827] hover:border-[#007AFF]/50 hover:shadow-[#007AFF]/10',
+        ? 'border-brand bg-gradient-to-br from-brand to-brand-deep text-white shadow-xl shadow-brand/30'
+        : 'border-line bg-white text-ink hover:border-brand/50 hover:shadow-brand/10',
     ]"
   >
     <!-- Animated background decoration -->
@@ -15,7 +15,7 @@
         'absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100',
         variant === 'primary'
           ? 'bg-gradient-to-br from-white/10 to-transparent'
-          : 'bg-gradient-to-br from-[#007AFF]/5 to-transparent',
+          : 'bg-gradient-to-br from-brand/5 to-transparent',
       ]"
     />
 
@@ -38,7 +38,7 @@
           'group-hover:scale-110 group-hover:rotate-3',
           variant === 'primary'
             ? 'bg-white/20 backdrop-blur-sm shadow-lg'
-            : 'bg-[#007AFF]/10',
+            : 'bg-brand/10',
         ]"
       >
         <!-- Icon SVG based on iconType prop -->
@@ -46,7 +46,7 @@
           v-if="iconType === 'plus'"
           :class="[
             'w-7 h-7 md:w-8 md:h-8 transition-transform duration-300 group-hover:scale-110',
-            variant === 'primary' ? 'text-white' : 'text-[#007AFF]',
+            variant === 'primary' ? 'text-white' : 'text-brand',
           ]"
           fill="none"
           stroke="currentColor"
@@ -64,7 +64,7 @@
           v-else-if="iconType === 'list'"
           :class="[
             'w-7 h-7 md:w-8 md:h-8 transition-transform duration-300 group-hover:scale-110',
-            variant === 'primary' ? 'text-white' : 'text-[#007AFF]',
+            variant === 'primary' ? 'text-white' : 'text-brand',
           ]"
           fill="none"
           stroke="currentColor"
@@ -82,7 +82,7 @@
           v-else-if="iconType === 'dashboard'"
           :class="[
             'w-7 h-7 md:w-8 md:h-8 transition-transform duration-300 group-hover:scale-110',
-            variant === 'primary' ? 'text-white' : 'text-[#007AFF]',
+            variant === 'primary' ? 'text-white' : 'text-brand',
           ]"
           fill="none"
           stroke="currentColor"
@@ -100,7 +100,7 @@
           v-else
           :class="[
             'w-7 h-7 md:w-8 md:h-8 transition-transform duration-300 group-hover:scale-110',
-            variant === 'primary' ? 'text-white' : 'text-[#007AFF]',
+            variant === 'primary' ? 'text-white' : 'text-brand',
           ]"
           fill="none"
           stroke="currentColor"
@@ -119,7 +119,7 @@
       <h3
         :class="[
           'text-xl md:text-2xl font-bold mb-2 transition-colors',
-          variant === 'primary' ? 'text-white' : 'text-[#111827] group-hover:text-[#007AFF]',
+          variant === 'primary' ? 'text-white' : 'text-ink group-hover:text-brand',
         ]"
       >
         {{ title }}
@@ -131,7 +131,7 @@
           'text-sm md:text-base flex-1 leading-relaxed',
           variant === 'primary'
             ? 'text-white/90'
-            : 'text-[#6B7280] group-hover:text-[#111827]',
+            : 'text-muted group-hover:text-ink',
         ]"
       >
         {{ description }}
@@ -144,7 +144,7 @@
             'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all',
             variant === 'primary'
               ? 'bg-white/20 text-white backdrop-blur-sm group-hover:bg-white/30'
-              : 'bg-[#34C759]/10 text-[#34C759] group-hover:bg-[#34C759]/20',
+              : 'bg-success/10 text-success group-hover:bg-success/20',
           ]"
         >
           <svg
@@ -170,7 +170,7 @@
             'group-hover:scale-110',
             variant === 'primary'
               ? 'bg-white/20 group-hover:bg-white/30 backdrop-blur-sm'
-              : 'bg-[#007AFF]/10 group-hover:bg-[#007AFF]/20',
+              : 'bg-brand/10 group-hover:bg-brand/20',
           ]"
         >
           <svg
@@ -179,7 +179,7 @@
               isRTL
                 ? 'group-hover:-translate-x-1'
                 : 'group-hover:translate-x-1',
-              variant === 'primary' ? 'text-white' : 'text-[#007AFF]',
+              variant === 'primary' ? 'text-white' : 'text-brand',
             ]"
             fill="none"
             stroke="currentColor"
@@ -203,7 +203,7 @@
     <!-- Bottom accent line (secondary variant only) -->
     <div
       v-if="variant === 'secondary'"
-      class="h-1 w-0 bg-gradient-to-r from-[#007AFF] to-[#0051D5] transition-all duration-500 group-hover:w-full"
+      class="h-1 w-0 bg-gradient-to-r from-brand to-brand-deep transition-all duration-500 group-hover:w-full"
     />
   </router-link>
 </template>

@@ -18,6 +18,18 @@
       "viewLoans": {
         "title": "View active loans",
         "description": "Browse and filter all open loans in the system by borrower, trustee, and status."
+      },
+      "communityLoans": {
+        "title": "Community loans",
+        "description": "View loans and borrowers assigned to your community."
+      },
+      "myLoan": {
+        "title": "My loan",
+        "description": "View your loan details, status, and payment schedule."
+      },
+      "viewDonations": {
+        "title": "My donations",
+        "description": "View your donation history and contribution summary."
       }
     },
     "quickActions": {
@@ -26,7 +38,9 @@
       "reports": "Reports",
       "reportsDesc": "Generate summaries by borrower, trustee, and date range.",
       "settings": "Settings",
-      "settingsDesc": "Manage system configuration, localization, and permissions."
+      "settingsDesc": "Manage system configuration, localization, and permissions.",
+      "reminders": "Payment reminders",
+      "remindersDesc": "Configure automatic SMS and WhatsApp reminders."
     },
     "recentActivity": {
       "title": "Recent activity",
@@ -39,20 +53,36 @@
     "activeLoansCardDescription": "View the list of all open loans, including borrower, trustee, and amount.",
     "createLoanCardTitle": "Create New Loan",
     "createLoanCardDescription": "Open a new loan for a borrower, including trustee details and repayment terms.",
-    "footerNote": "A dashboard with charts, alerts, and system insights will appear here in future versions."
+    "footerNote": "A dashboard with charts, alerts, and system insights will appear here in future versions.",
+    "roleMessages": {
+      "admin": "Manage loans, users, donations, reports, and system activity from one place.",
+      "trustee": "View borrowers and loans that belong to your community.",
+      "borrower": "View your loan details and payment schedule.",
+      "donor": "View your donations and general Gemach summaries."
+    },
+    "messages": {
+      "summaryLoadError": "Some summary information could not be loaded."
+    }
   },
-
   "nav": {
     "home": "Home",
     "createLoan": "Create Loan",
-    "activeLoans": "Active Loans",
-    "dashboard": "Dashboard"
+    "activeLoans": "Loans",
+    "dashboard": "Dashboard",
+    "borrowers": "Borrowers",
+    "trustees": "Trustees",
+    "donors": "Donors",
+    "donations": "Donations",
+    "reports": "Reports",
+    "reminders": "Reminders",
+    "admins": "Administrators",
+    "logout": "Log out",
+    "menu": "Menu",
+    "closeMenu": "Close menu"
   },
-
   "app": {
     "title": "Gemach"
   },
-
   "loanForm": {
     "title": "New Loan",
     "sections": {
@@ -79,14 +109,15 @@
       "borrowerAddress": "Address",
       "borrowerAddressPlaceholder": "Enter address",
       "trustee": "Trustee",
-      "trusteePlaceholder": "Select or type trustee",
+      "trusteePlaceholder": "Search trustee by name",
+      "signedForm": "Signed Loan Agreement",
+      "standingOrderForm": "Standing Order Authorization Form",
       "amount": "Loan Amount",
       "amountPlaceholder": "0.00",
       "startDate": "Start Date",
       "startDatePlaceholder": "Select date",
       "numPayments": "Number of Payments",
       "numPaymentsPlaceholder": "e.g., 25",
-      "signedForm": "Signed Form",
       "loanType": "Loan Type"
     },
     "loanTypes": {
@@ -116,7 +147,8 @@
       "fileRequired": "File is required. Please upload the signed form",
       "uploadFailed": "Upload failed. Try again",
       "success": "Loan created successfully",
-      "genericError": "Error creating loan"
+      "genericError": "Error creating loan",
+      "standingOrderFormRequired": "Standing order authorization form is required"
     },
     "buttons": {
       "clearForm": "Clear Form",
@@ -124,7 +156,6 @@
       "submitting": "Submitting..."
     }
   },
-
   "usersList": {
     "title": "API Test – Users List",
     "loading": "Loading data...",
@@ -145,13 +176,13 @@
     },
     "roles": {
       "admin": "Admin"
-    }
+    },
+    "idLabel": "ID",
+    "noRole": "No role"
   },
-
   "loanList": {
     "title": "Active loans",
     "subtitle": "View and manage all active loans in the Gemach, with search, filters, and quick actions.",
-
     "stats": {
       "totalLoans": "Total loans",
       "totalAmount": "Total outstanding amount",
@@ -159,13 +190,11 @@
       "active": "Filters applied",
       "none": "No filters"
     },
-
     "search": {
       "placeholder": "Search by borrower, trustee, phone, or email"
     },
     "showDetails": "Show details",
     "hideDetails": "Hide details",
-
     "table": {
       "borrower": "Borrower",
       "phone": "Phone",
@@ -174,21 +203,17 @@
       "amount": "Amount",
       "type": "Loan type"
     },
-
     "types": {
       "checks": "Checks",
       "standingOrders": "Standing orders"
     },
-
     "filters": {
       "title": "Filter"
     },
-
     "actions": {
       "refresh": "Refresh loans",
       "retry": "Try again"
     },
-
     "messages": {
       "loading": "Loading loans...",
       "noLoans": "No loans to display",
@@ -198,74 +223,70 @@
       "error": "There was a problem loading the loans."
     }
   },
-
-"loanDetails": {
+  "loanDetails": {
     "title": "Loan Details",
     "tabDetails": "Details",
     "tabSchedule": "Payment Schedule",
-
     "borrowerInfo": "Borrower Information",
     "loanInfo": "Loan Information",
     "trustee": "Trustee",
     "additionalDetails": "Additional Details:",
-
     "name": "Name:",
     "phone": "Phone:",
     "email": "Email:",
     "address": "Address:",
     "idNumber": "ID Number:",
     "createdAt": "Created At:",
-
     "loanId": "Loan ID:",
     "type": "Loan Type:",
     "amount": "Loan Amount:",
     "status": "Status:",
     "startDate": "Start Date:",
-
     "community": "Community:",
     "notes": "Notes:",
-
-    "editButton": "Edit Loan"
+    "editButton": "Edit Loan",
+    "notFound": "Loan not found.",
+    "checkDetails": "Check details:",
+    "numPayments": "Number of payments:",
+    "predefinedSchedule": "Predefined schedule:",
+    "monthlyAmount": "Monthly amount:",
+    "chargeDay": "Charge day:",
+    "stopDate": "Stop date:",
+    "yes": "Yes",
+    "no": "No"
   },
-
-"payments": {
-  "loading": "Loading payment schedule...",
-  "error": "Failed to load payment schedule.",
-  "empty": "No payments found.",
-  "openToLoad": "Open the tab to load the payment schedule.",
-
-  "summary": {
-    "totalAmount": "Total Amount",
-    "paidAmount": "Paid",
-    "remainingAmount": "Remaining",
-    "paymentsProgress": "Payments"
+  "payments": {
+    "loading": "Loading payment schedule...",
+    "error": "Failed to load payment schedule.",
+    "empty": "No payments found.",
+    "openToLoad": "Open the tab to load the payment schedule.",
+    "summary": {
+      "totalAmount": "Total Amount",
+      "paidAmount": "Paid",
+      "remainingAmount": "Remaining",
+      "paymentsProgress": "Payments"
+    },
+    "table": {
+      "dueDate": "Due Date",
+      "amountDue": "Amount Due",
+      "amountPaid": "Amount Paid",
+      "status": "Status"
+    },
+    "status": {
+      "paid": "Paid",
+      "pending": "Pending"
+    }
   },
-
-  "table": {
-    "dueDate": "Due Date",
-    "amountDue": "Amount Due",
-    "amountPaid": "Amount Paid",
-    "status": "Status"
-  },
-
-  "status": {
-    "paid": "Paid",
-    "pending": "Pending"
-  }
-},
-
   "loan": {
     "filterByType": "Filter by loan type",
     "all": "All loan types",
     "checks": "Checks",
     "standingOrders": "Standing orders",
-
     "types": {
       "checks": "Checks",
       "standingOrder": "Standing Order"
     }
   },
-
   "editLoan": {
     "title": "Edit Loan",
     "cardTitle": "Edit Existing Loan",
@@ -290,9 +311,103 @@
       "save": "Save"
     }
   },
-
+  "common": {
+    "remove": "Remove",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "edit": "Edit",
+    "delete": "Delete",
+    "refresh": "Refresh",
+    "retry": "Retry",
+    "loading": "Loading...",
+    "search": "Search",
+    "all": "All",
+    "yes": "Yes",
+    "no": "No",
+    "back": "Back"
+  },
+  "roles": {
+    "admin": "Administrator",
+    "trustee": "Trustee",
+    "borrower": "Borrower",
+    "donor": "Donor"
+  },
   "lang": {
     "he": "עברית",
     "en": "English"
+  },
+  "auth": {
+    "login": {
+      "organization": "Gemach Chasdei Yaakov",
+      "title": "Sign in",
+      "subtitle": "Sign in to continue to the Gemach management system.",
+      "username": "Username",
+      "password": "Password",
+      "submit": "Sign in",
+      "loading": "Signing in...",
+      "required": "Username and password are required.",
+      "invalid": "Invalid username or password.",
+      "tooManyAttempts": "Too many sign-in attempts. Please try again later.",
+      "securityNote": "Your session is protected and access is limited according to your role."
+    },
+    "changePassword": {
+      "title": "Change password",
+      "subtitle": "Create a new password before continuing.",
+      "current": "Current password",
+      "new": "New password",
+      "confirm": "Confirm new password",
+      "submit": "Save password",
+      "saving": "Saving...",
+      "required": "All password fields are required.",
+      "notMatch": "The new passwords do not match.",
+      "samePassword": "The new password must be different from the current password.",
+      "error": "Failed to change password."
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "A current overview of loans, payments, donations, and Gemach activity.",
+    "messages": {
+      "loadError": "Failed to load dashboard data."
+    },
+    "cards": {
+      "activeLoans": "Active loans",
+      "overdueLoans": "Overdue loans",
+      "closedLoans": "Closed loans",
+      "activeAmount": "Active loan amount",
+      "totalDonations": "Total donations",
+      "myDonations": "My donations"
+    },
+    "activeAmountDescription": "Total amount currently held in active loans.",
+    "donationsDescription": "Total donations recorded in the system.",
+    "people": {
+      "borrowers": "Borrowers",
+      "trustees": "Trustees",
+      "donors": "Donors"
+    },
+    "status": {
+      "active": "Active",
+      "overdue": "Overdue",
+      "closed": "Closed"
+    },
+    "statusChart": {
+      "title": "Loans by status",
+      "subtitle": "Distribution of active, overdue, and closed loans.",
+      "loans": "loans"
+    },
+    "communityChart": {
+      "title": "Loans by community",
+      "subtitle": "Active loan distribution across trustee communities."
+    },
+    "trustee": {
+      "title": "Community overview",
+      "community": "Community",
+      "borrowers": "Borrowers in your community"
+    },
+    "donor": {
+      "title": "Donation overview",
+      "subtitle": "Your donation activity and the general Gemach summary."
+    }
   }
 }

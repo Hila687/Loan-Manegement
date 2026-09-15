@@ -1,122 +1,357 @@
-// src/services/loanService.ts
 import api from "./api";
+
 import {
   LoanType,
-  type LoanListItem,
   type Loan,
+  type LoanChecksDetails,
   type LoanFilters,
+  type LoanListItem,
+  type LoanStandingOrderDetails,
   type LoanStatus,
-  type LoanDetailsUnion,
 } from "../types/loan";
-import type { ApiLoanListItem, ApiLoanDetails } from "../types/api-loan";
 
-function mapLoanListItem(apiLoan: ApiLoanListItem): LoanListItem {
+import type {
+  ApiLoanDetails,
+  ApiLoanListItem,
+} from "../types/api-loan";
+
+
+function mapBorrower(
+  apiLoan: ApiLoanListItem
+) {
   return {
-    id: apiLoan.loan_id,
-    type:
-      apiLoan.loan_type === "checks"
-        ? LoanType.CHECKS
-        : LoanType.STANDING_ORDER,
-    status: apiLoan.status as LoanStatus,
-    amount: Number(apiLoan.amount),
-    startDate: apiLoan.start_date,
+    name:
+      apiLoan.borrower
+        ?.name || "",
 
-    borrower: {
-      name: apiLoan.borrower.name,
-      phone: apiLoan.borrower.phone,
-      email: apiLoan.borrower.email ?? undefined,
-      address: apiLoan.borrower.address,
-      idNumber: apiLoan.borrower.id_number,
-      createdAt: apiLoan.borrower.created_at,
-    },
+    phone:
+      apiLoan.borrower
+        ?.phone || "",
 
-    trustee: apiLoan.trustee
-      ? {
-          name: apiLoan.trustee.name,
-          community: apiLoan.trustee.community,
-          phone: apiLoan.trustee.phone,
-          notes: apiLoan.trustee.notes,
-        }
-      : null,
+    email:
+      apiLoan.borrower
+        ?.email || undefined,
+
+    address:
+      apiLoan.borrower
+        ?.address || undefined,
+
+    idNumber:
+      apiLoan.borrower
+        ?.id_number ||
+      undefined,
+
+    createdAt:
+      apiLoan.borrower
+        ?.created_at ||
+      undefined,
   };
 }
 
-function mapLoanDetails(apiLoan: ApiLoanDetails): Loan {
-  let details: LoanDetailsUnion = {};
 
-  if ("num_payments" in apiLoan.details) {
+function mapTrustee(
+  apiLoan: ApiLoanListItem
+) {
+  if (!apiLoan.trustee) {
+    return null;
+  }
+
+  return {
+    name:
+      apiLoan.trustee
+        .name || "",
+
+    community:
+      apiLoan.trustee
+        .community ||
+      undefined,
+
+    phone:
+      apiLoan.trustee
+        .phone ||
+      undefined,
+
+    notes:
+      apiLoan.trustee
+        .notes ??
+      null,
+  };
+}
+
+
+function mapLoanType(
+  value:
+    | "checks"
+    | "standing_order"
+): LoanType {
+  return value === "checks"
+    ? LoanType.CHECKS
+    : LoanType.STANDING_ORDER;
+}
+
+
+function mapLoanStatus(
+  value: string
+): LoanStatus {
+  if (
+    value === "OVERDUE"
+  ) {
+    return "OVERDUE";
+  }
+
+  if (
+    value === "CLOSED"
+  ) {
+    return "CLOSED";
+  }
+
+  return "ACTIVE";
+}
+
+
+function mapLoanListItem(
+  apiLoan: ApiLoanListItem
+): LoanListItem {
+  return {
+    id:
+      apiLoan.loan_id,
+
+    type:
+      mapLoanType(
+        apiLoan.loan_type
+      ),
+
+    status:
+      mapLoanStatus(
+        apiLoan.status
+      ),
+
+    amount:
+      Number(
+        apiLoan.amount ||
+          0
+      ),
+
+    startDate:
+      apiLoan.start_date,
+
+    borrower:
+      mapBorrower(
+        apiLoan
+      ),
+
+    trustee:
+      mapTrustee(
+        apiLoan
+      ),
+  };
+}
+
+
+function mapLoanDetails(
+  apiLoan: ApiLoanDetails
+): Loan {
+  let details:
+    | LoanChecksDetails
+    | LoanStandingOrderDetails;
+
+  if (
+    apiLoan.loan_type ===
+    "checks"
+  ) {
+    const apiDetails =
+      apiLoan.details;
+
     details = {
-      numPayments: apiLoan.details.num_payments,
-      predefinedSchedule: apiLoan.details.predefined_schedule,
-      checkDetails: apiLoan.details.check_details,
+      numPayments:
+        Number(
+          "num_payments"
+            in apiDetails
+            ? apiDetails
+                .num_payments
+            : 0
+        ),
+
+      predefinedSchedule:
+        "predefined_schedule"
+          in apiDetails
+          ? Boolean(
+              apiDetails
+                .predefined_schedule
+            )
+          : false,
+
+      checkDetails:
+        "check_details"
+          in apiDetails
+          ? apiDetails
+              .check_details
+          : null,
     };
-  } else if ("monthly_amount" in apiLoan.details) {
+  } else {
+    const apiDetails =
+      apiLoan.details;
+
     details = {
-      monthlyAmount: Number(apiLoan.details.monthly_amount),
-      chargeDay: apiLoan.details.charge_day,
-      stopDate: apiLoan.details.stop_date,
+      numPayments:
+        Number(
+          "num_payments"
+            in apiDetails
+            ? apiDetails
+                .num_payments
+            : 0
+        ),
+
+      monthlyAmount:
+        Number(
+          "monthly_amount"
+            in apiDetails
+            ? apiDetails
+                .monthly_amount
+            : 0
+        ),
+
+      chargeDay:
+        Number(
+          "charge_day"
+            in apiDetails
+            ? apiDetails
+                .charge_day
+            : 0
+        ),
+
+      stopDate:
+        "stop_date"
+          in apiDetails
+          ? apiDetails
+              .stop_date
+          : null,
     };
   }
 
   return {
-    id: apiLoan.loan_id,
+    id:
+      apiLoan.loan_id,
+
     type:
-      apiLoan.loan_type === "checks"
-        ? LoanType.CHECKS
-        : LoanType.STANDING_ORDER,
-    status: apiLoan.status as LoanStatus,
-    amount: Number(apiLoan.amount),
-    startDate: apiLoan.start_date,
-    createdAt: apiLoan.created_at,
-    formFileUrl: apiLoan.form_file_url,
+      mapLoanType(
+        apiLoan.loan_type
+      ),
 
-    borrower: {
-      name: apiLoan.borrower.name,
-      phone: apiLoan.borrower.phone,
-      email: apiLoan.borrower.email ?? undefined,
-      address: apiLoan.borrower.address,
-      idNumber: apiLoan.borrower.id_number,
-      createdAt: apiLoan.borrower.created_at,
-    },
+    status:
+      mapLoanStatus(
+        apiLoan.status
+      ),
 
-    trustee: apiLoan.trustee
-      ? {
-          name: apiLoan.trustee.name,
-          community: apiLoan.trustee.community,
-          phone: apiLoan.trustee.phone,
-          notes: apiLoan.trustee.notes,
-        }
-      : null,
+    amount:
+      Number(
+        apiLoan.amount ||
+          0
+      ),
+
+    startDate:
+      apiLoan.start_date,
+
+    createdAt:
+      apiLoan.created_at,
+
+    formFileUrl:
+      apiLoan.form_file_url,
+
+    borrower:
+      mapBorrower(
+        apiLoan
+      ),
+
+    trustee:
+      mapTrustee(
+        apiLoan
+      ),
 
     details,
   };
 }
 
-async function getActiveLoans(filters: LoanFilters): Promise<LoanListItem[]> {
-  const params: Record<string, string> = {};
 
-  if (filters.status && filters.status !== "all") {
-    params.status = String(filters.status);
+async function getActiveLoans(
+  filters: LoanFilters = {}
+): Promise<LoanListItem[]> {
+  const params: Record<
+    string,
+    string
+  > = {};
+
+  if (
+    filters.type &&
+    filters.type !== "all"
+  ) {
+    params.type =
+      String(
+        filters.type
+      );
   } else {
-    params.status = "ACTIVE";
+    params.type =
+      "all";
   }
 
-  if (filters.type && filters.type !== "all") {
-    params.type = filters.type;
+  if (
+    filters.status &&
+    filters.status !== "all"
+  ) {
+    params.status =
+      String(
+        filters.status
+      );
   }
 
-  if (filters.search) {
-    params.search = filters.search;
+  if (
+    filters.search
+      ?.trim()
+  ) {
+    params.search =
+      filters.search.trim();
   }
 
-  const res = await api.get<ApiLoanListItem[]>("/loans/", { params });
-  return res.data.map(mapLoanListItem);
+  const response =
+    await api.get<
+      ApiLoanListItem[]
+    >(
+      "/loans/",
+      {
+        params,
+      }
+    );
+
+  const items =
+    Array.isArray(
+      response.data
+    )
+      ? response.data
+      : [];
+
+  return items.map(
+    mapLoanListItem
+  );
 }
 
-async function getLoanDetails(id: string): Promise<Loan> {
-  const res = await api.get<ApiLoanDetails>(`/loans/${id}/`);
-  return mapLoanDetails(res.data);
+
+async function getLoanDetails(
+  id: string
+): Promise<Loan> {
+  const response =
+    await api.get<
+      ApiLoanDetails
+    >(
+      `/loans/${encodeURIComponent(
+        id
+      )}/`
+    );
+
+  return mapLoanDetails(
+    response.data
+  );
 }
+
 
 export default {
   getActiveLoans,

@@ -1,124 +1,362 @@
-from django.db import models
-from django.contrib.auth.models import User
 import uuid
+from pathlib import Path
 
-# --- 1. Role Model ---
+from django.contrib.auth.models import User
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
+from django.db import models
+from django.utils import timezone
+
+
+def signed_form_upload_to(
+    instance,
+    filename: str,
+) -> str:
+    extension = Path(filename).suffix.lower()
+
+    return (
+        f"loan_forms/"
+        f"{timezone.localdate().year}/"
+        f"{uuid.uuid4().hex}"
+        f"{extension}"
+    )
+
+
 class Role(models.Model):
-    role_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=50, unique=True, verbose_name="שם תפקיד")
-    description = models.CharField(max_length=255, null=True, blank=True, verbose_name="תיאור")
-    created_at = models.DateTimeField(auto_now_add=True)
+    role_id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+    )
+
+    name = models.CharField(
+        max_length=50,
+        unique=True,
+    )
+
+    description = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
 
     def __str__(self):
         return self.name
 
-    class Meta:
-        verbose_name = "תפקיד"
-        verbose_name_plural = "תפקידים"
 
-# --- 2. UserProfile Model for extending User ---
 class UserProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile', verbose_name="משתמש")
-    role = models.ForeignKey(Role, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="תפקיד")
-    phone = models.CharField(max_length=20, null=True, blank=True, verbose_name="טלפון")
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="profile",
+    )
+
+    role = models.ForeignKey(
+        Role,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+
+    phone = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True,
+    )
+
+    must_change_password = models.BooleanField(
+        default=True,
+    )
 
     def __str__(self):
         return self.user.username
 
-    class Meta:
-        verbose_name = "פרופיל משתמש"
-        verbose_name_plural = "פרופילי משתמשים"
 
-# --- 3. trustee Model ---
 class Trustee(models.Model):
-    trustee_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='trustee_profile', verbose_name="משתמש מקושר")
-    community = models.CharField(max_length=100, verbose_name="קהילה")
-    notes = models.TextField(blank=True, null=True, verbose_name="הערות")
+    trustee_id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+    )
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="trustee_profile",
+    )
+
+    community = models.CharField(
+        max_length=100,
+        db_index=True,
+    )
+
+    notes = models.TextField(
+        blank=True,
+        null=True,
+    )
 
     def __str__(self):
-        return f"Trustee: {self.user.username} - {self.community}"
+        name = (
+            self.user.get_full_name()
+            or self.user.username
+        )
 
-    class Meta:
-        verbose_name = "נאמן"
-        verbose_name_plural = "נאמנים"
+        return f"{name} - {self.community}"
 
-# --- 4. borrower Model ---
+
 class Borrower(models.Model):
-    borrower_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='borrower_profile', verbose_name="משתמש מקושר", null=True, blank=True)
-    trustee = models.ForeignKey(Trustee, on_delete=models.SET_NULL, null=True, related_name='borrowers', verbose_name="נאמן מלווה")
-    id_number = models.CharField(max_length=20, unique=True, verbose_name="תעודת זהות")
-    first_name = models.CharField(max_length=100, null=True, blank=True)
-    last_name = models.CharField(max_length=100, null=True, blank=True)
-    phone = models.CharField(max_length=20, null=True, blank=True)
-    email = models.EmailField(null=True, blank=True)
-    address = models.CharField(max_length=255, verbose_name="כתובת")
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="תאריך יצירה")
+    borrower_id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+    )
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="borrower_profile",
+        null=True,
+        blank=True,
+    )
+
+    trustee = models.ForeignKey(
+        Trustee,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="borrowers",
+    )
+
+    id_number = models.CharField(
+        max_length=20,
+        unique=True,
+    )
+
+    first_name = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+    )
+
+    last_name = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+    )
+
+    phone = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True,
+    )
+
+    email = models.EmailField(
+        null=True,
+        blank=True,
+    )
+
+    address = models.CharField(
+        max_length=255,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
 
     def __str__(self):
-        return f"Borrower: {self.id_number}"
+        name = (
+            f"{self.first_name or ''} "
+            f"{self.last_name or ''}"
+        ).strip()
+
+        return name or self.id_number
+
+
+class Donor(models.Model):
+    donor_id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+    )
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="donor_profile",
+    )
+
+    phone = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True,
+    )
+
+    notes = models.TextField(
+        blank=True,
+        null=True,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    def __str__(self):
+        return (
+            self.user.get_full_name()
+            or self.user.username
+        )
+
+
+class Donation(models.Model):
+    donation_id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+    )
+
+    donor = models.ForeignKey(
+        Donor,
+        on_delete=models.PROTECT,
+        related_name="donations",
+    )
+
+    amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+    )
+
+    donation_date = models.DateField()
+
+    notes = models.TextField(
+        blank=True,
+        null=True,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
 
     class Meta:
-        verbose_name = "לווה"
-        verbose_name_plural = "לווים"
+        ordering = [
+            "-donation_date",
+            "-created_at",
+        ]
 
-# --- 5. base Loan Model ---
+    def __str__(self):
+        return (
+            f"Donation "
+            f"{self.donation_id} - "
+            f"{self.amount}"
+        )
+
+
 class Loan(models.Model):
+    STATUS_ACTIVE = "ACTIVE"
+    STATUS_OVERDUE = "OVERDUE"
+    STATUS_CLOSED = "CLOSED"
+
     STATUS_CHOICES = [
-        ('PENDING', 'ממתין לאישור'),
-        ('ACTIVE', 'פעיל'),
-        ('PAID', 'שולם'),
-        ('REJECTED', 'נדחה'),
+        (STATUS_ACTIVE, "Active"),
+        (STATUS_OVERDUE, "Overdue"),
+        (STATUS_CLOSED, "Closed"),
     ]
 
-    loan_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    borrower = models.ForeignKey(Borrower, on_delete=models.CASCADE, related_name='%(class)s_loans', verbose_name="לווה")
-    trustee = models.ForeignKey(Trustee, on_delete=models.SET_NULL, null=True, related_name='%(class)s_monitored_loans', verbose_name="נאמן מפקח")
-    amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="סכום ההלוואה")
-    start_date = models.DateField(verbose_name="תאריך התחלה")
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING', verbose_name="סטטוס")
-    form_file = models.FileField(upload_to='loan_forms/', blank=True, null=True, verbose_name="קובץ טופס חתום")
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="תאריך יצירה")
+    loan_id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+    )
+
+    borrower = models.ForeignKey(
+        Borrower,
+        on_delete=models.CASCADE,
+        related_name="%(class)s_loans",
+    )
+
+    trustee = models.ForeignKey(
+        Trustee,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="%(class)s_monitored_loans",
+    )
+
+    amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+    )
+
+    start_date = models.DateField()
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_ACTIVE,
+        db_index=True,
+    )
+
+    form_file = models.FileField(
+        upload_to=signed_form_upload_to,
+        blank=True,
+        null=True,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
 
     class Meta:
         abstract = True
 
-# --- 6. Loan Subclasses ---
-class LoanChecks(Loan):
-    num_payments = models.IntegerField(verbose_name="מספר תשלומים")
-    check_details = models.TextField(blank=True, null=True, verbose_name="פרטי צ'קים")
-    predefined_schedule = models.BooleanField(default=True, verbose_name="לוח תשלומים מוגדר מראש?")
 
-    class Meta:
-        verbose_name = "הלוואה (צ'קים)"
-        verbose_name_plural = "הלוואות (צ'קים)"
+class LoanChecks(Loan):
+    num_payments = models.PositiveIntegerField()
+
+    check_details = models.TextField(
+        blank=True,
+        null=True,
+    )
+
+    predefined_schedule = models.BooleanField(
+        default=True,
+    )
+
 
 class LoanStandingOrder(Loan):
-    monthly_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="סכום חודשי")
-    charge_day = models.IntegerField(verbose_name="יום חיוב בחודש")
-    stop_date = models.DateField(blank=True, null=True, verbose_name="תאריך עצירה")
+    num_payments = models.PositiveIntegerField(
+        default=1,
+    )
 
-    class Meta:
-        verbose_name = "הלוואה (הוראת קבע)"
-        verbose_name_plural = "הלוואות (הוראת קבע)"
+    monthly_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+    )
 
+    charge_day = models.PositiveSmallIntegerField()
 
-# --- 7. Payment Model ---
-import uuid
-
-from django.db import models
-from django.contrib.contenttypes.fields import GenericForeignKey
-from django.contrib.contenttypes.models import ContentType
+    stop_date = models.DateField(
+        blank=True,
+        null=True,
+    )
+    standing_order_form_file = models.FileField(
+    upload_to="standing_order_forms/",
+    blank=True,
+    null=True,
+    verbose_name="Standing order authorization form",
+)
 
 
 class Payment(models.Model):
     STATUS_PENDING = "PENDING"
     STATUS_PAID = "PAID"
+    STATUS_LATE = "LATE"
 
     STATUS_CHOICES = [
         (STATUS_PENDING, "Pending"),
         (STATUS_PAID, "Paid"),
+        (STATUS_LATE, "Late"),
     ]
 
     id = models.UUIDField(
@@ -127,25 +365,30 @@ class Payment(models.Model):
         editable=False,
     )
 
-    # --- Generic relation to Loan (LoanChecks / LoanStandingOrder) ---
     content_type = models.ForeignKey(
         ContentType,
         on_delete=models.PROTECT,
         related_name="payments",
     )
-    object_id = models.UUIDField()
-    loan = GenericForeignKey("content_type", "object_id")
 
-    # --- Payment details ---
-    due_date = models.DateField()
+    object_id = models.UUIDField()
+
+    loan = GenericForeignKey(
+        "content_type",
+        "object_id",
+    )
+
+    due_date = models.DateField(
+        db_index=True,
+    )
 
     amount = models.DecimalField(
-        max_digits=10,
+        max_digits=12,
         decimal_places=2,
     )
 
     amount_paid = models.DecimalField(
-        max_digits=10,
+        max_digits=12,
         decimal_places=2,
         default=0,
     )
@@ -154,6 +397,7 @@ class Payment(models.Model):
         max_length=10,
         choices=STATUS_CHOICES,
         default=STATUS_PENDING,
+        db_index=True,
     )
 
     paid_at = models.DateTimeField(
@@ -167,8 +411,194 @@ class Payment(models.Model):
         blank=True,
     )
 
+    is_manual_exception = models.BooleanField(
+        default=False,
+    )
+
+    exception_note = models.CharField(
+        max_length=500,
+        blank=True,
+        default="",
+    )
+
     class Meta:
-        ordering = ["due_date"]
+        ordering = [
+            "due_date",
+            "id",
+        ]
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    "content_type",
+                    "object_id",
+                    "due_date",
+                ],
+                name="unique_payment_due_date_per_loan",
+            ),
+        ]
 
     def __str__(self):
-        return f"Payment {self.id} | Loan {self.object_id} | {self.status}"
+        return (
+            f"Payment {self.id} | "
+            f"Loan {self.object_id} | "
+            f"{self.status}"
+        )
+
+
+class AuditLog(models.Model):
+    audit_id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+    )
+
+    actor = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="audit_events",
+    )
+
+    action = models.CharField(
+        max_length=100,
+    )
+
+    entity_type = models.CharField(
+        max_length=100,
+    )
+
+    entity_id = models.CharField(
+        max_length=100,
+        blank=True,
+        default="",
+    )
+
+    metadata = models.JSONField(
+        default=dict,
+        blank=True,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        db_index=True,
+    )
+
+    class Meta:
+        ordering = [
+            "-created_at",
+        ]
+
+
+class ReminderSettings(models.Model):
+    CHANNEL_SMS = "SMS"
+    CHANNEL_WHATSAPP = "WHATSAPP"
+    CHANNEL_BOTH = "BOTH"
+
+    CHANNEL_CHOICES = [
+        (CHANNEL_SMS, "SMS"),
+        (CHANNEL_WHATSAPP, "WhatsApp"),
+        (CHANNEL_BOTH, "SMS + WhatsApp"),
+    ]
+
+    singleton_id = models.PositiveSmallIntegerField(
+        primary_key=True,
+        default=1,
+        editable=False,
+    )
+
+    enabled = models.BooleanField(
+        default=False,
+    )
+
+    days_before = models.PositiveSmallIntegerField(
+        default=3,
+    )
+
+    channel = models.CharField(
+        max_length=20,
+        choices=CHANNEL_CHOICES,
+        default=CHANNEL_SMS,
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+    )
+
+    def save(self, *args, **kwargs):
+        self.singleton_id = 1
+        super().save(*args, **kwargs)
+
+
+class ReminderLog(models.Model):
+    STATUS_SENT = "SENT"
+    STATUS_FAILED = "FAILED"
+    STATUS_SKIPPED = "SKIPPED"
+
+    STATUS_CHOICES = [
+        (STATUS_SENT, "Sent"),
+        (STATUS_FAILED, "Failed"),
+        (STATUS_SKIPPED, "Skipped"),
+    ]
+
+    reminder_id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+    )
+
+    payment = models.ForeignKey(
+        Payment,
+        on_delete=models.PROTECT,
+        related_name="reminder_logs",
+    )
+
+    channel = models.CharField(
+        max_length=20,
+    )
+
+    reminder_date = models.DateField()
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+    )
+
+    recipient_masked = models.CharField(
+        max_length=50,
+        blank=True,
+        default="",
+    )
+
+    provider_message_id = models.CharField(
+        max_length=100,
+        blank=True,
+        default="",
+    )
+
+    error_code = models.CharField(
+        max_length=100,
+        blank=True,
+        default="",
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    class Meta:
+        ordering = [
+            "-created_at",
+        ]
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    "payment",
+                    "channel",
+                    "reminder_date",
+                ],
+                name="unique_daily_payment_reminder",
+            ),
+        ]

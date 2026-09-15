@@ -7,5 +7,5 @@ body,
 
 body {
   overflow: hidden;
-  background-color: #F7F8FC;
+  background-color: var(--color-canvas);
 }

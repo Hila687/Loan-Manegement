@@ -18,6 +18,18 @@
       "viewLoans": {
         "title": "צפייה בהלוואות פעילות",
         "description": "צפייה בכל ההלוואות הפתוחות במערכת לפי לווה, נאמן וסטטוס."
+      },
+      "communityLoans": {
+        "title": "הלוואות בקהילה",
+        "description": "צפייה בהלוואות ובלווים המשויכים לקהילה שלך."
+      },
+      "myLoan": {
+        "title": "ההלוואה שלי",
+        "description": "צפייה בפרטי ההלוואה, בסטטוס ובלוח התשלומים שלך."
+      },
+      "viewDonations": {
+        "title": "התרומות שלי",
+        "description": "צפייה בהיסטוריית התרומות ובסיכום התרומה שלך."
       }
     },
     "quickActions": {
@@ -26,7 +38,9 @@
       "reports": "דוחות",
       "reportsDesc": "הפקת דוחות לפי לווה, נאמן וטווח תאריכים.",
       "settings": "הגדרות",
-      "settingsDesc": "ניהול הגדרות המערכת, לוקליזציה והרשאות."
+      "settingsDesc": "ניהול הגדרות המערכת, לוקליזציה והרשאות.",
+      "reminders": "תזכורות תשלום",
+      "remindersDesc": "הגדרת תזכורות אוטומטיות ב-SMS וב-WhatsApp."
     },
     "recentActivity": {
       "title": "פעילות אחרונה במערכת",
@@ -39,20 +53,36 @@
     "activeLoansCardDescription": "צפי ברשימת כל ההלוואות הפתוחות, כולל לווה, נאמן וסכום.",
     "createLoanCardTitle": "פתיחת הלוואה חדשה",
     "createLoanCardDescription": "פתיחת הלוואה חדשה עבור לווה, כולל פרטי נאמן ותנאי החזר.",
-    "footerNote": "בעתיד יופיע כאן לוח בקרה עם גרפים, התראות ותצוגת מצב הגמ\"ח."
+    "footerNote": "בעתיד יופיע כאן לוח בקרה עם גרפים, התראות ותצוגת מצב הגמ\"ח.",
+    "roleMessages": {
+      "admin": "מכאן ניתן לנהל הלוואות, משתמשים, תרומות, דוחות ופעילות מערכת.",
+      "trustee": "כאן ניתן לצפות בלווים ובהלוואות השייכים לקהילה שלך.",
+      "borrower": "כאן ניתן לצפות בפרטי ההלוואה ובלוח התשלומים שלך.",
+      "donor": "כאן ניתן לצפות בתרומות שלך ובסיכומים כלליים של הגמ״ח."
+    },
+    "messages": {
+      "summaryLoadError": "חלק מנתוני הסיכום לא נטענו."
+    }
   },
-
   "nav": {
     "home": "בית",
     "createLoan": "יצירת הלוואה",
-    "activeLoans": "הלוואות פעילות",
-    "dashboard": "דשבורד"
+    "activeLoans": "הלוואות",
+    "dashboard": "דשבורד",
+    "borrowers": "לווים",
+    "trustees": "נאמנים",
+    "donors": "תורמים",
+    "donations": "תרומות",
+    "reports": "דוחות",
+    "reminders": "תזכורות",
+    "admins": "מנהלי מערכת",
+    "logout": "התנתקות",
+    "menu": "תפריט",
+    "closeMenu": "סגירת תפריט"
   },
-
   "app": {
     "title": "גמ\"ח"
   },
-
   "loanForm": {
     "title": "הלוואה חדשה",
     "sections": {
@@ -79,14 +109,15 @@
       "borrowerAddress": "כתובת",
       "borrowerAddressPlaceholder": "הכנס כתובת",
       "trustee": "נאמן",
-      "trusteePlaceholder": "בחר או הקלד נאמן",
+      "trusteePlaceholder": "חיפוש נאמן לפי שם",
+      "signedForm": "שטר הלוואה חתום",
+      "standingOrderForm": "טופס אישור הוראת קבע",
       "amount": "סכום הלוואה",
       "amountPlaceholder": "0.00",
       "startDate": "תאריך התחלה",
       "startDatePlaceholder": "בחר תאריך",
       "numPayments": "מספר תשלומים",
       "numPaymentsPlaceholder": "לדוג׳ 25",
-      "signedForm": "טופס חתום",
       "loanType": "סוג הלוואה"
     },
     "loanTypes": {
@@ -116,7 +147,8 @@
       "fileRequired": "קובץ נדרש. אנא העלה את הטופס החתום",
       "uploadFailed": "העלאה נכשלה. נסה שוב",
       "success": "ההלוואה נוצרה בהצלחה",
-      "genericError": "שגיאה בעת יצירת ההלוואה"
+      "genericError": "שגיאה בעת יצירת ההלוואה",
+      "standingOrderFormRequired": "יש להעלות טופס אישור הוראת קבע"
     },
     "buttons": {
       "clearForm": "נקה טופס",
@@ -124,7 +156,6 @@
       "submitting": "מעדכן..."
     }
   },
-
   "usersList": {
     "title": "בדיקת API – רשימת משתמשים",
     "loading": "טוען נתונים...",
@@ -145,13 +176,13 @@
     },
     "roles": {
       "admin": "מנהל מערכת"
-    }
+    },
+    "idLabel": "מזהה",
+    "noRole": "ללא תפקיד"
   },
-
   "loanList": {
     "title": "הלוואות פעילות",
     "subtitle": "צפייה וניהול של כל ההלוואות הפעילות בגמ\"ח, עם חיפוש, סינון ופעולות מהירות.",
-
     "stats": {
       "totalLoans": "סה\"כ הלוואות",
       "totalAmount": "סכום כולל פתוח",
@@ -159,13 +190,11 @@
       "active": "קיימים מסננים פעילים",
       "none": "ללא מסננים"
     },
-
     "search": {
       "placeholder": "חיפוש לפי לווה, נאמן, טלפון או אימייל"
     },
     "showDetails": "הצג פרטים",
     "hideDetails": "הסתר פרטים",
-
     "table": {
       "borrower": "לווה",
       "phone": "טלפון",
@@ -174,21 +203,17 @@
       "amount": "סכום",
       "type": "סוג הלוואה"
     },
-
     "types": {
       "checks": "הלוואה בצ'קים",
       "standingOrders": "הלוואה בהוראת קבע"
     },
-
     "filters": {
       "title": "סינון"
     },
-
     "actions": {
       "refresh": "רענון הלוואות",
       "retry": "ניסיון חוזר"
     },
-
     "messages": {
       "loading": "טוען הלוואות...",
       "noLoans": "אין הלוואות להצגה",
@@ -198,7 +223,6 @@
       "error": "אירעה שגיאה בעת טעינת ההלוואות."
     }
   },
-
   "loanDetails": {
     "title": "פרטי הלוואה",
     "tabDetails": "פרטים",
@@ -228,47 +252,41 @@
     "stopDate": "תאריך סיום:",
     "yes": "כן",
     "no": "לא",
-    "editButton": "עריכת הלוואה"
+    "editButton": "עריכת הלוואה",
+    "notFound": "ההלוואה לא נמצאה."
   },
-
   "payments": {
     "loading": "טוען לוח תשלומים...",
     "error": "לא ניתן לטעון את לוח התשלומים.",
     "empty": "לא נמצאו תשלומים.",
     "openToLoad": "פתח/י את הטאב כדי לטעון את לוח התשלומים.",
-
     "summary": {
       "totalAmount": "סה״כ הלוואה",
       "paidAmount": "שולם",
       "remainingAmount": "נותר",
       "paymentsProgress": "תשלומים"
     },
-
     "table": {
       "dueDate": "תאריך לתשלום",
       "amountDue": "סכום לתשלום",
       "amountPaid": "סכום ששולם",
       "status": "סטטוס"
     },
-
     "status": {
       "paid": "שולם",
       "pending": "ממתין"
     }
   },
-
   "loan": {
     "filterByType": "סינון לפי סוג הלוואה",
     "all": "כל סוגי ההלוואות",
     "checks": "הלוואות בצ'קים",
     "standingOrders": "הלוואות בהוראת קבע",
-
     "types": {
       "checks": "צ'קים",
       "standingOrder": "הוראת קבע"
     }
   },
-
   "editLoan": {
     "title": "עריכת הלוואה",
     "cardTitle": "עריכת הלוואה קיימת",
@@ -293,9 +311,103 @@
       "save": "שמירה"
     }
   },
-
+  "common": {
+    "remove": "הסרה",
+    "save": "שמירה",
+    "cancel": "ביטול",
+    "close": "סגירה",
+    "edit": "עריכה",
+    "delete": "מחיקה",
+    "refresh": "רענון",
+    "retry": "נסה שוב",
+    "loading": "טוען...",
+    "search": "חיפוש",
+    "all": "הכל",
+    "yes": "כן",
+    "no": "לא",
+    "back": "חזרה"
+  },
+  "roles": {
+    "admin": "מנהל מערכת",
+    "trustee": "נאמן",
+    "borrower": "לווה",
+    "donor": "תורם"
+  },
   "lang": {
     "he": "עברית",
     "en": "English"
+  },
+  "auth": {
+    "login": {
+      "organization": "גמ״ח חסדי יעקב",
+      "title": "כניסה למערכת",
+      "subtitle": "יש להתחבר כדי להמשיך למערכת ניהול הגמ״ח.",
+      "username": "שם משתמש",
+      "password": "סיסמה",
+      "submit": "כניסה",
+      "loading": "מתחבר...",
+      "required": "יש להזין שם משתמש וסיסמה.",
+      "invalid": "שם המשתמש או הסיסמה אינם נכונים.",
+      "tooManyAttempts": "בוצעו ניסיונות כניסה רבים מדי. נסה שוב מאוחר יותר.",
+      "securityNote": "החיבור מאובטח והגישה למידע מוגבלת בהתאם לתפקיד המשתמש."
+    },
+    "changePassword": {
+      "title": "החלפת סיסמה",
+      "subtitle": "יש להגדיר סיסמה חדשה לפני המשך השימוש במערכת.",
+      "current": "סיסמה נוכחית",
+      "new": "סיסמה חדשה",
+      "confirm": "אימות סיסמה חדשה",
+      "submit": "שמירת סיסמה",
+      "saving": "שומר...",
+      "required": "יש למלא את כל שדות הסיסמה.",
+      "notMatch": "הסיסמאות החדשות אינן תואמות.",
+      "samePassword": "הסיסמה החדשה חייבת להיות שונה מהסיסמה הנוכחית.",
+      "error": "החלפת הסיסמה נכשלה."
+    }
+  },
+  "dashboard": {
+    "title": "דשבורד",
+    "subtitle": "תמונת מצב עדכנית של הלוואות, תשלומים, תרומות ופעילות הגמ״ח.",
+    "messages": {
+      "loadError": "טעינת נתוני הדשבורד נכשלה."
+    },
+    "cards": {
+      "activeLoans": "הלוואות פעילות",
+      "overdueLoans": "הלוואות באיחור",
+      "closedLoans": "הלוואות סגורות",
+      "activeAmount": "סכום הלוואות פעילות",
+      "totalDonations": "סה״כ תרומות",
+      "myDonations": "התרומות שלי"
+    },
+    "activeAmountDescription": "הסכום הכולל שנמצא כעת בהלוואות פעילות.",
+    "donationsDescription": "הסכום הכולל של התרומות שנרשמו במערכת.",
+    "people": {
+      "borrowers": "לווים",
+      "trustees": "נאמנים",
+      "donors": "תורמים"
+    },
+    "status": {
+      "active": "פעילות",
+      "overdue": "באיחור",
+      "closed": "סגורות"
+    },
+    "statusChart": {
+      "title": "הלוואות לפי סטטוס",
+      "subtitle": "חלוקת ההלוואות לפעילות, באיחור וסגורות.",
+      "loans": "הלוואות"
+    },
+    "communityChart": {
+      "title": "הלוואות לפי קהילה",
+      "subtitle": "חלוקת ההלוואות הפעילות לפי קהילות הנאמנים."
+    },
+    "trustee": {
+      "title": "תמונת מצב קהילתית",
+      "community": "קהילה",
+      "borrowers": "לווים בקהילה שלך"
+    },
+    "donor": {
+      "title": "סיכום תרומות",
+      "subtitle": "הפעילות האישית שלך לצד סיכום כללי של הגמ״ח."
+    }
   }
 }

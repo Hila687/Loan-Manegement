@@ -1,384 +1,971 @@
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.permissions import AllowAny, IsAdminUser
+import json
+from decimal import Decimal
+from pathlib import Path
+
 from django.db import transaction
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
+from django.http import FileResponse
+from rest_framework import status
+from rest_framework.parsers import (
+    FormParser,
+    JSONParser,
+    MultiPartParser,
+)
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from .models import Borrower, Trustee, LoanChecks, LoanStandingOrder,Payment
-from .serializers import LoanListSerializer, LoanDetailSerializer, LoanUpdateSerializer,CreateLoanRequestSerializer
+from .file_validation import validate_signed_form
+from .loan_access import (
+    find_any_loan,
+    find_scoped_loan,
+    scoped_loan_querysets,
+)
+from .models import (
+    Borrower,
+    LoanChecks,
+    LoanStandingOrder,
+    Trustee,
+)
+from .permissions import IsAdminRole
+from .serializers import (
+    CreateLoanRequestSerializer,
+    LoanDetailSerializer,
+    LoanListSerializer,
+    LoanUpdateSerializer,
+)
+from .services import (
+    audit,
+    create_role_user,
+    generate_payment_schedule,
+    regenerate_payment_schedule,
+    sync_loan_querysets,
+    sync_payment_statuses_and_loan,
+)
 
-from core.payment_schedule import calculate_payment_dates
-from django.contrib.contenttypes.models import ContentType
+
+def borrower_summary(
+    borrower,
+):
+    user = borrower.user
+
+    name = (
+        f"{borrower.first_name or ''} "
+        f"{borrower.last_name or ''}"
+    ).strip()
+
+    if not name and user:
+        name = (
+            user.get_full_name()
+            or user.username
+        )
+
+    return {
+        "name":
+            name,
+
+        "phone":
+            (
+                borrower.phone
+                or (
+                    getattr(
+                        getattr(
+                            user,
+                            "profile",
+                            None,
+                        ),
+                        "phone",
+                        "",
+                    )
+                    if user
+                    else ""
+                )
+            ),
+
+        "email":
+            (
+                borrower.email
+                or (
+                    user.email
+                    if user
+                    else ""
+                )
+            ),
+    }
 
 
-# ------------------------------------
-#   Loan List View (edited) 
-# ------------------------------------
+def trustee_summary(
+    trustee,
+):
+    if not trustee:
+        return None
+
+    return {
+        "name":
+            (
+                trustee.user.get_full_name()
+                or trustee.user.username
+            ),
+
+        "community":
+            trustee.community,
+    }
+
+
+def loan_list_item(
+    loan,
+    loan_type,
+):
+    return {
+        "loan_id":
+            loan.loan_id,
+
+        "loan_type":
+            loan_type,
+
+        "amount":
+            loan.amount,
+
+        "start_date":
+            loan.start_date,
+
+        "status":
+            loan.status,
+
+        "borrower":
+            borrower_summary(
+                loan.borrower
+            ),
+
+        "trustee":
+            trustee_summary(
+                loan.trustee
+            ),
+    }
+
+
 class LoanListView(APIView):
-    """
-    GET /loans
+    permission_classes = [
+        IsAuthenticated,
+    ]
 
-    Returns ONLY ACTIVE loans (for the main loan list screen).
-    Supports optional filtering by loan type and **text search**.
-    """
+    parser_classes = [
+        JSONParser,
+        MultiPartParser,
+        FormParser,
+    ]
+
+    def get_permissions(self):
+        if self.request.method == "POST":
+            return [
+                IsAdminRole()
+            ]
+
+        return [
+            IsAuthenticated()
+        ]
 
     def get(self, request):
+        type_param = (
+            request.GET.get(
+                "type"
+            )
+            or "all"
+        ).strip().lower()
 
-        # Optional type filter (?type=checks / standing_orders / all)
-        type_param = request.GET.get("type", None)
+        search_param = (
+            request.GET.get(
+                "search"
+            )
+            or ""
+        ).strip().lower()
 
-        # Optional search text (?search=yael / 050 / trustee name ...)
-        search_param = request.GET.get("search", "").strip().lower()
+        checks, standing = (
+           scoped_loan_querysets(
+             request.user
+            )
+        )
+        sync_loan_querysets(
+          checks,
+          standing,
+        )
 
-        unified_loans = []  # final combined loan list
+        checks, standing = (
+          scoped_loan_querysets(
+             request.user,
+             active_only=True,
+            )
+        )
 
-        def resolve_borrower_fields(borrower):
-            user = borrower.user if borrower else None
 
-            # name
-            first = (borrower.first_name or "").strip() if borrower else ""
-            last = (borrower.last_name or "").strip() if borrower else ""
-            name_from_borrower = f"{first} {last}".strip()
-            if name_from_borrower:
-                name = name_from_borrower
-            elif user:
-                name = (user.get_full_name() or "").strip()
-            else:
-                name = ""
+        items = []
 
-            # phone
-            if borrower and borrower.phone:
-                phone = borrower.phone
-            elif user and hasattr(user, "profile") and getattr(user.profile, "phone", None):
-                phone = user.profile.phone
-            else:
-                phone = ""
+        if type_param in {
+            "all",
+            "checks",
+        }:
+            items.extend(
+                loan_list_item(
+                    loan,
+                    "checks",
+                )
+                for loan in checks
+            )
 
-            # email
-            if borrower and borrower.email:
-                email = borrower.email
-            elif user and user.email:
-                email = user.email
-            else:
-                email = ""
+        if type_param in {
+            "all",
+            "standing_order",
+            "standing_orders",
+        }:
+            items.extend(
+                loan_list_item(
+                    loan,
+                    "standing_order",
+                )
+                for loan in standing
+            )
 
-            return name, phone, email
-        
-        # -----------------------------
-        #   1. Fetch ACTIVE LoanChecks
-        # -----------------------------
-        checks_qs = LoanChecks.objects.filter(status="ACTIVE")
-
-        # Apply type filter: include only checks OR all
-        if type_param and type_param not in ["all", "checks"]:
-            checks_qs = []
-
-        for loan in checks_qs:
-            b_name, b_phone, b_email = resolve_borrower_fields(loan.borrower)
-            unified_loans.append({
-                "loan_id": loan.loan_id,
-                "loan_type": "checks",
-                "amount": loan.amount,
-                "start_date": loan.start_date,
-                "status": "CLOSED" if loan.status == "PAID" else "ACTIVE",
-                "borrower": {
-                    "name": b_name,
-                    "phone": b_phone,
-                    "email": b_email,
-                },
-
-                "trustee": {
-                    "name": loan.trustee.user.first_name if loan.trustee else None,
-                    "community": loan.trustee.community if loan.trustee else None,
-                }
-            })
-
-        # ---------------------------------------
-        #   2. Fetch ACTIVE LoanStandingOrder
-        # ---------------------------------------
-        standing_qs = LoanStandingOrder.objects.filter(status="ACTIVE")
-
-        # Apply type filter: include only standing orders OR all
-        if type_param and type_param not in ["all", "standing_orders", "standing_order"]:
-            standing_qs = []
-
-        for loan in standing_qs:
-            b_name, b_phone, b_email = resolve_borrower_fields(loan.borrower)
-            unified_loans.append({
-                "loan_id": loan.loan_id,
-                "loan_type": "standing_order",
-                "amount": loan.amount,
-                "start_date": loan.start_date,
-                "status": "CLOSED" if loan.status == "PAID" else "ACTIVE",
-                "borrower": {
-                    "name": b_name, 
-                    "phone": b_phone,
-                    "email": b_email,
-                },
-                    "trustee": {
-                    "name": loan.trustee.user.first_name if loan.trustee else None,
-                    "community": loan.trustee.community if loan.trustee else None,
-                }
-            })
-
-        # ----------------------------------------------------
-        #   3. Apply free-text search (if ?search= was given)
-        # ----------------------------------------------------
         if search_param:
-            def matches(loan):
-                """
-                Returns True if the search query appears in:
-                - borrower name
-                - borrower phone
-                - borrower email
-                - trustee name
-                - trustee community
-                """
-                borrower = loan.get("borrower", {})
-                trustee = loan.get("trustee", {})
+            filtered = []
 
-                fields = [
-                    borrower.get("name") or "",
-                    borrower.get("phone") or "",
-                    borrower.get("email") or "",
-                    trustee.get("name") or "",
-                    trustee.get("community") or "",
+            for item in items:
+                borrower = (
+                    item.get("borrower")
+                    or {}
+                )
+
+                trustee = (
+                    item.get("trustee")
+                    or {}
+                )
+
+                values = [
+                    borrower.get(
+                        "name",
+                        "",
+                    ),
+                    borrower.get(
+                        "phone",
+                        "",
+                    ),
+                    borrower.get(
+                        "email",
+                        "",
+                    ),
+                    trustee.get(
+                        "name",
+                        "",
+                    ),
+                    trustee.get(
+                        "community",
+                        "",
+                    ),
                 ]
 
-                # Case-insensitive substring match
-                return any(search_param in str(value).lower() for value in fields)
+                if any(
+                    search_param
+                    in str(value).lower()
+                    for value in values
+                ):
+                    filtered.append(item)
 
-            # keep only loans that match the search
-            unified_loans = [loan for loan in unified_loans if matches(loan)]
+            items = filtered
 
-        # ------------------------
-        #   4. Serialize + Return
-        # ------------------------
-        serializer = LoanListSerializer(unified_loans, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    
-    """
-    POST /api/loans/
-    Create a new loan (Checks or Standing Order).
+        items.sort(
+            key=lambda item: (
+                item["start_date"],
+                str(item["loan_id"]),
+            ),
+            reverse=True,
+        )
 
-    Flow:
-    - Validate request payload
-    - Locate or create Borrower
-    - Create Loan by type
-    - Automatically generate payment schedule upon loan creation
-    - Wrap entire flow in a transaction
-    - Return success response
-    """
+        serializer = LoanListSerializer(
+            items,
+            many=True,
+        )
+
+        return Response(
+            serializer.data
+        )
 
     def post(self, request):
-        # ----------------------------------------------------
-        # Step 1: Validate request data (BE-2)
-        # ----------------------------------------------------
-        serializer = CreateLoanRequestSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        raw_payload = request.data.get(
+            "payload"
+        )
+
+        if raw_payload:
+            try:
+                payload = json.loads(
+                    raw_payload
+                )
+
+            except (
+                TypeError,
+                json.JSONDecodeError,
+            ):
+                return Response(
+                    {
+                        "payload": [
+                            "Invalid JSON payload."
+                        ]
+                    },
+                    status=
+                        status.HTTP_400_BAD_REQUEST,
+                )
+
+        else:
+            payload = request.data
+
+        serializer = (
+            CreateLoanRequestSerializer(
+                data=payload
+            )
+        )
+
+        serializer.is_valid(
+            raise_exception=True
+        )
 
         data = serializer.validated_data
 
-        # ----------------------------------------------------
-        # Step 2: Atomic transaction (BE-5)
-        # ----------------------------------------------------
-        with transaction.atomic():
+        form_file = request.FILES.get(
+            "form_file"
+        )
 
-            # ------------------------------------------------
-            # Step 3: Locate or Create Borrower (BE-3)
-            # ------------------------------------------------
-            borrower_data = data["borrower"]
-            trustee_id = data["trustee_id"]
+        validate_signed_form(
+            form_file
+        )
 
-            borrower = Borrower.objects.filter(
-                id_number=borrower_data["id_number"]
-            ).first()
+        standing_order_form_file = (
+            request.FILES.get(
+                "standing_order_form_file"
+            )
+        )
 
-            if borrower:
-                # Update existing borrower
-                borrower.first_name = borrower_data.get("first_name")
-                borrower.last_name = borrower_data.get("last_name")
-                borrower.phone = borrower_data.get("phone")
-                borrower.email = borrower_data.get("email")
-                borrower.address = borrower_data.get("address")
-            else:
-                # Create new borrower
-                borrower = Borrower(
-                    id_number=borrower_data["id_number"],
-                    first_name=borrower_data.get("first_name"),
-                    last_name=borrower_data.get("last_name"),
-                    phone=borrower_data.get("phone"),
-                    email=borrower_data.get("email"),
-                    address=borrower_data.get("address"),
-                )
-
-            # Update borrower trustee (latest trustee)
-            borrower.trustee_id = trustee_id
-            borrower.save()
-
-
-            # ------------------------------------------------
-            # Step 4: Validate & fetch Trustee
-            # ------------------------------------------------
-            try:
-                trustee = Trustee.objects.get(trustee_id=trustee_id)
-            except Trustee.DoesNotExist:
+        if (
+            data["loan_type"]
+            == "standing_order"
+        ):
+            if not standing_order_form_file:
                 return Response(
-                    {"detail": "Trustee not found"},
-                    status=status.HTTP_404_NOT_FOUND
-                )       
-
-
-            # ------------------------------------------------
-            # Step 5: Create Loan by type (BE-4)
-            # ------------------------------------------------
-            loan_type = data["loan_type"]
-            loan_data = data["loan"]
-
-            if loan_type == "checks":
-                loan = LoanChecks.objects.create(
-                    borrower=borrower,
-                    trustee_id=trustee_id,
-                    amount=loan_data["amount"],
-                    start_date=loan_data["start_date"],
-                    num_payments=loan_data["num_payments"],
-                    status="ACTIVE",
+                    {
+                        "standing_order_form_file": [
+                            "Standing order authorization form is required."
+                        ]
+                    },
+                    status=
+                        status.HTTP_400_BAD_REQUEST,
                 )
 
-            elif loan_type == "standing_order":
-                monthly_amount = loan_data["amount"] / loan_data["num_payments"]
-                charge_day = loan_data["start_date"].day
-
-                loan = LoanStandingOrder.objects.create(
-                    borrower=borrower,
-                    trustee_id=trustee_id,
-                    amount=loan_data["amount"],
-                    start_date=loan_data["start_date"],
-                    monthly_amount=monthly_amount,
-                    charge_day=charge_day,
-                    status="ACTIVE",
-                )
-
-            # ------------------------------------------------
-            # Step 5.1: Generate Payment Schedule (BE-CORE-3)
-            # ------------------------------------------------
-            
-
-            num_payments = loan_data["num_payments"]
-
-            # Calculate due dates
-            due_dates = calculate_payment_dates(
-                loan.start_date,
-                num_payments
+            validate_signed_form(
+                standing_order_form_file
             )
 
-            # Calculate amount per payment
-            amount_per_payment = loan.amount / num_payments
+        borrower_data = data[
+            "borrower"
+        ]
 
-            # Prepare GenericForeignKey data
-            content_type = ContentType.objects.get_for_model(loan)
+        loan_data = data[
+            "loan"
+        ]
 
-            # Create Payment records
-            for due_date in due_dates:
-                Payment.objects.create(
-                    content_type=content_type,
-                    object_id=loan.loan_id,
-                    due_date=due_date,
-                    amount=amount_per_payment,
-                    amount_paid=0,
-                    status=Payment.STATUS_PENDING,
-                )
-
-
-
-        # ----------------------------------------------------
-        # Step 6: Success response (BE-6)
-        # ----------------------------------------------------
-        return Response(
-            {
-                "loan_id": str(loan.loan_id),
-                "loan_type": loan_type,
-                "status": "ACTIVE",
-            },
-            status=status.HTTP_201_CREATED
+        trustee = (
+            Trustee.objects
+            .filter(
+                trustee_id=
+                    data["trustee_id"],
+                user__is_active=True,
+            )
+            .first()
         )
 
+        if not trustee:
+            return Response(
+                {
+                    "trustee_id": [
+                        "Trustee not found."
+                    ]
+                },
+                status=
+                    status.HTTP_404_NOT_FOUND,
+            )
 
-
-
-# ------------------------------------
-#   Loan Detail View (unchanged)
-# ------------------------------------
-@method_decorator(csrf_exempt, name="dispatch")
-class LoanDetailView(APIView):
-    """
-    GET  /api/loans/{loan_id}
-    Returns full loan details for a given loan_id.
-    Supports both LoanChecks and LoanStandingOrder.
-    """
-
-    def get(self, request, loan_id):
-
+        stored_file_name = ""
+        stored_standing_order_file_name = ""
+        credentials = None
         loan = None
-        loan_type = None  # Set default
 
-        # Try LoanChecks first
         try:
-            loan = LoanChecks.objects.get(loan_id=loan_id)
-            loan_type = "checks"
-        except LoanChecks.DoesNotExist:
-            pass
-
-        # Try StandingOrder next
-        if loan is None:
-            try:
-                loan = LoanStandingOrder.objects.get(loan_id=loan_id)
-                loan_type = "standing_order"
-            except LoanStandingOrder.DoesNotExist:
-                return Response(
-                    {"detail": "Loan not found"},
-                    status=status.HTTP_404_NOT_FOUND
+            with transaction.atomic():
+                borrower = (
+                    Borrower.objects
+                    .select_for_update()
+                    .filter(
+                        id_number=
+                            borrower_data[
+                                "id_number"
+                            ]
+                    )
+                    .first()
                 )
 
-        # Serialize full details
+                if borrower is None:
+                    (
+                        user,
+                        temporary_password,
+                    ) = create_role_user(
+                        "borrower",
+                        borrower_data[
+                            "id_number"
+                        ],
+                        borrower_data[
+                            "first_name"
+                        ],
+                        borrower_data[
+                            "last_name"
+                        ],
+                        borrower_data.get(
+                            "email",
+                            "",
+                        ),
+                        borrower_data.get(
+                            "phone",
+                            "",
+                        ),
+                    )
+
+                    borrower = (
+                        Borrower.objects.create(
+                            user=user,
+                            trustee=trustee,
+                            id_number=
+                                borrower_data[
+                                    "id_number"
+                                ],
+                            first_name=
+                                borrower_data[
+                                    "first_name"
+                                ],
+                            last_name=
+                                borrower_data[
+                                    "last_name"
+                                ],
+                            phone=
+                                borrower_data[
+                                    "phone"
+                                ],
+                            email=
+                                borrower_data.get(
+                                    "email",
+                                    "",
+                                ),
+                            address=
+                                borrower_data[
+                                    "address"
+                                ],
+                        )
+                    )
+
+                    credentials = {
+                        "username":
+                            user.username,
+
+                        "temporary_password":
+                            temporary_password,
+                    }
+
+                else:
+                    borrower.trustee = trustee
+
+                    borrower.first_name = (
+                        borrower_data[
+                            "first_name"
+                        ]
+                    )
+
+                    borrower.last_name = (
+                        borrower_data[
+                            "last_name"
+                        ]
+                    )
+
+                    borrower.phone = (
+                        borrower_data[
+                            "phone"
+                        ]
+                    )
+
+                    borrower.email = (
+                        borrower_data.get(
+                            "email",
+                            "",
+                        )
+                    )
+
+                    borrower.address = (
+                        borrower_data[
+                            "address"
+                        ]
+                    )
+
+                    if borrower.user is None:
+                        (
+                            user,
+                            temporary_password,
+                        ) = create_role_user(
+                            "borrower",
+                            borrower_data[
+                                "id_number"
+                            ],
+                            borrower_data[
+                                "first_name"
+                            ],
+                            borrower_data[
+                                "last_name"
+                            ],
+                            borrower_data.get(
+                                "email",
+                                "",
+                            ),
+                            borrower_data.get(
+                                "phone",
+                                "",
+                            ),
+                        )
+
+                        borrower.user = user
+
+                        credentials = {
+                            "username":
+                                user.username,
+
+                            "temporary_password":
+                                temporary_password,
+                        }
+
+                    else:
+                        borrower.user.first_name = (
+                            borrower_data[
+                                "first_name"
+                            ]
+                        )
+
+                        borrower.user.last_name = (
+                            borrower_data[
+                                "last_name"
+                            ]
+                        )
+
+                        borrower.user.email = (
+                            borrower_data.get(
+                                "email",
+                                "",
+                            )
+                        )
+
+                        borrower.user.save(
+                            update_fields=[
+                                "first_name",
+                                "last_name",
+                                "email",
+                            ]
+                        )
+
+                        profile = getattr(
+                            borrower.user,
+                            "profile",
+                            None,
+                        )
+
+                        if profile:
+                            profile.phone = (
+                                borrower_data[
+                                    "phone"
+                                ]
+                            )
+
+                            profile.save(
+                                update_fields=[
+                                    "phone",
+                                ]
+                            )
+
+                    borrower.save()
+
+                num_payments = (
+                    loan_data[
+                        "num_payments"
+                    ]
+                )
+
+                common_fields = {
+                    "borrower":
+                        borrower,
+
+                    "trustee":
+                        trustee,
+
+                    "amount":
+                        loan_data[
+                            "amount"
+                        ],
+
+                    "start_date":
+                        loan_data[
+                            "start_date"
+                        ],
+
+                    "status":
+                        "ACTIVE",
+
+                    "form_file":
+                        form_file,
+                }
+
+                if (
+                    data["loan_type"]
+                    == "checks"
+                ):
+                    loan = (
+                        LoanChecks.objects.create(
+                            num_payments=
+                                num_payments,
+                            **common_fields,
+                        )
+                    )
+
+                else:
+                    monthly_amount = (
+                        Decimal(
+                            loan_data[
+                                "amount"
+                            ]
+                        )
+                        / Decimal(
+                            num_payments
+                        )
+                    ).quantize(
+                        Decimal("0.01")
+                    )
+
+                    loan = (
+                        LoanStandingOrder.objects
+                        .create(
+                            num_payments=
+                                num_payments,
+
+                            monthly_amount=
+                                monthly_amount,
+
+                            charge_day=
+                                loan_data[
+                                    "start_date"
+                                ].day,
+
+                            standing_order_form_file=
+                                standing_order_form_file,
+
+                            **common_fields,
+                        )
+                    )
+
+                if loan.form_file:
+                    stored_file_name = (
+                        loan.form_file.name
+                    )
+
+                if (
+                    data["loan_type"]
+                    == "standing_order"
+                    and
+                    getattr(
+                        loan,
+                        "standing_order_form_file",
+                        None,
+                    )
+                ):
+                    stored_standing_order_file_name = (
+                        loan
+                        .standing_order_form_file
+                        .name
+                    )
+
+                generate_payment_schedule(
+                    loan,
+                    num_payments,
+                )
+
+                audit(
+                    request.user,
+                    "CREATE_LOAN",
+                    loan.__class__.__name__,
+                    loan.loan_id,
+                    {
+                        "loan_type":
+                            data[
+                                "loan_type"
+                            ]
+                    },
+                )
+
+        except Exception:
+            if (
+                loan
+                and stored_file_name
+            ):
+                try:
+                    loan.form_file.storage.delete(
+                        stored_file_name
+                    )
+
+                except Exception:
+                    pass
+
+            if (
+                loan
+                and
+                stored_standing_order_file_name
+            ):
+                try:
+                    (
+                        loan
+                        .standing_order_form_file
+                        .storage
+                        .delete(
+                            stored_standing_order_file_name
+                        )
+                    )
+
+                except Exception:
+                    pass
+
+            raise
+
+        response_data = {
+            "loan_id":
+                str(loan.loan_id),
+
+            "loan_type":
+                data["loan_type"],
+
+            "status":
+                loan.status,
+        }
+
+        if credentials:
+            response_data[
+                "borrower_credentials"
+            ] = credentials
+
+        return Response(
+            response_data,
+            status=
+                status.HTTP_201_CREATED,
+        )
+
+class LoanDetailView(APIView):
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    def get_permissions(self):
+        if self.request.method == "PUT":
+            return [
+                IsAdminRole()
+            ]
+
+        return [
+            IsAuthenticated()
+        ]
+
+    def get(
+        self,
+        request,
+        loan_id,
+    ):
+        loan = find_scoped_loan(
+            request.user,
+            loan_id,
+        )
+
+        if not loan:
+            return Response(
+                {
+                    "detail":
+                        "Loan not found."
+                },
+                status=
+                    status.HTTP_404_NOT_FOUND,
+            )
+
         serializer = LoanDetailSerializer(
             loan,
-            context={"request": request}
+            context={
+                "request":
+                    request
+            },
         )
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    
+        return Response(
+            serializer.data
+        )
 
+    def put(
+        self,
+        request,
+        loan_id,
+    ):
+        loan = find_any_loan(
+            loan_id
+        )
 
-    """
-    PUT  /api/loans/{loan_id}  - admin only (currently disabled)
-    """
-    def get_permissions(self):
-        # if self.request.method == "PUT":
-        #     return [IsAdminUser()]
-        # return [AllowAny()]
-        return [AllowAny()]
+        if not loan:
+            return Response(
+                {
+                    "detail":
+                        "Loan not found."
+                },
+                status=
+                    status.HTTP_404_NOT_FOUND,
+            )
 
-    def put(self, request, loan_id):
-        # Find loan
-        try:
-            loan = LoanChecks.objects.get(loan_id=loan_id)
-        except LoanChecks.DoesNotExist:
-            try:
-                loan = LoanStandingOrder.objects.get(loan_id=loan_id)
-            except LoanStandingOrder.DoesNotExist:
-                return Response({"detail": "Loan not found"}, status=status.HTTP_404_NOT_FOUND)
+        old_schedule = (
+            loan.amount,
+            loan.start_date,
+            loan.num_payments,
+        )
+
         serializer = LoanUpdateSerializer(
             instance=loan,
             data=request.data,
-            context={"request": request},
+            context={
+                "request":
+                    request
+            },
         )
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer.save()
-        serializer = LoanDetailSerializer(loan, context={"request": request})
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        serializer.is_valid(
+            raise_exception=True
+        )
+
+        try:
+            with transaction.atomic():
+                updated_loan = (
+                    serializer.save()
+                )
+
+                new_schedule = (
+                    updated_loan.amount,
+                    updated_loan.start_date,
+                    updated_loan.num_payments,
+                )
+
+                if (
+                    new_schedule
+                    != old_schedule
+                ):
+                    regenerate_payment_schedule(
+                        updated_loan,
+                        updated_loan.num_payments,
+                    )
+
+                audit(
+                    request.user,
+                    "UPDATE_LOAN",
+                    updated_loan
+                    .__class__.__name__,
+                    updated_loan.loan_id,
+                )
+
+        except ValueError as exc:
+            return Response(
+                {
+                    "detail":
+                        str(exc)
+                },
+                status=
+                    status.HTTP_409_CONFLICT,
+            )
+
+        return Response(
+            LoanDetailSerializer(
+                updated_loan,
+                context={
+                    "request":
+                        request
+                },
+            ).data
+        )
+
+
+class LoanSignedFormView(APIView):
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    def get(
+        self,
+        request,
+        loan_id,
+    ):
+        loan = find_scoped_loan(
+            request.user,
+            loan_id,
+        )
+
+        if not loan:
+            return Response(
+                {
+                    "detail":
+                        "Loan not found."
+                },
+                status=
+                    status.HTTP_404_NOT_FOUND,
+            )
+
+        sync_payment_statuses_and_loan(
+         loan
+        )
+
+        serializer = LoanDetailSerializer(
+            loan,
+            context={
+                "request":
+                request
+            },
+        )
+
+        if not loan.form_file:
+            return Response(
+                {
+                    "detail":
+                        "Signed form not found."
+                },
+                status=
+                    status.HTTP_404_NOT_FOUND,
+            )
+
+        extension = Path(
+            loan.form_file.name
+        ).suffix.lower()
+
+        response = FileResponse(
+            loan.form_file.open(
+                "rb"
+            ),
+            as_attachment=False,
+            filename=(
+                f"signed-form-"
+                f"{loan.loan_id}"
+                f"{extension}"
+            ),
+        )
+
+        response[
+            "Cache-Control"
+        ] = "private, no-store"
+
+        response[
+            "X-Content-Type-Options"
+        ] = "nosniff"
+
+        return response

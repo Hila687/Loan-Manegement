@@ -1,371 +1,1105 @@
-from rest_framework import serializers
-from django.contrib.auth.models import User
-from .models import Trustee, Borrower, LoanChecks, LoanStandingOrder, Role, UserProfile
 from decimal import Decimal, InvalidOperation
-from .models import Payment
+
+from django.contrib.auth.models import User
+from django.db.models import Sum
+from django.urls import reverse
 from rest_framework import serializers
-from .models import Payment
-#from .models import Trustee, LoanChecks, LoanStandingOrder
+
+from .models import (
+    Borrower,
+    Donation,
+    Donor,
+    LoanChecks,
+    LoanStandingOrder,
+    Payment,
+    ReminderSettings,
+    Role,
+    Trustee,
+    UserProfile,
+)
 
 
-# --- Role & UserProfile ---
-class RoleSerializer(serializers.ModelSerializer):
+class RoleSerializer(
+    serializers.ModelSerializer
+):
     class Meta:
         model = Role
-        fields = '__all__'
+        fields = [
+            "role_id",
+            "name",
+            "description",
+            "created_at",
+        ]
 
-class UserProfileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = UserProfile
-        fields = '__all__'
+        read_only_fields = fields
 
-# --- User, Trustee, Borrower ---
-class UserSerializer(serializers.ModelSerializer):
+
+class UserSerializer(
+    serializers.ModelSerializer
+):
     class Meta:
         model = User
-        fields = ['id', 'username', 'first_name', 'last_name', 'email']
 
-class TrusteeSerializer(serializers.ModelSerializer):
-    user_details = UserSerializer(source='user', read_only=True)
-    class Meta:
-        model = Trustee
-        fields = '__all__'
-
-class BorrowerSerializer(serializers.ModelSerializer):
-    user_details = UserSerializer(source='user', read_only=True)
-    class Meta:
-        model = Borrower
-        fields = '__all__'
-
-# --- Loans ---
-class LoanChecksSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = LoanChecks
-        fields = '__all__'
-
-class LoanStandingOrderSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = LoanStandingOrder
-        fields = '__all__'
-        
-
-class LoanListSerializer(serializers.Serializer):
-    """
-    Serializer for unified loan list items.
-
-    This serializer is NOT tied to a specific Django model.
-    It is used to return a clean, consistent JSON structure
-    for both LoanChecks and LoanStandingOrder records.
-    """
-
-    # Basic loan fields (common to both loan types)
-    loan_id = serializers.UUIDField()  # Unique identifier of the loan
-    loan_type = serializers.CharField()  # "checks" or "standing_order"
-    amount = serializers.DecimalField(max_digits=10, decimal_places=2)  # Loan amount
-    start_date = serializers.DateField()  # When the loan starts
-    status = serializers.CharField()  # Current status (e.g., ACTIVE, PAID)
-
-    # Nested data for related entities (already prepared as dictionaries in the view)
-    borrower = serializers.DictField()  # Contains borrower info (name, phone, email, etc.)
-    trustee = serializers.DictField()   # Contains trustee info (name, community, etc.)
-
-class LoanDetailSerializer(serializers.Serializer):
-    """
-    Full loan details serializer used for the Loan Details panel.
-    Unifies output for both loan types (Checks / Standing Order).
-    """
-
-    loan_id = serializers.UUIDField()
-    loan_type = serializers.SerializerMethodField()   # <-- FIXED
-    amount = serializers.DecimalField(max_digits=10, decimal_places=2)
-    start_date = serializers.DateField()
-    status = serializers.SerializerMethodField()
-    created_at = serializers.DateTimeField()
-    form_file_url = serializers.SerializerMethodField()
-    trustee_id = serializers.SerializerMethodField()
-
-
-    # Borrower full details
-    borrower = serializers.SerializerMethodField()
-
-    # Trustee full details
-    trustee = serializers.SerializerMethodField()
-
-    # Loan-type-specific fields
-    details = serializers.SerializerMethodField()
-
-    # ----------------------------------------------------
-    # Loan Type (FIXED: previously caused AttributeError)
-    # ----------------------------------------------------
-    def get_loan_type(self, obj):
-        if obj.__class__.__name__ == "LoanChecks":
-            return "checks"
-        if obj.__class__.__name__ == "LoanStandingOrder":
-            return "standing_order"
-        return None
-    
-    # -------------------------------
-    # Status (MODEL -> CONTRACT)
-    # -------------------------------
-    def get_status(self, obj):
-        """
-        Map model status to contract status.
-
-        Model: PENDING, ACTIVE, PAID, REJECTED
-        Contract: ACTIVE, CLOSED, OVERDUE
-        """
-        if obj.status == "PAID":
-            return "CLOSED"
-
-        if obj.status == "ACTIVE":
-            return "ACTIVE"
-
-        if obj.status in ("PENDING", "REJECTED"):
-            return "ACTIVE"   # keep FE stable in Sprint 3
-
-        return "ACTIVE"
-    
-    # ----------------------------------------------------
-    # Borrower section
-    # ----------------------------------------------------
-    def get_borrower(self, obj):
-        borrower = obj.borrower
-        user = borrower.user if borrower and borrower.user else None
-
-        first = (borrower.first_name or "").strip()
-        last = (borrower.last_name or "").strip()
-        name_from_borrower = f"{first} {last}".strip()
-
-        name = name_from_borrower or ((user.get_full_name() or "").strip() if user else "")
-        email = borrower.email or (user.email if user else "") or ""
-
-        if borrower.phone:
-            phone = borrower.phone
-        elif user and hasattr(user, "profile") and getattr(user.profile, "phone", None):
-            phone = user.profile.phone
-        else:
-            phone = ""
-
-        return {
-            "id_number": borrower.id_number,
-            "address": borrower.address,
-            "name": name,
-            "email": email,
-            "phone": phone,
-            "created_at": borrower.created_at,
-        }
-
-
-    # ----------------------------------------------------
-    # Trustee section
-    # ----------------------------------------------------
-    def get_trustee(self, obj):
-        trustee = obj.trustee
-        user = trustee.user if trustee.user else None
-
-        return {
-            "name": user.get_full_name() if user else "",
-            "community": trustee.community,
-            "phone": user.profile.phone if user and hasattr(user, "profile") else "",
-            "notes": trustee.notes,
-        }
-
-    # ----------------------------------------------------
-    # Trustee ID (for frontend edit support)
-    # ----------------------------------------------------
-    def get_trustee_id(self, obj):
-        return str(obj.trustee_id) if obj.trustee_id else None
-    
-    # ----------------------------------------------------
-    # Dynamic loan-type-specific details
-    # ----------------------------------------------------
-    def get_details(self, obj):
-        if obj.__class__.__name__ == "LoanChecks":
-            return {
-                "num_payments": obj.num_payments,
-                "check_details": obj.check_details,
-                "predefined_schedule": obj.predefined_schedule,
-            }
-
-        if obj.__class__.__name__ == "LoanStandingOrder":
-            return {
-                "monthly_amount": obj.monthly_amount,
-                "charge_day": obj.charge_day,
-                "stop_date": obj.stop_date,
-            }
-
-        return {}
-
-    # ----------------------------------------------------
-    # Form file URL
-    # ----------------------------------------------------
-    def get_form_file_url(self, obj):
-        if obj.form_file:
-            request = self.context.get("request")
-            return request.build_absolute_uri(obj.form_file.url) if request else obj.form_file.url
-        return None
-
-class LoanUpdateSerializer(serializers.Serializer):
-    """
-    Contract-bound serializer for PUT /api/loans/{loan_id}
-
-    Accepts ONLY:
-      amount, start_date, number_of_payments, trustee_id, status
-
-    Validations (per contract):
-      amount > 0
-      number_of_payments >= 1
-      start_date ISO date
-      trustee_id exists
-      status in { ACTIVE, CLOSED, OVERDUE }
-
-    Returns 400 field-level errors:
-      { "amount": ["Must be greater than 0"] }
-    """
-
-    amount = serializers.DecimalField(max_digits=10, decimal_places=2)
-    start_date = serializers.DateField()
-    number_of_payments = serializers.IntegerField()
-    trustee_id = serializers.UUIDField()
-    status = serializers.ChoiceField(choices=["ACTIVE", "CLOSED", "OVERDUE"])
-
-    # --- Contract messages ---
-    def validate_amount(self, value):
-        if value <= 0:
-            raise serializers.ValidationError("Must be greater than 0")
-        return value
-
-    def validate_number_of_payments(self, value):
-        if value < 1:
-            raise serializers.ValidationError("Must be at least 1")
-        return value
-
-    def validate_trustee_id(self, value):
-        if not Trustee.objects.filter(trustee_id=value).exists():
-            raise serializers.ValidationError("Trustee not found")
-        return value
-
-    def validate(self, attrs):
-        """
-        Enforce strict payload: reject unexpected fields.
-        """
-        request = self.context.get("request")
-        if request:
-            allowed = {"amount", "start_date", "number_of_payments", "trustee_id", "status"}
-            extra = set(request.data.keys()) - allowed
-            if extra:
-                raise serializers.ValidationError({k: ["Unexpected field"] for k in sorted(extra)})
-        return attrs
-
-    # --- Internal mapping: contract status -> model status ---
-    def _map_status_to_model(self, contract_status: str) -> str:
-        """
-        Model choices are: PENDING, ACTIVE, PAID, REJECTED.
-        Contract expects: ACTIVE, CLOSED, OVERDUE.
-
-        Sprint 3 approach (no DB schema changes):
-          ACTIVE  -> ACTIVE
-          CLOSED  -> PAID
-          OVERDUE -> ACTIVE  (kept ACTIVE until future status expansion)
-        """
-        mapping = {
-            "ACTIVE": "ACTIVE",
-            "CLOSED": "PAID",
-            "OVERDUE": "ACTIVE",
-        }
-        return mapping.get(contract_status, "ACTIVE")
-
-    def update(self, instance, validated_data):
-        amount = validated_data["amount"]
-        num_payments = validated_data["number_of_payments"]
-        trustee_uuid = validated_data["trustee_id"]
-        contract_status = validated_data["status"]
-
-        # Common updates (loan-level only)
-        instance.amount = amount
-        instance.start_date = validated_data["start_date"]
-        instance.status = self._map_status_to_model(contract_status)
-        instance.trustee = Trustee.objects.get(trustee_id=trustee_uuid)
-
-        # Loan-type translation
-        if isinstance(instance, LoanChecks):
-            instance.num_payments = num_payments
-
-        elif isinstance(instance, LoanStandingOrder):
-            try:
-                instance.monthly_amount = (Decimal(amount) / Decimal(num_payments))
-            except (InvalidOperation, ZeroDivisionError):
-                raise serializers.ValidationError({"number_of_payments": ["Invalid value"]})
-
-        instance.save()
-        return instance
-    
-    def create(self, validated_data):
-        raise serializers.ValidationError({"detail": ["Create is not supported"]})
-
-# ----------------------------------------------------
-# Create Loan Request Serializers
-# Responsible for validating and normalizing incoming data
-# for the loan creation flow (POST /api/loans).
-# ----------------------------------------------------
-
-class BorrowerCreateSerializer(serializers.Serializer):
-    id_number = serializers.CharField(max_length=20)
-    first_name = serializers.CharField(max_length=100, required=False, allow_blank=True)
-    last_name = serializers.CharField(max_length=100, required=False, allow_blank=True)
-    phone = serializers.CharField(max_length=20, required=False, allow_blank=True)
-    email = serializers.EmailField(required=False, allow_blank=True)
-    address = serializers.CharField(max_length=255)
-
-class LoanDetailsSerializer(serializers.Serializer):
-    amount = serializers.DecimalField(max_digits=10, decimal_places=2)
-    num_payments = serializers.IntegerField()
-    start_date = serializers.DateField()
-
-    def validate_amount(self, value):
-        if value <= 0:
-            raise serializers.ValidationError("Amount must be greater than 0")
-        return value
-
-    def validate_num_payments(self, value):
-        if value < 1:
-            raise serializers.ValidationError("Number of payments must be at least 1")
-        return value
-
-class CreateLoanRequestSerializer(serializers.Serializer):
-    loan_type = serializers.ChoiceField(choices=["checks", "standing_order"])
-    borrower = BorrowerCreateSerializer()
-    loan = LoanDetailsSerializer()
-    trustee_id = serializers.UUIDField()
-
-
-class PaymentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Payment
         fields = [
             "id",
-            "due_date",
-            "amount",
-            "amount_paid",
-            "status",
-            "paid_at",
-            "check_number",
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+            "is_active",
+        ]
+
+        read_only_fields = [
+            "id",
+            "username",
         ]
 
 
-class PaymentSerializer(serializers.ModelSerializer):
+class UserProfileSerializer(
+    serializers.ModelSerializer
+):
+    user_details = UserSerializer(
+        source="user",
+        read_only=True,
+    )
+
+    role_name = serializers.CharField(
+        source="role.name",
+        read_only=True,
+    )
+
+    class Meta:
+        model = UserProfile
+
+        fields = [
+            "id",
+            "user_details",
+            "role_name",
+            "phone",
+            "must_change_password",
+        ]
+
+        read_only_fields = fields
+
+
+class TrusteeSerializer(
+    serializers.ModelSerializer
+):
+    user_details = UserSerializer(
+        source="user",
+        read_only=True,
+    )
+
+    phone = serializers.CharField(
+        source="user.profile.phone",
+        read_only=True,
+        allow_blank=True,
+    )
+
+    is_active = serializers.BooleanField(
+        source="user.is_active",
+        read_only=True,
+    )
+
+    borrower_count = serializers.IntegerField(
+        source="borrowers.count",
+        read_only=True,
+    )
+
+    class Meta:
+        model = Trustee
+
+        fields = [
+            "trustee_id",
+            "user_details",
+            "phone",
+            "is_active",
+            "community",
+            "notes",
+            "borrower_count",
+        ]
+
+        read_only_fields = [
+            "trustee_id",
+            "user_details",
+            "phone",
+            "is_active",
+            "borrower_count",
+        ]
+
+
+class TrusteeCreateSerializer(
+    serializers.Serializer
+):
+    first_name = serializers.CharField(
+        max_length=150
+    )
+
+    last_name = serializers.CharField(
+        max_length=150
+    )
+
+    email = serializers.EmailField(
+        required=False,
+        allow_blank=True,
+    )
+
+    phone = serializers.CharField(
+        max_length=20,
+        required=False,
+        allow_blank=True,
+    )
+
+    community = serializers.CharField(
+        max_length=100
+    )
+
+    notes = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
+
+
+class TrusteeUpdateSerializer(
+    TrusteeCreateSerializer
+):
+    first_name = serializers.CharField(
+        max_length=150,
+        required=False,
+    )
+
+    last_name = serializers.CharField(
+        max_length=150,
+        required=False,
+    )
+
+    community = serializers.CharField(
+        max_length=100,
+        required=False,
+    )
+
+
+class BorrowerSerializer(
+    serializers.ModelSerializer
+):
+    username = serializers.CharField(
+        source="user.username",
+        read_only=True,
+    )
+
+    trustee_name = (
+        serializers.SerializerMethodField()
+    )
+
+    trustee_community = (
+        serializers.CharField(
+            source="trustee.community",
+            read_only=True,
+            allow_null=True,
+        )
+    )
+
+    loans_count = (
+        serializers.SerializerMethodField()
+    )
+
+    class Meta:
+        model = Borrower
+
+        fields = [
+            "borrower_id",
+            "username",
+            "id_number",
+            "first_name",
+            "last_name",
+            "phone",
+            "email",
+            "address",
+            "trustee",
+            "trustee_name",
+            "trustee_community",
+            "loans_count",
+            "created_at",
+        ]
+
+        read_only_fields = [
+            "borrower_id",
+            "username",
+            "created_at",
+            "loans_count",
+            "trustee_name",
+            "trustee_community",
+        ]
+
+    def get_trustee_name(
+        self,
+        obj,
+    ):
+        if (
+            not obj.trustee
+            or not obj.trustee.user
+        ):
+            return ""
+
+        return (
+            obj.trustee.user.get_full_name()
+            or obj.trustee.user.username
+        )
+
+    def get_loans_count(
+        self,
+        obj,
+    ):
+        return (
+            obj.loanchecks_loans.count()
+            + obj.loanstandingorder_loans.count()
+        )
+
+
+class DonorSerializer(
+    serializers.ModelSerializer
+):
+    user_details = UserSerializer(
+        source="user",
+        read_only=True,
+    )
+
+    is_active = serializers.BooleanField(
+        source="user.is_active",
+        read_only=True,
+    )
+
+    total_donated = (
+        serializers.SerializerMethodField()
+    )
+
+    class Meta:
+        model = Donor
+
+        fields = [
+            "donor_id",
+            "user_details",
+            "phone",
+            "is_active",
+            "notes",
+            "total_donated",
+            "created_at",
+        ]
+
+        read_only_fields = [
+            "donor_id",
+            "user_details",
+            "is_active",
+            "total_donated",
+            "created_at",
+        ]
+
+    def get_total_donated(
+        self,
+        obj,
+    ):
+        annotated = getattr(
+            obj,
+            "total_donated",
+            None,
+        )
+
+        if annotated is not None:
+            return annotated
+
+        return (
+            obj.donations.aggregate(
+                total=Sum("amount")
+            )["total"]
+            or Decimal("0.00")
+        )
+
+
+class DonorCreateSerializer(
+    serializers.Serializer
+):
+    first_name = serializers.CharField(
+        max_length=150
+    )
+
+    last_name = serializers.CharField(
+        max_length=150
+    )
+
+    email = serializers.EmailField(
+        required=False,
+        allow_blank=True,
+    )
+
+    phone = serializers.CharField(
+        max_length=20,
+        required=False,
+        allow_blank=True,
+    )
+
+    notes = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
+
+
+class DonorUpdateSerializer(
+    DonorCreateSerializer
+):
+    first_name = serializers.CharField(
+        max_length=150,
+        required=False,
+    )
+
+    last_name = serializers.CharField(
+        max_length=150,
+        required=False,
+    )
+
+
+class DonationSerializer(
+    serializers.ModelSerializer
+):
+    donor_name = (
+        serializers.SerializerMethodField()
+    )
+
+    class Meta:
+        model = Donation
+
+        fields = [
+            "donation_id",
+            "donor",
+            "donor_name",
+            "amount",
+            "donation_date",
+            "notes",
+            "created_at",
+        ]
+
+        read_only_fields = [
+            "donation_id",
+            "donor_name",
+            "created_at",
+        ]
+
+    def get_donor_name(
+        self,
+        obj,
+    ):
+        return (
+            obj.donor.user.get_full_name()
+            or obj.donor.user.username
+        )
+
+    def validate_amount(
+        self,
+        value,
+    ):
+        if value <= 0:
+            raise serializers.ValidationError(
+                "Amount must be greater than 0."
+            )
+
+        return value
+
+
+class AdminUserSerializer(
+    serializers.ModelSerializer
+):
+    phone = serializers.CharField(
+        source="profile.phone",
+        read_only=True,
+    )
+
+    must_change_password = (
+        serializers.BooleanField(
+            source="profile.must_change_password",
+            read_only=True,
+        )
+    )
+
+    class Meta:
+        model = User
+
+        fields = [
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+            "phone",
+            "is_active",
+            "is_superuser",
+            "must_change_password",
+        ]
+
+        read_only_fields = fields
+
+
+class AdminCreateSerializer(
+    serializers.Serializer
+):
+    first_name = serializers.CharField(
+        max_length=150
+    )
+
+    last_name = serializers.CharField(
+        max_length=150
+    )
+
+    email = serializers.EmailField(
+        required=False,
+        allow_blank=True,
+    )
+
+    phone = serializers.CharField(
+        max_length=20,
+        required=False,
+        allow_blank=True,
+    )
+
+
+class LoanListSerializer(
+    serializers.Serializer
+):
+    loan_id = serializers.UUIDField()
+    loan_type = serializers.CharField()
+
+    amount = serializers.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+    )
+
+    start_date = serializers.DateField()
+    status = serializers.CharField()
+
+    borrower = serializers.DictField()
+
+    trustee = serializers.DictField(
+        allow_null=True
+    )
+
+
+class LoanDetailSerializer(
+    serializers.Serializer
+):
+    loan_id = serializers.UUIDField()
+
+    loan_type = (
+        serializers.SerializerMethodField()
+    )
+
+    amount = serializers.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+    )
+
+    start_date = serializers.DateField()
+
+    status = serializers.CharField()
+
+    created_at = serializers.DateTimeField()
+
+    form_file_url = (
+        serializers.SerializerMethodField()
+    )
+
+    trustee_id = (
+        serializers.SerializerMethodField()
+    )
+
+    borrower = (
+        serializers.SerializerMethodField()
+    )
+
+    trustee = (
+        serializers.SerializerMethodField()
+    )
+
+    details = (
+        serializers.SerializerMethodField()
+    )
+
+    def get_loan_type(
+        self,
+        obj,
+    ):
+        if isinstance(
+            obj,
+            LoanChecks,
+        ):
+            return "checks"
+
+        return "standing_order"
+
+    def get_borrower(
+        self,
+        obj,
+    ):
+        borrower = obj.borrower
+        user = borrower.user
+
+        name = (
+            f"{borrower.first_name or ''} "
+            f"{borrower.last_name or ''}"
+        ).strip()
+
+        if not name and user:
+            name = (
+                user.get_full_name()
+                or user.username
+            )
+
+        return {
+            "id_number":
+                borrower.id_number,
+
+            "address":
+                borrower.address,
+
+            "name":
+                name,
+
+            "email":
+                (
+                    borrower.email
+                    or (
+                        user.email
+                        if user
+                        else ""
+                    )
+                ),
+
+            "phone":
+                (
+                    borrower.phone
+                    or (
+                        getattr(
+                            getattr(
+                                user,
+                                "profile",
+                                None,
+                            ),
+                            "phone",
+                            "",
+                        )
+                        if user
+                        else ""
+                    )
+                ),
+
+            "created_at":
+                borrower.created_at,
+        }
+
+    def get_trustee(
+        self,
+        obj,
+    ):
+        trustee = obj.trustee
+
+        if not trustee:
+            return None
+
+        user = trustee.user
+
+        return {
+            "name":
+                (
+                    user.get_full_name()
+                    or user.username
+                ),
+
+            "community":
+                trustee.community,
+
+            "phone":
+                (
+                    getattr(
+                        getattr(
+                            user,
+                            "profile",
+                            None,
+                        ),
+                        "phone",
+                        "",
+                    )
+                    or ""
+                ),
+
+            "notes":
+                trustee.notes,
+        }
+
+    def get_trustee_id(
+        self,
+        obj,
+    ):
+        if not obj.trustee_id:
+            return None
+
+        return str(
+            obj.trustee_id
+        )
+
+    def get_details(
+        self,
+        obj,
+    ):
+        if isinstance(
+            obj,
+            LoanChecks,
+        ):
+            return {
+                "num_payments":
+                    obj.num_payments,
+
+                "check_details":
+                    obj.check_details,
+
+                "predefined_schedule":
+                    obj.predefined_schedule,
+            }
+
+        return {
+            "num_payments":
+                obj.num_payments,
+
+            "monthly_amount":
+                obj.monthly_amount,
+
+            "charge_day":
+                obj.charge_day,
+
+            "stop_date":
+                obj.stop_date,
+        }
+
+    def get_form_file_url(
+        self,
+        obj,
+    ):
+        if not obj.form_file:
+            return None
+
+        request = self.context.get(
+            "request"
+        )
+
+        path = reverse(
+            "loan-signed-form",
+            kwargs={
+                "loan_id":
+                    obj.loan_id
+            },
+        )
+
+        if request:
+            return (
+                request.build_absolute_uri(
+                    path
+                )
+            )
+
+        return path
+
+
+class LoanUpdateSerializer(
+    serializers.Serializer
+):
+    amount = serializers.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+    )
+
+    start_date = serializers.DateField()
+
+    number_of_payments = (
+        serializers.IntegerField()
+    )
+
+    trustee_id = serializers.UUIDField()
+
+    status = serializers.ChoiceField(
+        choices=[
+            "ACTIVE",
+            "CLOSED",
+            "OVERDUE",
+        ]
+    )
+
+    def validate_amount(
+        self,
+        value,
+    ):
+        if value <= 0:
+            raise serializers.ValidationError(
+                "Must be greater than 0."
+            )
+
+        return value
+
+    def validate_number_of_payments(
+        self,
+        value,
+    ):
+        if value < 1:
+            raise serializers.ValidationError(
+                "Must be at least 1."
+            )
+
+        return value
+
+    def validate_trustee_id(
+        self,
+        value,
+    ):
+        if not Trustee.objects.filter(
+            trustee_id=value,
+            user__is_active=True,
+        ).exists():
+            raise serializers.ValidationError(
+                "Trustee not found."
+            )
+
+        return value
+
+    def validate(
+        self,
+        attrs,
+    ):
+        request = self.context.get(
+            "request"
+        )
+
+        if request:
+            allowed = {
+                "amount",
+                "start_date",
+                "number_of_payments",
+                "trustee_id",
+                "status",
+            }
+
+            extra = (
+                set(request.data.keys())
+                - allowed
+            )
+
+            if extra:
+                raise serializers.ValidationError({
+                    key: [
+                        "Unexpected field."
+                    ]
+                    for key in sorted(extra)
+                })
+
+        return attrs
+
+    def update(
+        self,
+        instance,
+        validated_data,
+    ):
+        amount = validated_data[
+            "amount"
+        ]
+
+        num_payments = validated_data[
+            "number_of_payments"
+        ]
+
+        instance.amount = amount
+
+        instance.start_date = (
+            validated_data[
+                "start_date"
+            ]
+        )
+
+        instance.status = (
+            validated_data[
+                "status"
+            ]
+        )
+
+        instance.trustee = (
+            Trustee.objects.get(
+                trustee_id=
+                    validated_data[
+                        "trustee_id"
+                    ]
+            )
+        )
+
+        instance.num_payments = (
+            num_payments
+        )
+
+        if isinstance(
+            instance,
+            LoanStandingOrder,
+        ):
+            try:
+                instance.monthly_amount = (
+                    Decimal(amount)
+                    / Decimal(num_payments)
+                ).quantize(
+                    Decimal("0.01")
+                )
+
+            except (
+                InvalidOperation,
+                ZeroDivisionError,
+            ):
+                raise serializers.ValidationError({
+                    "number_of_payments": [
+                        "Invalid value."
+                    ]
+                })
+
+            instance.charge_day = (
+                instance.start_date.day
+            )
+
+        instance.save()
+
+        return instance
+
+    def create(
+        self,
+        validated_data,
+    ):
+        raise serializers.ValidationError({
+            "detail": [
+                "Create is not supported."
+            ]
+        })
+
+
+class BorrowerCreateSerializer(
+    serializers.Serializer
+):
+    id_number = serializers.CharField(
+        max_length=20
+    )
+
+    first_name = serializers.CharField(
+        max_length=100
+    )
+
+    last_name = serializers.CharField(
+        max_length=100
+    )
+
+    phone = serializers.CharField(
+        max_length=20
+    )
+
+    email = serializers.EmailField(
+        required=False,
+        allow_blank=True,
+    )
+
+    address = serializers.CharField(
+        max_length=255
+    )
+
+
+class LoanDetailsCreateSerializer(
+    serializers.Serializer
+):
+    amount = serializers.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+    )
+
+    num_payments = (
+        serializers.IntegerField()
+    )
+
+    start_date = serializers.DateField()
+
+    def validate_amount(
+        self,
+        value,
+    ):
+        if value <= 0:
+            raise serializers.ValidationError(
+                "Amount must be greater than 0."
+            )
+
+        return value
+
+    def validate_num_payments(
+        self,
+        value,
+    ):
+        if value < 1:
+            raise serializers.ValidationError(
+                "Number of payments must be at least 1."
+            )
+
+        return value
+
+
+class CreateLoanRequestSerializer(
+    serializers.Serializer
+):
+    loan_type = serializers.ChoiceField(
+        choices=[
+            "checks",
+            "standing_order",
+        ]
+    )
+
+    borrower = BorrowerCreateSerializer()
+
+    loan = LoanDetailsCreateSerializer()
+
+    trustee_id = serializers.UUIDField()
+
+    def validate_trustee_id(
+        self,
+        value,
+    ):
+        if not Trustee.objects.filter(
+            trustee_id=value,
+            user__is_active=True,
+        ).exists():
+            raise serializers.ValidationError(
+                "Trustee not found."
+            )
+
+        return value
+
+
+class PaymentSerializer(
+    serializers.ModelSerializer
+):
+    payment_id = serializers.UUIDField(
+        source="id",
+        read_only=True,
+    )
+
     amount_due = serializers.DecimalField(
         source="amount",
-        max_digits=10,
-        decimal_places=2
+        max_digits=12,
+        decimal_places=2,
     )
 
     class Meta:
         model = Payment
+
         fields = [
-            "id",
+            "payment_id",
             "due_date",
             "amount_due",
             "amount_paid",
             "status",
+            "is_manual_exception",
+            "exception_note",
         ]
+
+        read_only_fields = fields
+
+
+class PaymentExceptionSerializer(
+    serializers.Serializer
+):
+    status = serializers.ChoiceField(
+        choices=[
+            Payment.STATUS_PENDING,
+            Payment.STATUS_PAID,
+            Payment.STATUS_LATE,
+        ],
+        required=False,
+    )
+
+    amount_paid = serializers.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        required=False,
+    )
+
+    note = serializers.CharField(
+        max_length=500,
+        required=False,
+        allow_blank=False,
+    )
+
+    clear_exception = (
+        serializers.BooleanField(
+            required=False,
+            default=False,
+        )
+    )
+
+    def validate(
+        self,
+        attrs,
+    ):
+        if attrs.get(
+            "clear_exception"
+        ):
+            return attrs
+
+        if "status" not in attrs:
+            raise serializers.ValidationError({
+                "status": [
+                    "This field is required."
+                ]
+            })
+
+        if not attrs.get("note"):
+            raise serializers.ValidationError({
+                "note": [
+                    "A note is required "
+                    "for a manual exception."
+                ]
+            })
+
+        return attrs
+
+    def validate_amount_paid(
+        self,
+        value,
+    ):
+        if value < 0:
+            raise serializers.ValidationError(
+                "Amount paid cannot be negative."
+            )
+
+        return value
+
+
+class ReminderSettingsSerializer(
+    serializers.ModelSerializer
+):
+    class Meta:
+        model = ReminderSettings
+
+        fields = [
+            "enabled",
+            "days_before",
+            "channel",
+            "updated_at",
+        ]
+
+        read_only_fields = [
+            "updated_at",
+        ]
+
+    def validate_days_before(
+        self,
+        value,
+    ):
+        if value > 30:
+            raise serializers.ValidationError(
+                "Reminder timing cannot exceed 30 days."
+            )
+
+        return value

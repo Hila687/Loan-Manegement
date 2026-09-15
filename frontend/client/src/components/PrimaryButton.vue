@@ -18,7 +18,7 @@ function onClick() {
     type="button"
     @click="onClick"
     :class="[
-      'cursor-pointer overflow-hidden rounded-lg h-12 px-5 bg-[#007AFF] text-white text-sm font-semibold tracking-wide hover:bg-[#0067E0] active:bg-[#0052BA] transition-colors',
+      'cursor-pointer overflow-hidden rounded-lg h-12 px-5 bg-brand text-white text-sm font-semibold tracking-wide hover:bg-brand-deep active:bg-brand-deep transition-colors',
       block !== false ? 'w-full flex items-center justify-center' : 'inline-flex items-center justify-center'
     ]"
   >

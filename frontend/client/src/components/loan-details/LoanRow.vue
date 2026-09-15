@@ -1,8 +1,8 @@
 <!-- frontend/client/src/components/loan-details/LoanRow.vue -->
 <template>
-  <tr class="hover:bg-gray-50 cursor-pointer" @click="onClickRow">
+  <tr class="hover:bg-surface-muted cursor-pointer" @click="onClickRow">
     <!-- Open/close icon -->
-    <td class="p-4 w-6 text-gray-500 text-lg select-none">
+    <td class="p-4 w-6 text-muted text-lg select-none">
       {{ isOpen(loan.id) ? "▲" : "▼" }}
     </td>
 
@@ -34,7 +34,7 @@
 
   <!-- Expanded Row -->
   <tr v-if="isOpen(loan.id)">
-    <td colspan="6" class="bg-gray-50 p-4 border-t">
+    <td colspan="6" class="bg-surface-muted p-4 border-t">
       <LoanDetailsPanel :loan="loan" />
     </td>
   </tr>

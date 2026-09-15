@@ -3,7 +3,7 @@
   <div class="space-y-2">
     <h2 class="text-lg font-semibold">{{ t("loanDetails.loanInfo") }}</h2>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-700">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-ink-soft">
 
       <div>
         <strong>{{ t("loanDetails.loanId") }}</strong> {{ loan.id }}

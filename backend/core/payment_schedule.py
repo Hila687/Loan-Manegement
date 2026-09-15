@@ -1,26 +1,56 @@
-from datetime import date
+from decimal import Decimal, ROUND_DOWN
+
 from dateutil.relativedelta import relativedelta
 
 
-def calculate_payment_dates(start_date: date, num_payments: int) -> list[date]:
-    """
-    Calculate payment due dates based on a start date and number of payments.
+def calculate_payment_dates(
+    start_date,
+    num_payments: int,
+):
+    return [
+        start_date + relativedelta(months=index)
+        for index in range(num_payments)
+    ]
 
-    Rules (Sprint 5):
-    - First payment due date is start_date
-    - Each subsequent payment is exactly +1 calendar month
-    - No special handling for end-of-month edge cases
-    - Year transitions are handled naturally by date arithmetic
-    """
 
-    if num_payments <= 0:
-        return []
+def split_amount_exactly(
+    amount: Decimal,
+    num_payments: int,
+):
+    if num_payments < 1:
+        raise ValueError(
+            "Number of payments must be at least 1."
+        )
 
-    due_dates = []
-    current_date = start_date
+    total = Decimal(amount).quantize(
+        Decimal("0.01")
+    )
 
-    for _ in range(num_payments):
-        due_dates.append(current_date)
-        current_date = current_date + relativedelta(months=1)
+    base = (
+        total / Decimal(num_payments)
+    ).quantize(
+        Decimal("0.01"),
+        rounding=ROUND_DOWN,
+    )
 
-    return due_dates
+    amounts = [
+        base
+        for _ in range(num_payments)
+    ]
+
+    remainder = total - sum(
+        amounts,
+        Decimal("0.00"),
+    )
+
+    cents = int(
+        (
+            remainder
+            / Decimal("0.01")
+        ).to_integral_value()
+    )
+
+    for index in range(cents):
+        amounts[index] += Decimal("0.01")
+
+    return amounts

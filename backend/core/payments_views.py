@@ -1,63 +1,278 @@
-from datetime import date
+from decimal import Decimal
 
-from django.contrib.contenttypes.models import ContentType
-from rest_framework.views import APIView
+from django.db import transaction
+from django.utils import timezone
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from core.models import LoanChecks, LoanStandingOrder, Payment
-from .serializers import PaymentSerializer
+from .loan_access import find_scoped_loan
+from .models import Payment
+from .permissions import IsAdminRole
+from .serializers import (
+    PaymentExceptionSerializer,
+    PaymentSerializer,
+)
+from .services import (
+    audit,
+    get_payment_queryset_for_loan,
+    sync_payment_statuses_and_loan,
+)
 
 
 class LoanPaymentsView(APIView):
-    def get(self, request, loan_id):
+    permission_classes = [
+        IsAuthenticated,
+    ]
 
-        # 1. מציאת ההלוואה (צ'קים או הוראת קבע)
-        loan_checks = LoanChecks.objects.filter(loan_id=loan_id).first()
-        loan_standing = LoanStandingOrder.objects.filter(loan_id=loan_id).first()
+    def get(
+        self,
+        request,
+        loan_id,
+    ):
+        loan = find_scoped_loan(
+            request.user,
+            loan_id,
+        )
 
-        if not loan_checks and not loan_standing:
+        if not loan:
             return Response(
-                {"detail": "Loan not found"},
-                status=404
+                {
+                    "detail":
+                        "Loan not found."
+                },
+                status=
+                    status.HTTP_404_NOT_FOUND,
             )
 
-        loan = loan_checks if loan_checks else loan_standing
+        sync_payment_statuses_and_loan(
+            loan
+        )
 
-        # 2. שליפת התשלומים באמצעות GenericForeignKey
-        loan_content_type = ContentType.objects.get_for_model(loan)
+        payments = (
+            get_payment_queryset_for_loan(
+                loan
+            ).order_by(
+                "due_date"
+            )
+        )
 
-        payments = Payment.objects.filter(
-            content_type=loan_content_type,
-            object_id=loan.loan_id
-        ).order_by("due_date")
+        total_amount = sum(
+            (
+                payment.amount
+                for payment
+                in payments
+            ),
+            Decimal("0.00"),
+        )
 
-        # 3. עדכון אוטומטי של סטטוס תשלומים שהיו אמורים להיות משולמים
-        today = date.today()
-        for payment in payments:
-            if payment.status == Payment.STATUS_PENDING and payment.due_date <= today:
-                payment.status = Payment.STATUS_PAID
-                payment.amount_paid = payment.amount
-                payment.save()
-
-        # 4. חישוב סיכום
-        total_payments = payments.count()
-        paid_payments = payments.filter(status=Payment.STATUS_PAID).count()
-
-        total_amount = sum(p.amount for p in payments)
-        paid_amount = sum(p.amount_paid for p in payments)
-
-        summary = {
-            "total_amount": total_amount,
-            "paid_amount": paid_amount,
-            "total_payments": total_payments,
-            "paid_payments": paid_payments,
-        }
-
-        # 5. Serializer + Response
-        serializer = PaymentSerializer(payments, many=True)
+        paid_amount = sum(
+            (
+                payment.amount_paid
+                for payment
+                in payments
+            ),
+            Decimal("0.00"),
+        )
 
         return Response({
-            "loan_id": loan_id,
-            "summary": summary,
-            "payments": serializer.data
+            "loan_id":
+                str(loan.loan_id),
+
+            "loan_status":
+                loan.status,
+
+            "summary": {
+                "total_amount":
+                    total_amount,
+
+                "paid_amount":
+                    paid_amount,
+
+                "total_payments":
+                    payments.count(),
+
+                "paid_payments":
+                    payments.filter(
+                        status=
+                            Payment.STATUS_PAID
+                    ).count(),
+
+                "late_payments":
+                    payments.filter(
+                        status=
+                            Payment.STATUS_LATE
+                    ).count(),
+            },
+
+            "payments":
+                PaymentSerializer(
+                    payments,
+                    many=True,
+                ).data,
         })
+
+
+class PaymentExceptionView(APIView):
+    permission_classes = [
+        IsAdminRole,
+    ]
+
+    @transaction.atomic
+    def patch(
+        self,
+        request,
+        payment_id,
+    ):
+        payment = (
+            Payment.objects
+            .select_for_update()
+            .filter(
+                pk=payment_id
+            )
+            .first()
+        )
+
+        if not payment:
+            return Response(
+                {
+                    "detail":
+                        "Payment not found."
+                },
+                status=
+                    status.HTTP_404_NOT_FOUND,
+            )
+
+        loan = payment.loan
+
+        serializer = (
+            PaymentExceptionSerializer(
+                data=request.data
+            )
+        )
+
+        serializer.is_valid(
+            raise_exception=True
+        )
+
+        data = (
+            serializer.validated_data
+        )
+
+        if data.get(
+            "clear_exception"
+        ):
+            payment.is_manual_exception = False
+            payment.exception_note = ""
+
+            payment.save(
+                update_fields=[
+                    "is_manual_exception",
+                    "exception_note",
+                ]
+            )
+
+            sync_payment_statuses_and_loan(
+                loan
+            )
+
+            audit(
+                request.user,
+                "CLEAR_PAYMENT_EXCEPTION",
+                "Payment",
+                payment.id,
+            )
+
+            return Response(
+                PaymentSerializer(
+                    payment
+                ).data
+            )
+
+        payment.is_manual_exception = True
+
+        payment.exception_note = (
+            data["note"].strip()
+        )
+
+        payment.status = data[
+            "status"
+        ]
+
+        if (
+            payment.status
+            == Payment.STATUS_PAID
+        ):
+            payment.amount_paid = (
+                data.get(
+                    "amount_paid",
+                    payment.amount,
+                )
+            )
+
+            payment.paid_at = (
+                payment.paid_at
+                or timezone.now()
+            )
+
+        elif (
+            payment.status
+            == Payment.STATUS_LATE
+        ):
+            payment.amount_paid = (
+                data.get(
+                    "amount_paid",
+                    Decimal("0.00"),
+                )
+            )
+
+            payment.paid_at = None
+
+        else:
+            payment.amount_paid = (
+                data.get(
+                    "amount_paid",
+                    Decimal("0.00"),
+                )
+            )
+
+            payment.paid_at = None
+
+        if (
+            payment.amount_paid
+            > payment.amount
+        ):
+            return Response(
+                {
+                    "amount_paid": [
+                        "Amount paid cannot exceed "
+                        "the scheduled amount."
+                    ]
+                },
+                status=
+                    status.HTTP_400_BAD_REQUEST,
+            )
+
+        payment.save()
+
+        sync_payment_statuses_and_loan(
+            loan
+        )
+
+        audit(
+            request.user,
+            "SET_PAYMENT_EXCEPTION",
+            "Payment",
+            payment.id,
+            {
+                "status":
+                    payment.status
+            },
+        )
+
+        return Response(
+            PaymentSerializer(
+                payment
+            ).data
+        )
