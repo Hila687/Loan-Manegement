@@ -22,6 +22,20 @@ def signed_form_upload_to(
     )
 
 
+def standing_order_form_upload_to(
+    instance,
+    filename: str,
+) -> str:
+    extension = Path(filename).suffix.lower()
+
+    return (
+        f"standing_order_forms/"
+        f"{timezone.localdate().year}/"
+        f"{uuid.uuid4().hex}"
+        f"{extension}"
+    )
+
+
 class Role(models.Model):
     role_id = models.UUIDField(
         primary_key=True,
@@ -341,11 +355,11 @@ class LoanStandingOrder(Loan):
         null=True,
     )
     standing_order_form_file = models.FileField(
-    upload_to="standing_order_forms/",
-    blank=True,
-    null=True,
-    verbose_name="Standing order authorization form",
-)
+        upload_to=standing_order_form_upload_to,
+        blank=True,
+        null=True,
+        verbose_name="Standing order authorization form",
+    )
 
 
 class Payment(models.Model):

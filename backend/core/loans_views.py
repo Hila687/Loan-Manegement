@@ -357,7 +357,10 @@ class LoanListView(APIView):
                 )
 
             validate_signed_form(
-                standing_order_form_file
+                standing_order_form_file,
+                field_name=(
+                    "standing_order_form_file"
+                ),
             )
 
         borrower_data = data[
@@ -969,3 +972,84 @@ class LoanSignedFormView(APIView):
         ] = "nosniff"
 
         return response
+
+class LoanStandingOrderFormView(APIView):
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    def get(
+        self,
+        request,
+        loan_id,
+    ):
+        loan = find_scoped_loan(
+            request.user,
+            loan_id,
+        )
+
+        if not loan:
+            return Response(
+                {
+                    "detail":
+                        "Loan not found."
+                },
+                status=
+                    status.HTTP_404_NOT_FOUND,
+            )
+
+        if not isinstance(
+            loan,
+            LoanStandingOrder,
+        ):
+            return Response(
+                {
+                    "detail":
+                        "Standing order form not found."
+                },
+                status=
+                    status.HTTP_404_NOT_FOUND,
+            )
+
+        form_file = getattr(
+            loan,
+            "standing_order_form_file",
+            None,
+        )
+
+        if not form_file:
+            return Response(
+                {
+                    "detail":
+                        "Standing order form not found."
+                },
+                status=
+                    status.HTTP_404_NOT_FOUND,
+            )
+
+        extension = Path(
+            form_file.name
+        ).suffix.lower()
+
+        response = FileResponse(
+            form_file.open(
+                "rb"
+            ),
+            as_attachment=False,
+            filename=(
+                f"standing-order-form-"
+                f"{loan.loan_id}"
+                f"{extension}"
+            ),
+        )
+
+        response[
+            "Cache-Control"
+        ] = "private, no-store"
+
+        response[
+            "X-Content-Type-Options"
+        ] = "nosniff"
+
+        return response
+

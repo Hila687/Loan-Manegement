@@ -13,6 +13,7 @@ from core.loans_views import (
     LoanDetailView,
     LoanListView,
     LoanSignedFormView,
+    LoanStandingOrderFormView,
 )
 from core.payments_views import (
     LoanPaymentsView,
@@ -136,6 +137,12 @@ urlpatterns = [
         "api/loans/<uuid:loan_id>/signed-form/",
         LoanSignedFormView.as_view(),
         name="loan-signed-form",
+    ),
+
+    path(
+        "api/loans/<uuid:loan_id>/standing-order-form/",
+        LoanStandingOrderFormView.as_view(),
+        name="loan-standing-order-form",
     ),
 
     path(

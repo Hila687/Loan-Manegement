@@ -507,6 +507,10 @@ class LoanDetailSerializer(
         serializers.SerializerMethodField()
     )
 
+    standing_order_form_file_url = (
+        serializers.SerializerMethodField()
+    )
+
     trustee_id = (
         serializers.SerializerMethodField()
     )
@@ -691,6 +695,44 @@ class LoanDetailSerializer(
 
         path = reverse(
             "loan-signed-form",
+            kwargs={
+                "loan_id":
+                    obj.loan_id
+            },
+        )
+
+        if request:
+            return (
+                request.build_absolute_uri(
+                    path
+                )
+            )
+
+        return path
+
+    def get_standing_order_form_file_url(
+        self,
+        obj,
+    ):
+        if not isinstance(
+            obj,
+            LoanStandingOrder,
+        ):
+            return None
+
+        if not getattr(
+            obj,
+            "standing_order_form_file",
+            None,
+        ):
+            return None
+
+        request = self.context.get(
+            "request"
+        )
+
+        path = reverse(
+            "loan-standing-order-form",
             kwargs={
                 "loan_id":
                     obj.loan_id
