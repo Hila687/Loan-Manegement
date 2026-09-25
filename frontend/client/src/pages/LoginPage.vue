@@ -13,6 +13,9 @@ import {
   useLocale,
 } from "../composables/useLocale";
 
+import LanguageSelector
+  from "../components/LanguageSelector.vue";
+
 import {
   useAuth,
 } from "../composables/useAuth";
@@ -24,7 +27,6 @@ const route = useRoute();
 const {
   t,
   locale,
-  setLanguage,
 } = useLocale();
 
 const auth = useAuth();
@@ -39,14 +41,6 @@ const isRTL = computed(
     locale.value === "he"
 );
 
-
-function toggleLanguage() {
-  setLanguage(
-    locale.value === "he"
-      ? "en"
-      : "he"
-  );
-}
 
 
 async function submit() {
@@ -153,7 +147,8 @@ async function submit() {
           shadow-brand/10
           border
           border-white
-          overflow-hidden
+          overflow-visible
+          relative
         "
       >
         <div
@@ -400,56 +395,9 @@ async function submit() {
             }}
           </button>
 
-          <button
-            type="button"
-            class="
-              mx-auto
-              flex
-              items-center
-              gap-2
-              text-sm
-              text-muted
-              hover:text-brand
-              transition-colors
-            "
-            @click="
-              toggleLanguage
-            "
-          >
-            <svg
-              class="
-                w-4
-                h-4
-              "
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="
-                  M3 5h12
-                  M9 3v2
-                  m1.048 9.5
-                  A18.022 18.022
-                  0 016.412 9
-                  m6.088 9h7
-                  M11 21l5-10
-                  5 10
-                "
-              />
-            </svg>
-
-            <span>
-              {{
-                locale === "he"
-                  ? "English"
-                  : "עברית"
-              }}
-            </span>
-          </button>
+          <div class="relative z-50 flex justify-center">
+            <LanguageSelector />
+          </div>
         </form>
       </div>
 

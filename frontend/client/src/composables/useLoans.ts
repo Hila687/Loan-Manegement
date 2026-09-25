@@ -21,8 +21,15 @@ import {
 } from "../types/loan";
 
 
-export function useLoans() {
-  const loans:
+type UseLoansOptions = {
+  includeCompleted?: boolean;
+};
+
+
+export function useLoans(
+  options: UseLoansOptions = {}
+) {
+  const allLoans:
     Ref<LoanListItem[]> =
       ref([]);
 
@@ -45,19 +52,74 @@ export function useLoans() {
     ref(false);
 
 
+  const loans =
+    computed(() => {
+      const query =
+        filters.value.search
+          ?.trim()
+          .toLowerCase() ||
+        "";
+
+      return allLoans.value.filter(
+        (loan) => {
+          if (
+            filters.value.type &&
+            filters.value.type !==
+              "all" &&
+            loan.type !==
+              filters.value.type
+          ) {
+            return false;
+          }
+
+          if (
+            filters.value.status &&
+            filters.value.status !==
+              "all" &&
+            loan.status !==
+              filters.value.status
+          ) {
+            return false;
+          }
+
+          if (!query) {
+            return true;
+          }
+
+          const searchableValues = [
+            loan.borrower.name,
+            loan.borrower.phone,
+            loan.borrower.email,
+            loan.borrower.idNumber,
+            loan.trustee?.name,
+            loan.trustee?.community,
+          ];
+
+          return searchableValues.some(
+            (value) =>
+              String(
+                value || ""
+              )
+                .toLowerCase()
+                .includes(query)
+          );
+        }
+      );
+    });
+
+
   async function fetchLoans():
     Promise<void> {
-    loading.value =
-      true;
-
-    error.value =
-      null;
+    loading.value = true;
+    error.value = null;
 
     try {
-      loans.value =
+      allLoans.value =
         await loanService
-          .getActiveLoans(
-            filters.value
+          .getLoanDirectory(
+            Boolean(
+              options.includeCompleted
+            )
           );
 
       initialFetchDone.value =
@@ -106,11 +168,9 @@ export function useLoans() {
           "Failed to load loans.";
       }
 
-      loans.value =
-        [];
+      allLoans.value = [];
     } finally {
-      loading.value =
-        false;
+      loading.value = false;
     }
   }
 
@@ -125,8 +185,6 @@ export function useLoans() {
       ...filters.value,
       [key]: value,
     };
-
-    fetchLoans();
   }
 
 
@@ -138,8 +196,6 @@ export function useLoans() {
       ...filters.value,
       ...newFilters,
     };
-
-    fetchLoans();
   }
 
 
@@ -150,8 +206,6 @@ export function useLoans() {
       status: "all",
       search: undefined,
     };
-
-    fetchLoans();
   }
 
 
@@ -161,8 +215,6 @@ export function useLoans() {
       ...filters.value,
       search: undefined,
     };
-
-    fetchLoans();
   }
 
 
@@ -192,6 +244,8 @@ export function useLoans() {
         return (
           filters.value.type !==
             "all" ||
+          filters.value.status !==
+            "all" ||
           Boolean(
             filters.value
               .search
@@ -213,7 +267,6 @@ export function useLoans() {
             loan.amount ||
             0
           ),
-
         0
       );
     });
@@ -228,7 +281,6 @@ export function useLoans() {
         > = {
           [LoanType.CHECKS]:
             0,
-
           [LoanType.STANDING_ORDER]:
             0,
         };
@@ -243,6 +295,28 @@ export function useLoans() {
       }
 
       return counts;
+    });
+
+
+  const statusCounts =
+    computed(() => {
+      return allLoans.value.reduce(
+        (
+          counts,
+          loan
+        ) => {
+          counts[
+            loan.status
+          ] += 1;
+
+          return counts;
+        },
+        {
+          ACTIVE: 0,
+          OVERDUE: 0,
+          CLOSED: 0,
+        }
+      );
     });
 
 
@@ -272,6 +346,7 @@ export function useLoans() {
 
   return {
     loans,
+    allLoans,
     loading,
     error,
     filters,
@@ -281,6 +356,7 @@ export function useLoans() {
     hasActiveFilters,
     totalAmount,
     loansByType,
+    statusCounts,
     isLoading,
     hasError,
     isEmpty,

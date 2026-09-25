@@ -1,14 +1,30 @@
 <template>
   <AppLayout
     :title="title"
-    :subtitle="subtitle"
     :show-language-toggle="true"
     max-width="full"
   >
     <div class="space-y-5 sm:space-y-6">
+      <!-- Short report hint -->
+      <div
+        v-if="showHelp"
+        class="flex items-center justify-between gap-3 rounded-xl border border-brand/15 bg-brand/5 px-4 py-3 text-sm text-ink-soft"
+      >
+        <span>{{ shortHelpText }}</span>
+
+        <button
+          type="button"
+          class="flex h-7 w-7 flex-shrink-0 cursor-pointer items-center justify-center rounded-lg text-lg leading-none text-muted transition hover:bg-white hover:text-ink"
+          :aria-label="closeHelpLabel"
+          @click="showHelp = false"
+        >
+          ×
+        </button>
+      </div>
+
       <!-- Report filters -->
       <section
-        class="rounded-2xl border border-[#E5E5EA] bg-white p-4 shadow-sm sm:p-5"
+        class="rounded-2xl border border-line bg-white p-4 shadow-sm sm:p-5"
       >
         <div
           class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4"
@@ -17,14 +33,14 @@
             class="flex flex-col gap-1.5"
           >
             <span
-              class="text-sm font-medium text-[#374151]"
+              class="text-sm font-medium text-ink-soft"
             >
               {{ trusteeLabel }}
             </span>
 
             <select
               v-model="filters.trustee"
-              class="h-11 rounded-lg border border-[#E5E5EA] bg-white px-3 text-sm outline-none transition focus:border-[#007AFF] focus:ring-2 focus:ring-[#007AFF]/20"
+              class="h-11 rounded-lg border border-line bg-white px-3 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20"
             >
               <option value="">
                 {{ allLabel }}
@@ -44,14 +60,14 @@
             class="flex flex-col gap-1.5"
           >
             <span
-              class="text-sm font-medium text-[#374151]"
+              class="text-sm font-medium text-ink-soft"
             >
               {{ borrowerLabel }}
             </span>
 
             <select
               v-model="filters.borrower"
-              class="h-11 rounded-lg border border-[#E5E5EA] bg-white px-3 text-sm outline-none transition focus:border-[#007AFF] focus:ring-2 focus:ring-[#007AFF]/20"
+              class="h-11 rounded-lg border border-line bg-white px-3 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20"
             >
               <option value="">
                 {{ allLabel }}
@@ -71,7 +87,7 @@
             class="flex flex-col gap-1.5"
           >
             <span
-              class="text-sm font-medium text-[#374151]"
+              class="text-sm font-medium text-ink-soft"
             >
               {{ fromDateLabel }}
             </span>
@@ -79,7 +95,8 @@
             <input
               v-model="filters.start_date"
               type="date"
-              class="h-11 rounded-lg border border-[#E5E5EA] bg-white px-3 text-sm outline-none transition focus:border-[#007AFF] focus:ring-2 focus:ring-[#007AFF]/20"
+              dir="ltr"
+              class="h-11 rounded-lg border border-line bg-white px-3 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20"
             />
           </label>
 
@@ -87,7 +104,7 @@
             class="flex flex-col gap-1.5"
           >
             <span
-              class="text-sm font-medium text-[#374151]"
+              class="text-sm font-medium text-ink-soft"
             >
               {{ toDateLabel }}
             </span>
@@ -95,7 +112,8 @@
             <input
               v-model="filters.end_date"
               type="date"
-              class="h-11 rounded-lg border border-[#E5E5EA] bg-white px-3 text-sm outline-none transition focus:border-[#007AFF] focus:ring-2 focus:ring-[#007AFF]/20"
+              dir="ltr"
+              class="h-11 rounded-lg border border-line bg-white px-3 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20"
             />
           </label>
         </div>
@@ -106,7 +124,7 @@
           <button
             type="button"
             :disabled="loading"
-            class="h-11 rounded-xl border border-[#E5E5EA] bg-white px-5 text-sm font-semibold text-[#374151] transition hover:bg-gray-50 disabled:opacity-50"
+            class="h-11 rounded-xl border border-line bg-white px-5 text-sm font-semibold text-ink-soft transition hover:bg-surface-muted disabled:opacity-50"
             @click="clearFilters"
           >
             {{ clearLabel }}
@@ -115,7 +133,7 @@
           <button
             type="button"
             :disabled="loading"
-            class="h-11 rounded-xl bg-[#007AFF] px-5 text-sm font-semibold text-white shadow-lg shadow-[#007AFF]/20 transition hover:bg-[#0051D5] disabled:bg-gray-400"
+            class="h-11 rounded-xl bg-brand px-5 text-sm font-semibold text-white shadow-lg shadow-brand/20 transition hover:bg-brand-deep disabled:bg-faint"
             @click="loadReport()"
           >
             {{
@@ -141,18 +159,23 @@
         class="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6"
       >
         <article
-          v-for="card in summaryCards"
+          v-for="(card, index) in summaryCards"
           :key="card.key"
-          class="rounded-2xl border border-[#E5E5EA] bg-white p-4 shadow-sm"
+          :class="[
+            'rounded-2xl border border-line bg-white p-3 shadow-sm sm:p-4',
+            summaryCards.length % 2 === 1 && index === summaryCards.length - 1
+              ? 'col-span-2 lg:col-span-1'
+              : '',
+          ]"
         >
           <p
-            class="text-xs font-medium text-[#6B7280]"
+            class="text-xs font-medium text-muted"
           >
             {{ card.label }}
           </p>
 
           <p
-            class="mt-2 break-words text-lg font-bold text-[#111827]"
+            class="mt-2 break-words text-lg font-bold text-ink"
           >
             {{ card.value }}
           </p>
@@ -162,14 +185,14 @@
       <!-- Loading -->
       <div
         v-if="loading"
-        class="flex flex-col items-center justify-center rounded-2xl border border-[#E5E5EA] bg-white py-16"
+        class="flex flex-col items-center justify-center rounded-2xl border border-line bg-white py-16"
       >
         <div
-          class="h-9 w-9 animate-spin rounded-full border-4 border-[#007AFF] border-t-transparent"
+          class="h-9 w-9 animate-spin rounded-full border-4 border-brand border-t-transparent"
         ></div>
 
         <p
-          class="mt-4 text-sm text-[#6B7280]"
+          class="mt-4 text-sm text-muted"
         >
           {{ loadingLabel }}
         </p>
@@ -181,16 +204,16 @@
           loaded &&
           rows.length === 0
         "
-        class="rounded-2xl border border-[#E5E5EA] bg-white px-6 py-14 text-center"
+        class="rounded-2xl border border-line bg-white px-6 py-14 text-center"
       >
         <h2
-          class="text-base font-semibold text-[#111827]"
+          class="text-base font-semibold text-ink"
         >
           {{ emptyTitle }}
         </h2>
 
         <p
-          class="mt-1 text-sm text-[#6B7280]"
+          class="mt-1 text-sm text-muted"
         >
           {{ emptyDescription }}
         </p>
@@ -199,44 +222,44 @@
       <!-- Desktop table -->
       <section
         v-else-if="rows.length"
-        class="hidden overflow-hidden rounded-2xl border border-[#E5E5EA] bg-white shadow-sm md:block"
+        class="hidden overflow-hidden rounded-2xl border border-line bg-white shadow-sm md:block"
       >
         <div
           class="overflow-x-auto"
         >
           <table
-            class="min-w-full divide-y divide-[#E5E5EA] text-sm"
+            class="min-w-full divide-y divide-line text-sm"
           >
             <thead
-              class="bg-[#F7F8FC]"
+              class="bg-surface-muted"
             >
               <tr>
                 <th
-                  class="px-4 py-3 text-start font-semibold text-[#374151]"
+                  class="px-4 py-3 text-start font-semibold text-ink-soft"
                 >
                   {{ borrowerLabel }}
                 </th>
 
                 <th
-                  class="px-4 py-3 text-start font-semibold text-[#374151]"
+                  class="px-4 py-3 text-start font-semibold text-ink-soft"
                 >
                   {{ trusteeLabel }}
                 </th>
 
                 <th
-                  class="px-4 py-3 text-start font-semibold text-[#374151]"
+                  class="px-4 py-3 text-start font-semibold text-ink-soft"
                 >
                   {{ amountLabel }}
                 </th>
 
                 <th
-                  class="px-4 py-3 text-start font-semibold text-[#374151]"
+                  class="px-4 py-3 text-start font-semibold text-ink-soft"
                 >
                   {{ statusLabelText }}
                 </th>
 
                 <th
-                  class="px-4 py-3 text-start font-semibold text-[#374151]"
+                  class="px-4 py-3 text-start font-semibold text-ink-soft"
                 >
                   {{ startDateLabel }}
                 </th>
@@ -244,27 +267,27 @@
             </thead>
 
             <tbody
-              class="divide-y divide-[#E5E5EA]"
+              class="divide-y divide-line"
             >
               <tr
                 v-for="(row, index) in rows"
                 :key="rowKey(row, index)"
-                class="hover:bg-[#F7F8FC]/60"
+                class="hover:bg-canvas/60"
               >
                 <td
-                  class="px-4 py-3 text-[#111827]"
+                  class="px-4 py-3 text-ink"
                 >
                   {{ rowBorrower(row) }}
                 </td>
 
                 <td
-                  class="px-4 py-3 text-[#111827]"
+                  class="px-4 py-3 text-ink"
                 >
                   {{ rowTrustee(row) }}
                 </td>
 
                 <td
-                  class="px-4 py-3 font-medium text-[#111827]"
+                  class="px-4 py-3 font-medium text-ink"
                 >
                   {{
                     formatCurrency(
@@ -293,7 +316,7 @@
                 </td>
 
                 <td
-                  class="px-4 py-3 text-[#111827]"
+                  class="px-4 py-3 text-ink"
                 >
                   {{
                     formatDate(
@@ -315,7 +338,7 @@
         <article
           v-for="(row, index) in rows"
           :key="rowKey(row, index)"
-          class="rounded-2xl border border-[#E5E5EA] bg-white p-4 shadow-sm"
+          class="rounded-2xl border border-line bg-white p-4 shadow-sm"
         >
           <div
             class="flex items-start justify-between gap-3"
@@ -324,13 +347,13 @@
               class="min-w-0"
             >
               <h3
-                class="truncate font-semibold text-[#111827]"
+                class="truncate font-semibold text-ink"
               >
                 {{ rowBorrower(row) }}
               </h3>
 
               <p
-                class="mt-1 truncate text-xs text-[#6B7280]"
+                class="mt-1 truncate text-xs text-muted"
               >
                 {{ rowTrustee(row) }}
               </p>
@@ -357,13 +380,13 @@
           >
             <div>
               <p
-                class="text-xs text-[#6B7280]"
+                class="text-xs text-muted"
               >
                 {{ amountLabel }}
               </p>
 
               <p
-                class="mt-1 text-sm font-semibold text-[#111827]"
+                class="mt-1 text-sm font-semibold text-ink"
               >
                 {{
                   formatCurrency(
@@ -375,13 +398,13 @@
 
             <div>
               <p
-                class="text-xs text-[#6B7280]"
+                class="text-xs text-muted"
               >
                 {{ startDateLabel }}
               </p>
 
               <p
-                class="mt-1 text-sm text-[#111827]"
+                class="mt-1 text-sm text-ink"
               >
                 {{
                   formatDate(
@@ -437,6 +460,22 @@ const isHebrew =
       "he"
   );
 
+function text(
+  he: string,
+  en: string,
+  es: string
+): string {
+  if (locale.value === "he") {
+    return he;
+  }
+
+  if (locale.value === "es") {
+    return es;
+  }
+
+  return en;
+}
+
 const filters =
   reactive({
     trustee: "",
@@ -463,39 +502,93 @@ const loaded =
 const errorMessage =
   ref("");
 
+const showHelp =
+  ref(true);
+
 const title =
   computed(() =>
-    isHebrew.value
-      ? "דוחות ניהוליים"
-      : "Management Reports"
+    text(
+      "דוחות וסיכומים",
+      "Reports & Summaries",
+      "Informes y resúmenes"
+    )
   );
 
 const subtitle =
   computed(() =>
     isHebrew.value
-      ? "סיכום הלוואות לפי לווה, נאמן וטווח תאריכים"
-      : "Loan summaries by borrower, trustee, and date range"
+      ? "מסננים את הנתונים ורואים תמונת מצב ממוקדת של ההלוואות."
+      : "Filter the data to see a focused view of the loan portfolio."
   );
+
+const shortHelpText =
+  computed(() =>
+    locale.value === "he"
+      ? "בחרו מסננים ועדכנו."
+      : locale.value === "es"
+        ? "Elige filtros y pulsa Actualizar resultados."
+        : "Choose filters and select Update results."
+  );
+
+const closeHelpLabel =
+  computed(() =>
+    text(
+      "סגירת ההסבר",
+      "Close help",
+      "Cerrar ayuda"
+    )
+  );
+
+const reportHelpEyebrow =
+  computed(() =>
+    isHebrew.value
+      ? "איך משתמשים בדוח"
+      : "How to use this page"
+  );
+
+const reportHelpTitle =
+  computed(() =>
+    isHebrew.value
+      ? "בחרו מה תרצו לבדוק — והמערכת תרכז עבורכם את הנתונים"
+      : "Choose what you want to review and the system will summarize it"
+  );
+
+const reportHelpDescription =
+  computed(() =>
+    isHebrew.value
+      ? "אפשר לסנן לפי נאמן, לווה וטווח תאריכים. למעלה יוצג סיכום מספרי ומתחתיו רשימת ההלוואות שנכנסו לחישוב."
+      : "Filter by trustee, borrower, and date range. The summary cards show the totals, and the list below shows which loans are included."
+  );
+
+const reportHelpSteps =
+  computed(() => [
+    {
+      number: 1,
+      label: isHebrew.value ? "בחרו מסננים" : "Choose filters",
+    },
+    {
+      number: 2,
+      label: isHebrew.value ? "עדכנו תוצאות" : "Update results",
+    },
+    {
+      number: 3,
+      label: isHebrew.value ? "בדקו סיכום ופירוט" : "Review summary & details",
+    },
+  ]);
 
 const trusteeLabel =
   computed(() =>
-    isHebrew.value
-      ? "נאמן"
-      : "Trustee"
+    text("נאמן", "Trustee", "Responsable")
   );
 
 const borrowerLabel =
   computed(() =>
-    isHebrew.value
-      ? "לווה"
-      : "Borrower"
+    text("לווה", "Borrower", "Prestatario")
   );
 
 const allLabel =
   computed(() =>
-    isHebrew.value
-      ? "הכל"
-      : "All"
+    text("הכל", "All", "Todos")
   );
 
 const fromDateLabel =
@@ -535,16 +628,12 @@ const statusLabelText =
 
 const clearLabel =
   computed(() =>
-    isHebrew.value
-      ? "ניקוי"
-      : "Clear"
+    text("ניקוי", "Clear", "Limpiar")
   );
 
 const generateLabel =
   computed(() =>
-    isHebrew.value
-      ? "הפקת דוח"
-      : "Generate report"
+    text("עדכון תוצאות", "Update results", "Actualizar resultados")
   );
 
 const loadingLabel =
@@ -705,8 +794,8 @@ const summaryCards =
 
         label:
           isHebrew.value
-            ? "הלוואות באיחור"
-            : "Overdue loans",
+            ? "הלוואות בעייתיות"
+            : "Loans needing attention",
 
         format:
           "number",
@@ -1234,8 +1323,8 @@ function statusLabel(
     "OVERDUE"
   ) {
     return isHebrew.value
-      ? "באיחור"
-      : "Overdue";
+      ? "בעייתית"
+      : "Needs attention";
   }
 
   if (
@@ -1243,8 +1332,8 @@ function statusLabel(
     "CLOSED"
   ) {
     return isHebrew.value
-      ? "סגורה"
-      : "Closed";
+      ? "הסתיימה"
+      : "Completed";
   }
 
   return isHebrew.value
@@ -1260,8 +1349,8 @@ function statusClass(
     "OVERDUE"
   ) {
     return (
-      "bg-[#FF3B30]/10 " +
-      "text-[#FF3B30]"
+      "bg-danger/10 " +
+      "text-danger"
     );
   }
 
@@ -1270,14 +1359,14 @@ function statusClass(
     "CLOSED"
   ) {
     return (
-      "bg-[#34C759]/10 " +
-      "text-[#248A3D]"
+      "bg-success/10 " +
+      "text-success-deep"
     );
   }
 
   return (
-    "bg-[#007AFF]/10 " +
-    "text-[#007AFF]"
+    "bg-brand/10 " +
+    "text-brand"
   );
 }
 

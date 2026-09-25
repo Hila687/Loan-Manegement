@@ -1,6 +1,5 @@
 <template>
   <div class="space-y-4">
-    <!-- Loading -->
     <div
       v-if="loading"
       class="flex items-center justify-center gap-3 rounded-xl border border-line bg-white p-6 text-sm text-muted"
@@ -8,27 +7,21 @@
       <div
         class="h-5 w-5 animate-spin rounded-full border-2 border-brand border-t-transparent"
       ></div>
-
       {{ t("payments.loading") }}
     </div>
 
-    <!-- Error -->
     <div
       v-else-if="error"
       class="rounded-xl border border-red-200 bg-red-50 p-4"
     >
-      <div
-        class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-      >
-        <p
-          class="text-sm font-medium text-red-700"
-        >
+      <div class="flex items-center justify-between gap-3">
+        <p class="text-sm font-medium text-red-700">
           {{ t("payments.error") }}
         </p>
 
         <button
           type="button"
-          class="self-start rounded-lg bg-white px-4 py-2 text-sm font-semibold text-red-700 ring-1 ring-red-200 transition hover:bg-red-100 sm:self-auto"
+          class="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-red-700 ring-1 ring-red-200 transition hover:bg-red-100"
           @click="loadPayments(true)"
         >
           {{ retryLabel }}
@@ -36,205 +29,107 @@
       </div>
     </div>
 
-    <!-- Loaded but empty -->
     <div
-      v-else-if="
-        paymentsLoaded &&
-        payments.length === 0
-      "
+      v-else-if="paymentsLoaded && payments.length === 0"
       class="rounded-xl border border-line bg-white p-6 text-center text-sm text-muted"
     >
       {{ t("payments.empty") }}
     </div>
 
-    <!-- Loaded with data -->
     <div
       v-else-if="paymentsLoaded"
       class="space-y-4"
     >
-      <!-- Summary -->
       <div
         v-if="summary"
         class="grid grid-cols-2 gap-3 lg:grid-cols-4"
       >
-        <div
-          class="rounded-xl border border-line bg-white p-3 sm:p-4"
-        >
-          <div
-            class="text-xs text-muted"
-          >
-            {{
-              t(
-                "payments.summary.totalAmount"
-              )
-            }}
-          </div>
-
-          <div
-            class="mt-1 text-base font-semibold text-ink sm:text-lg"
-          >
-            {{
-              formatCurrency(
-                summary.total_amount
-              )
-            }}
-          </div>
+        <div class="summary-card">
+          <p class="summary-label">
+            {{ t("payments.summary.totalAmount") }}
+          </p>
+          <p class="summary-value">
+            {{ formatCurrency(summary.total_amount) }}
+          </p>
         </div>
 
-        <div
-          class="rounded-xl border border-line bg-white p-3 sm:p-4"
-        >
-          <div
-            class="text-xs text-muted"
-          >
-            {{
-              t(
-                "payments.summary.paidAmount"
-              )
-            }}
-          </div>
-
-          <div
-            class="mt-1 text-base font-semibold text-ink sm:text-lg"
-          >
-            {{
-              formatCurrency(
-                summary.paid_amount
-              )
-            }}
-          </div>
+        <div class="summary-card">
+          <p class="summary-label">
+            {{ t("payments.summary.paidAmount") }}
+          </p>
+          <p class="summary-value">
+            {{ formatCurrency(summary.paid_amount) }}
+          </p>
         </div>
 
-        <div
-          class="rounded-xl border border-line bg-white p-3 sm:p-4"
-        >
-          <div
-            class="text-xs text-muted"
-          >
-            {{
-              t(
-                "payments.summary.remainingAmount"
-              )
-            }}
-          </div>
-
-          <div
-            class="mt-1 text-base font-semibold text-ink sm:text-lg"
-          >
-            {{
-              formatCurrency(
-                remainingAmount
-              )
-            }}
-          </div>
+        <div class="summary-card">
+          <p class="summary-label">
+            {{ t("payments.summary.remainingAmount") }}
+          </p>
+          <p class="summary-value">
+            {{ formatCurrency(remainingAmount) }}
+          </p>
         </div>
 
-        <div
-          class="rounded-xl border border-line bg-white p-3 sm:p-4"
-        >
-          <div
-            class="text-xs text-muted"
-          >
-            {{
-              t(
-                "payments.summary.paymentsProgress"
-              )
-            }}
-          </div>
-
-          <div
-            class="mt-1 text-base font-semibold text-ink sm:text-lg"
-          >
-            {{
-              summary.paid_payments
-            }}
-            /
-            {{
-              summary.total_payments
-            }}
-          </div>
+        <div class="summary-card">
+          <p class="summary-label">
+            {{ t("payments.summary.paymentsProgress") }}
+          </p>
+          <p class="summary-value">
+            <bdi
+              dir="ltr"
+              class="inline-block [unicode-bidi:isolate]"
+            >
+              {{ summary.paid_payments }} / {{ summary.total_payments }}
+            </bdi>
+          </p>
         </div>
       </div>
 
-      <!-- Loan status -->
-      <div
-        class="flex flex-wrap items-center justify-between gap-3"
-      >
-        <span
-          v-if="loanStatus"
-          class="inline-flex rounded-full px-3 py-1 text-xs font-semibold"
-          :class="loanStatusClass"
-        >
-          {{ loanStatusLabel }}
-        </span>
-
+      <div class="flex justify-end">
         <button
           type="button"
-          class="rounded-lg border border-line bg-white px-3 py-2 text-xs font-semibold text-brand transition hover:border-brand hover:bg-brand/5"
+          class="inline-flex items-center gap-2 rounded-lg border border-line bg-white px-3 py-2 text-xs font-semibold text-brand transition hover:border-brand hover:bg-brand/5"
           @click="loadPayments(true)"
         >
+          <svg
+            class="h-3.5 w-3.5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 4v6h6M20 20v-6h-6M5.5 16a7 7 0 0011.9 2M18.5 8a7 7 0 00-11.9-2"
+            />
+          </svg>
           {{ refreshLabel }}
         </button>
       </div>
 
       <!-- Desktop table -->
-      <div
-        class="hidden overflow-hidden rounded-xl border border-line sm:block"
-      >
-        <div
-          class="max-h-96 overflow-y-auto"
-        >
-          <table
-            class="min-w-full divide-y divide-line text-sm"
-          >
-            <thead
-              class="sticky top-0 bg-canvas"
-            >
+      <div class="hidden overflow-hidden rounded-xl border border-line sm:block">
+        <div class="max-h-96 overflow-y-auto overflow-x-auto">
+          <table class="min-w-full divide-y divide-line text-sm">
+            <thead class="sticky top-0 z-10 bg-canvas">
               <tr>
-                <th
-                  class="px-4 py-3 text-start font-semibold text-ink-soft"
-                >
-                  {{
-                    t(
-                      "payments.table.dueDate"
-                    )
-                  }}
+                <th class="px-4 py-3 text-start font-semibold text-ink-soft">
+                  {{ t("payments.table.dueDate") }}
                 </th>
-
-                <th
-                  class="px-4 py-3 text-start font-semibold text-ink-soft"
-                >
-                  {{
-                    t(
-                      "payments.table.amountDue"
-                    )
-                  }}
+                <th class="px-4 py-3 text-start font-semibold text-ink-soft">
+                  {{ t("payments.table.amountDue") }}
                 </th>
-
-                <th
-                  class="px-4 py-3 text-start font-semibold text-ink-soft"
-                >
-                  {{
-                    t(
-                      "payments.table.amountPaid"
-                    )
-                  }}
+                <th class="px-4 py-3 text-start font-semibold text-ink-soft">
+                  {{ t("payments.table.amountPaid") }}
                 </th>
-
-                <th
-                  class="px-4 py-3 text-start font-semibold text-ink-soft"
-                >
-                  {{
-                    t(
-                      "payments.table.status"
-                    )
-                  }}
+                <th class="px-4 py-3 text-start font-semibold text-ink-soft">
+                  {{ t("payments.table.status") }}
                 </th>
-
                 <th
-                  v-if="
-                    auth.isAdmin.value
-                  "
+                  v-if="auth.isAdmin.value"
                   class="px-4 py-3 text-start font-semibold text-ink-soft"
                 >
                   {{ actionsLabel }}
@@ -242,455 +137,315 @@
               </tr>
             </thead>
 
-            <tbody
-              class="divide-y divide-line bg-white"
-            >
-              <tr
-                v-for="
-                  payment in payments
-                "
-                :key="
-                  payment.payment_id
-                "
-                class="hover:bg-canvas/70"
+            <tbody class="divide-y divide-line bg-white">
+              <template
+                v-for="payment in payments"
+                :key="payment.payment_id"
               >
-                <td
-                  class="px-4 py-3 text-ink"
-                >
-                  {{
-                    formatDate(
-                      payment.due_date
-                    )
-                  }}
-                </td>
+                <tr class="hover:bg-canvas/70">
+                  <td class="px-4 py-3 text-ink">
+                    {{ formatDate(payment.due_date) }}
+                  </td>
+                  <td class="px-4 py-3 text-ink">
+                    {{ formatCurrency(payment.amount_due) }}
+                  </td>
+                  <td class="px-4 py-3 text-ink">
+                    {{ formatCurrency(payment.amount_paid) }}
+                  </td>
+                  <td class="px-4 py-3">
+                    <div class="flex items-center gap-2">
+                      <span
+                        class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold"
+                        :class="statusPillClass(payment.status)"
+                      >
+                        {{ statusLabel(payment.status) }}
+                      </span>
 
-                <td
-                  class="px-4 py-3 text-ink"
-                >
-                  {{
-                    formatCurrency(
-                      payment.amount_due
-                    )
-                  }}
-                </td>
-
-                <td
-                  class="px-4 py-3 text-ink"
-                >
-                  {{
-                    formatCurrency(
-                      payment.amount_paid
-                    )
-                  }}
-                </td>
-
-                <td
-                  class="px-4 py-3"
-                >
-                  <div
-                    class="flex flex-col items-start gap-1"
+                      <button
+                        v-if="payment.exception_note"
+                        type="button"
+                        class="flex h-8 w-8 items-center justify-center rounded-full bg-warning/10 text-warning-deep transition hover:bg-warning/20"
+                        :aria-label="noteLabel"
+                        :title="noteLabel"
+                        @click="toggleNote(payment.payment_id)"
+                      >
+                        <svg
+                          class="h-4 w-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M21 15a4 4 0 01-4 4H8l-5 3V7a4 4 0 014-4h10a4 4 0 014 4v8z"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                  <td
+                    v-if="auth.isAdmin.value"
+                    class="px-4 py-3"
                   >
-                    <span
-                      class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold"
-                      :class="
-                        statusPillClass(
-                          payment.status
-                        )
-                      "
+                    <button
+                      type="button"
+                      class="rounded-lg border border-brand/20 bg-brand/5 px-3 py-1.5 text-xs font-semibold text-brand transition hover:bg-brand/10"
+                      @click="openPaymentEditor(payment)"
                     >
-                      {{
-                        statusLabel(
-                          payment.status
-                        )
-                      }}
-                    </span>
+                      {{ editLabel }}
+                    </button>
+                  </td>
+                </tr>
 
-                    <span
-                      v-if="
-                        payment.is_manual_exception
-                      "
-                      class="text-[11px] text-violet"
-                    >
-                      {{
-                        manualExceptionLabel
-                      }}
-                    </span>
-                  </div>
-                </td>
-
-                <td
-                  v-if="
-                    auth.isAdmin.value
-                  "
-                  class="px-4 py-3"
+                <tr
+                  v-if="openNotePaymentId === payment.payment_id && payment.exception_note"
+                  class="bg-warning/5"
                 >
-                  <button
-                    type="button"
-                    class="rounded-lg border border-brand/20 bg-brand/5 px-3 py-1.5 text-xs font-semibold text-brand transition hover:bg-brand/10"
-                    @click="
-                      openExceptionEditor(
-                        payment
-                      )
-                    "
+                  <td
+                    :colspan="auth.isAdmin.value ? 5 : 4"
+                    class="px-4 py-3"
                   >
-                    {{
-                      editExceptionLabel
-                    }}
-                  </button>
-                </td>
-              </tr>
+                    <div class="inline-flex max-w-xl items-start gap-2 rounded-xl border border-warning/20 bg-white px-3 py-2 text-sm text-ink-soft shadow-sm">
+                      <svg
+                        class="mt-0.5 h-4 w-4 flex-shrink-0 text-warning-deep"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M21 15a4 4 0 01-4 4H8l-5 3V7a4 4 0 014-4h10a4 4 0 014 4v8z"
+                        />
+                      </svg>
+                      <span>{{ payment.exception_note }}</span>
+                    </div>
+                  </td>
+                </tr>
+              </template>
             </tbody>
           </table>
         </div>
       </div>
 
       <!-- Mobile cards -->
-      <div
-        class="space-y-3 sm:hidden"
-      >
+      <div class="space-y-3 sm:hidden">
         <article
-          v-for="
-            payment in payments
-          "
-          :key="
-            payment.payment_id
-          "
+          v-for="payment in payments"
+          :key="payment.payment_id"
           class="rounded-xl border border-line bg-white p-4"
         >
-          <div
-            class="flex items-start justify-between gap-3"
-          >
+          <div class="flex items-start justify-between gap-3">
             <div>
-              <p
-                class="text-xs text-muted"
-              >
-                {{
-                  t(
-                    "payments.table.dueDate"
-                  )
-                }}
+              <p class="text-xs text-muted">
+                {{ t("payments.table.dueDate") }}
               </p>
-
-              <p
-                class="mt-1 text-sm font-semibold text-ink"
-              >
-                {{
-                  formatDate(
-                    payment.due_date
-                  )
-                }}
+              <p class="mt-1 text-sm font-semibold text-ink">
+                {{ formatDate(payment.due_date) }}
               </p>
             </div>
 
-            <span
-              class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold"
-              :class="
-                statusPillClass(
-                  payment.status
-                )
-              "
-            >
-              {{
-                statusLabel(
-                  payment.status
-                )
-              }}
-            </span>
+            <div class="flex items-center gap-2">
+              <button
+                v-if="payment.exception_note"
+                type="button"
+                class="flex h-8 w-8 items-center justify-center rounded-full bg-warning/10 text-warning-deep"
+                :aria-label="noteLabel"
+                @click="toggleNote(payment.payment_id)"
+              >
+                <svg
+                  class="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M21 15a4 4 0 01-4 4H8l-5 3V7a4 4 0 014-4h10a4 4 0 014 4v8z"
+                  />
+                </svg>
+              </button>
+
+              <span
+                class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold"
+                :class="statusPillClass(payment.status)"
+              >
+                {{ statusLabel(payment.status) }}
+              </span>
+            </div>
           </div>
 
-          <div
-            class="mt-4 grid grid-cols-2 gap-3"
-          >
+          <div class="mt-4 grid grid-cols-2 gap-3">
             <div>
-              <p
-                class="text-xs text-muted"
-              >
-                {{
-                  t(
-                    "payments.table.amountDue"
-                  )
-                }}
+              <p class="text-xs text-muted">
+                {{ t("payments.table.amountDue") }}
               </p>
-
-              <p
-                class="mt-1 text-sm font-medium text-ink"
-              >
-                {{
-                  formatCurrency(
-                    payment.amount_due
-                  )
-                }}
+              <p class="mt-1 text-sm font-medium text-ink">
+                {{ formatCurrency(payment.amount_due) }}
               </p>
             </div>
 
             <div>
-              <p
-                class="text-xs text-muted"
-              >
-                {{
-                  t(
-                    "payments.table.amountPaid"
-                  )
-                }}
+              <p class="text-xs text-muted">
+                {{ t("payments.table.amountPaid") }}
               </p>
-
-              <p
-                class="mt-1 text-sm font-medium text-ink"
-              >
-                {{
-                  formatCurrency(
-                    payment.amount_paid
-                  )
-                }}
+              <p class="mt-1 text-sm font-medium text-ink">
+                {{ formatCurrency(payment.amount_paid) }}
               </p>
             </div>
           </div>
 
           <div
-            v-if="
-              payment.is_manual_exception
-            "
-            class="mt-3 rounded-lg bg-violet/5 px-3 py-2 text-xs text-violet"
+            v-if="openNotePaymentId === payment.payment_id && payment.exception_note"
+            class="mt-3 rounded-xl border border-warning/20 bg-warning/5 px-3 py-2 text-sm text-ink-soft"
           >
-            {{
-              manualExceptionLabel
-            }}
-
-            <span
-              v-if="
-                payment.exception_note
-              "
-            >
-              ·
-              {{
-                payment.exception_note
-              }}
-            </span>
+            {{ payment.exception_note }}
           </div>
 
           <button
-            v-if="
-              auth.isAdmin.value
-            "
+            v-if="auth.isAdmin.value"
             type="button"
             class="mt-3 w-full rounded-lg border border-brand/20 bg-brand/5 px-3 py-2 text-xs font-semibold text-brand"
-            @click="
-              openExceptionEditor(
-                payment
-              )
-            "
+            @click="openPaymentEditor(payment)"
           >
-            {{
-              editExceptionLabel
-            }}
+            {{ editLabel }}
           </button>
         </article>
       </div>
     </div>
 
-    <!-- Not loaded yet -->
     <div
       v-else
       class="rounded-xl border border-line bg-white p-4 text-sm italic text-muted"
     >
-      {{
-        t(
-          "payments.openToLoad"
-        )
-      }}
+      {{ t("payments.openToLoad") }}
     </div>
 
-    <!-- Admin exception editor -->
-    <div
-      v-if="
-        auth.isAdmin.value &&
-        editingPayment
-      "
-      class="rounded-xl border border-brand/20 bg-brand-soft p-4 sm:p-5"
-    >
+    <Teleport to="body">
       <div
-        class="flex items-start justify-between gap-4"
+        v-if="auth.isAdmin.value && editingPayment"
+        class="fixed inset-0 z-[120] flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm"
+        @click.self="closePaymentEditor"
       >
-        <div>
-          <h3
-            class="font-semibold text-ink"
-          >
-            {{ exceptionTitle }}
-          </h3>
-
-          <p
-            class="mt-1 text-xs text-muted"
-          >
-            {{
-              formatDate(
-                editingPayment.due_date
-              )
-            }}
-            ·
-            {{
-              formatCurrency(
-                editingPayment.amount_due
-              )
-            }}
-          </p>
-        </div>
-
-        <button
-          type="button"
-          class="text-xl text-muted transition hover:text-danger"
-          @click="
-            closeExceptionEditor
-          "
+        <section
+          class="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-line bg-white shadow-2xl"
+          :dir="locale === 'he' ? 'rtl' : 'ltr'"
+          role="dialog"
+          aria-modal="true"
         >
-          ×
-        </button>
-      </div>
+          <header class="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-line bg-white px-5 py-4 sm:px-6">
+            <div>
+              <h3 class="text-lg font-bold text-ink">
+                {{ editPaymentLabel }}
+              </h3>
+              <p class="mt-1 text-sm text-muted">
+                {{ formatDate(editingPayment.due_date) }}
+                ·
+                {{ formatCurrency(editingPayment.amount_due) }}
+              </p>
+            </div>
 
-      <div
-        class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2"
-      >
-        <label
-          class="flex flex-col gap-1.5"
-        >
-          <span
-            class="text-sm font-medium text-ink-soft"
-          >
-            {{
-              t(
-                "payments.table.status"
-              )
-            }}
-          </span>
-
-          <select
-            v-model="
-              exceptionStatus
-            "
-            class="h-11 rounded-lg border border-line bg-white px-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-          >
-            <option
-              value="PENDING"
+            <button
+              type="button"
+              class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-xl text-muted transition hover:bg-surface-muted hover:text-danger"
+              :aria-label="closeLabel"
+              @click="closePaymentEditor"
             >
-              {{
-                statusLabel(
-                  "PENDING"
-                )
-              }}
-            </option>
+              ×
+            </button>
+          </header>
 
-            <option
-              value="PAID"
+          <div class="space-y-4 px-5 py-5 sm:px-6">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <label class="flex flex-col gap-1.5">
+                <span class="text-sm font-medium text-ink-soft">
+                  {{ t("payments.table.status") }}
+                </span>
+
+                <select
+                  v-model="exceptionStatus"
+                  class="h-11 rounded-xl border border-line bg-white px-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                >
+                  <option value="PENDING">
+                    {{ t("payments.status.pending") }}
+                  </option>
+                  <option value="PAID">
+                    {{ t("payments.status.paid") }}
+                  </option>
+                  <option value="LATE">
+                    {{ lateLabel }}
+                  </option>
+                </select>
+              </label>
+
+              <label class="flex flex-col gap-1.5">
+                <span class="text-sm font-medium text-ink-soft">
+                  {{ amountPaidLabel }}
+                </span>
+
+                <input
+                  v-model="exceptionAmountPaid"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  class="h-11 rounded-xl border border-line bg-white px-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                />
+              </label>
+            </div>
+
+            <label class="flex flex-col gap-1.5">
+              <span class="text-sm font-medium text-ink-soft">
+                {{ noteLabel }}
+              </span>
+
+              <textarea
+                v-model="exceptionNote"
+                rows="3"
+                maxlength="500"
+                class="resize-none rounded-xl border border-line bg-white px-3 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                :placeholder="notePlaceholder"
+              ></textarea>
+            </label>
+
+            <p
+              v-if="exceptionError"
+              class="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-600"
             >
-              {{
-                statusLabel(
-                  "PAID"
-                )
-              }}
-            </option>
+              {{ exceptionError }}
+            </p>
+          </div>
 
-            <option
-              value="LATE"
+          <footer class="sticky bottom-0 flex flex-col-reverse gap-2 border-t border-line bg-white px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
+            <button
+              v-if="editingPayment.is_manual_exception"
+              type="button"
+              :disabled="savingException"
+              class="rounded-xl border border-line bg-white px-4 py-2.5 text-sm font-semibold text-ink-soft transition hover:bg-surface-muted disabled:opacity-50"
+              @click="clearManualException"
             >
-              {{
-                statusLabel(
-                  "LATE"
-                )
-              }}
-            </option>
-          </select>
-        </label>
+              {{ resetChangeLabel }}
+            </button>
 
-        <label
-          class="flex flex-col gap-1.5"
-        >
-          <span
-            class="text-sm font-medium text-ink-soft"
-          >
-            {{ amountPaidLabel }}
-          </span>
-
-          <input
-            v-model="
-              exceptionAmountPaid
-            "
-            type="number"
-            inputmode="decimal"
-            min="0"
-            step="0.01"
-            class="h-11 rounded-lg border border-line bg-white px-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-          />
-        </label>
+            <button
+              type="button"
+              :disabled="savingException"
+              class="rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-deep disabled:opacity-50"
+              @click="savePaymentEdit"
+            >
+              {{ savingException ? savingLabel : saveLabel }}
+            </button>
+          </footer>
+        </section>
       </div>
-
-      <label
-        class="mt-4 flex flex-col gap-1.5"
-      >
-        <span
-          class="text-sm font-medium text-ink-soft"
-        >
-          {{ exceptionNoteLabel }}
-        </span>
-
-        <textarea
-          v-model="
-            exceptionNote
-          "
-          rows="3"
-          maxlength="500"
-          class="rounded-lg border border-line bg-white px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-        ></textarea>
-      </label>
-
-      <p
-        v-if="
-          exceptionError
-        "
-        class="mt-3 text-sm text-red-600"
-      >
-        {{ exceptionError }}
-      </p>
-
-      <div
-        class="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"
-      >
-        <button
-          v-if="
-            editingPayment.is_manual_exception
-          "
-          type="button"
-          :disabled="
-            savingException
-          "
-          class="rounded-lg border border-line bg-white px-4 py-2 text-sm font-semibold text-ink-soft transition hover:bg-surface-muted disabled:opacity-50"
-          @click="
-            clearManualException
-          "
-        >
-          {{
-            clearExceptionLabel
-          }}
-        </button>
-
-        <button
-          type="button"
-          :disabled="
-            savingException
-          "
-          class="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-deep disabled:opacity-50"
-          @click="
-            saveManualException
-          "
-        >
-          {{
-            savingException
-              ? savingLabel
-              : saveLabel
-          }}
-        </button>
-      </div>
-    </div>
+    </Teleport>
   </div>
 </template>
+
 
 <script setup lang="ts">
 import {
@@ -718,11 +473,13 @@ import type {
   PaymentSummary,
 } from "../../types/payments";
 
+
 const props =
   defineProps<{
     loanId: string;
     active: boolean;
   }>();
+
 
 const {
   t,
@@ -732,59 +489,36 @@ const {
 const auth =
   useAuth();
 
-const loading =
-  ref(false);
+const loading = ref(false);
+const error = ref(false);
+const paymentsLoaded = ref(false);
+const payments = ref<PaymentRow[]>([]);
+const summary = ref<PaymentSummary | null>(null);
+const editingPayment = ref<PaymentRow | null>(null);
+const openNotePaymentId = ref<string | null>(null);
+const exceptionStatus = ref<PaymentStatus>("PENDING");
+const exceptionAmountPaid = ref("0");
+const exceptionNote = ref("");
+const exceptionError = ref("");
+const savingException = ref(false);
 
-const error =
-  ref(false);
 
-const paymentsLoaded =
-  ref(false);
+function text(
+  he: string,
+  en: string,
+  es: string
+): string {
+  if (locale.value === "he") {
+    return he;
+  }
 
-const payments =
-  ref<PaymentRow[]>([]);
+  if (locale.value === "es") {
+    return es;
+  }
 
-const summary =
-  ref<PaymentSummary | null>(
-    null
-  );
+  return en;
+}
 
-const loanStatus =
-  ref<
-    | "ACTIVE"
-    | "OVERDUE"
-    | "CLOSED"
-    | ""
-  >("");
-
-const editingPayment =
-  ref<PaymentRow | null>(
-    null
-  );
-
-const exceptionStatus =
-  ref<PaymentStatus>(
-    "PENDING"
-  );
-
-const exceptionAmountPaid =
-  ref("0");
-
-const exceptionNote =
-  ref("");
-
-const exceptionError =
-  ref("");
-
-const savingException =
-  ref(false);
-
-const isHebrew =
-  computed(
-    () =>
-      locale.value ===
-      "he"
-  );
 
 const remainingAmount =
   computed(() => {
@@ -794,173 +528,52 @@ const remainingAmount =
 
     return Math.max(
       0,
-      Number(
-        summary.value
-          .total_amount ||
-          0
-      ) -
-        Number(
-          summary.value
-            .paid_amount ||
-            0
-        )
+      Number(summary.value.total_amount || 0) -
+      Number(summary.value.paid_amount || 0)
     );
   });
 
-const retryLabel =
-  computed(() =>
-    isHebrew.value
-      ? "נסה שוב"
-      : "Retry"
-  );
+const retryLabel = computed(() => text("נסה שוב", "Retry", "Intentar de nuevo"));
+const refreshLabel = computed(() => text("רענון", "Refresh", "Actualizar"));
+const actionsLabel = computed(() => text("פעולות", "Actions", "Acciones"));
+const editLabel = computed(() => text("עריכה", "Edit", "Editar"));
+const editPaymentLabel = computed(() => text("עריכת תשלום", "Edit payment", "Editar pago"));
+const amountPaidLabel = computed(() => text("סכום ששולם", "Amount paid", "Importe pagado"));
+const noteLabel = computed(() => text("הערה", "Note", "Nota"));
+const notePlaceholder = computed(() => text("הערה...", "Note...", "Nota..."));
+const resetChangeLabel = computed(() => text("איפוס שינוי", "Reset change", "Restablecer cambio"));
+const saveLabel = computed(() => text("שמירה", "Save", "Guardar"));
+const savingLabel = computed(() => text("שומר...", "Saving...", "Guardando..."));
+const closeLabel = computed(() => text("סגירה", "Close", "Cerrar"));
+const lateLabel = computed(() => text("באיחור", "Late", "Atrasado"));
 
-const refreshLabel =
-  computed(() =>
-    isHebrew.value
-      ? "רענון"
-      : "Refresh"
-  );
-
-const actionsLabel =
-  computed(() =>
-    isHebrew.value
-      ? "פעולות"
-      : "Actions"
-  );
-
-const manualExceptionLabel =
-  computed(() =>
-    isHebrew.value
-      ? "חריגה ידנית"
-      : "Manual exception"
-  );
-
-const editExceptionLabel =
-  computed(() =>
-    isHebrew.value
-      ? "עריכת חריגה"
-      : "Edit exception"
-  );
-
-const exceptionTitle =
-  computed(() =>
-    isHebrew.value
-      ? "חריגה בתשלום"
-      : "Payment exception"
-  );
-
-const amountPaidLabel =
-  computed(() =>
-    isHebrew.value
-      ? "סכום ששולם"
-      : "Amount paid"
-  );
-
-const exceptionNoteLabel =
-  computed(() =>
-    isHebrew.value
-      ? "סיבת החריגה"
-      : "Exception note"
-  );
-
-const clearExceptionLabel =
-  computed(() =>
-    isHebrew.value
-      ? "חזרה לחישוב אוטומטי"
-      : "Return to automatic status"
-  );
-
-const saveLabel =
-  computed(() =>
-    isHebrew.value
-      ? "שמירה"
-      : "Save"
-  );
-
-const savingLabel =
-  computed(() =>
-    isHebrew.value
-      ? "שומר..."
-      : "Saving..."
-  );
-
-const loanStatusLabel =
-  computed(() => {
-    if (
-      loanStatus.value ===
-      "OVERDUE"
-    ) {
-      return isHebrew.value
-        ? "הלוואה באיחור"
-        : "Loan overdue";
-    }
-
-    if (
-      loanStatus.value ===
-      "CLOSED"
-    ) {
-      return isHebrew.value
-        ? "הלוואה סגורה"
-        : "Loan closed";
-    }
-
-    return isHebrew.value
-      ? "הלוואה פעילה"
-      : "Loan active";
-  });
-
-const loanStatusClass =
-  computed(() => {
-    if (
-      loanStatus.value ===
-      "OVERDUE"
-    ) {
-      return (
-        "bg-danger/10 " +
-        "text-danger"
-      );
-    }
-
-    if (
-      loanStatus.value ===
-      "CLOSED"
-    ) {
-      return (
-        "bg-success/10 " +
-        "text-success-deep"
-      );
-    }
-
-    return (
-      "bg-brand/10 " +
-      "text-brand"
-    );
-  });
 
 function formatCurrency(
-  amount:
-    | number
-    | string
-) {
-  return new Intl.NumberFormat(
-    isHebrew.value
+  amount: number | string
+): string {
+  const formatterLocale =
+    locale.value === "he"
       ? "he-IL"
-      : "en-US",
+      : locale.value === "es"
+        ? "es-ES"
+        : "en-US";
+
+  return new Intl.NumberFormat(
+    formatterLocale,
     {
       style: "currency",
       currency: "ILS",
       maximumFractionDigits: 2,
     }
   ).format(
-    Number(
-      amount || 0
-    )
+    Number(amount || 0)
   );
 }
 
+
 function formatDate(
   dateStr: string
-) {
+): string {
   const date =
     new Date(
       `${dateStr}T00:00:00`
@@ -974,67 +587,62 @@ function formatDate(
     return dateStr;
   }
 
-  return date.toLocaleDateString(
-    isHebrew.value
+  const formatterLocale =
+    locale.value === "he"
       ? "he-IL"
-      : "en-US"
+      : locale.value === "es"
+        ? "es-ES"
+        : "en-US";
+
+  return date.toLocaleDateString(
+    formatterLocale
   );
 }
+
 
 function statusLabel(
   status: PaymentStatus
-) {
-  if (
-    status === "PAID"
-  ) {
-    return t(
-      "payments.status.paid"
-    );
+): string {
+  if (status === "PAID") {
+    return t("payments.status.paid");
   }
 
-  if (
-    status === "LATE"
-  ) {
-    return isHebrew.value
-      ? "באיחור"
-      : "Late";
+  if (status === "LATE") {
+    return lateLabel.value;
   }
 
-  return t(
-    "payments.status.pending"
-  );
+  return t("payments.status.pending");
 }
+
 
 function statusPillClass(
   status: PaymentStatus
-) {
-  if (
-    status === "PAID"
-  ) {
-    return (
-      "bg-success/10 " +
-      "text-success-deep"
-    );
+): string {
+  if (status === "PAID") {
+    return "bg-success/10 text-success-deep";
   }
 
-  if (
-    status === "LATE"
-  ) {
-    return (
-      "bg-danger/10 " +
-      "text-danger"
-    );
+  if (status === "LATE") {
+    return "bg-danger/10 text-danger";
   }
 
-  return (
-    "bg-warning/10 " +
-    "text-warning-deep"
-  );
+  return "bg-warning/10 text-warning-deep";
 }
+
+
+function toggleNote(
+  paymentId: string
+): void {
+  openNotePaymentId.value =
+    openNotePaymentId.value === paymentId
+      ? null
+      : paymentId;
+}
+
 
 async function loadPayments(
   force = false
-) {
+): Promise<void> {
   if (
     paymentsLoaded.value &&
     !force
@@ -1042,11 +650,8 @@ async function loadPayments(
     return;
   }
 
-  loading.value =
-    true;
-
-  error.value =
-    false;
+  loading.value = true;
+  error.value = false;
 
   try {
     const data =
@@ -1062,27 +667,21 @@ async function loadPayments(
         : [];
 
     summary.value =
-      data?.summary ??
-      null;
-
-    loanStatus.value =
-      data?.loan_status ||
-      "";
+      data?.summary ?? null;
 
     paymentsLoaded.value =
       true;
   } catch {
-    error.value =
-      true;
+    error.value = true;
   } finally {
-    loading.value =
-      false;
+    loading.value = false;
   }
 }
 
-function openExceptionEditor(
+
+function openPaymentEditor(
   payment: PaymentRow
-) {
+): void {
   editingPayment.value =
     payment;
 
@@ -1091,27 +690,23 @@ function openExceptionEditor(
 
   exceptionAmountPaid.value =
     String(
-      payment.amount_paid ||
-      0
+      payment.amount_paid || 0
     );
 
   exceptionNote.value =
-    payment.exception_note ||
-    "";
+    payment.exception_note || "";
 
-  exceptionError.value =
-    "";
+  exceptionError.value = "";
 }
 
-function closeExceptionEditor() {
-  editingPayment.value =
-    null;
 
-  exceptionError.value =
-    "";
+function closePaymentEditor(): void {
+  editingPayment.value = null;
+  exceptionError.value = "";
 }
 
-async function saveManualException() {
+
+async function savePaymentEdit(): Promise<void> {
   if (
     !editingPayment.value ||
     savingException.value
@@ -1124,106 +719,86 @@ async function saveManualException() {
 
   const amountPaid =
     Number(
-      exceptionAmountPaid.value ||
-      0
+      exceptionAmountPaid.value || 0
     );
 
   const amountDue =
     Number(
-      editingPayment.value
-        .amount_due ||
-      0
+      editingPayment.value.amount_due || 0
     );
 
   if (!note) {
     exceptionError.value =
-      isHebrew.value
-        ? "יש להזין סיבה לחריגה"
-        : "An exception note is required";
-
+      text(
+        "יש להזין הערה",
+        "A note is required",
+        "Se requiere una nota"
+      );
     return;
   }
 
   if (
-    !Number.isFinite(
-      amountPaid
-    ) ||
+    !Number.isFinite(amountPaid) ||
     amountPaid < 0
   ) {
     exceptionError.value =
-      isHebrew.value
-        ? "הסכום ששולם אינו תקין"
-        : "Invalid paid amount";
-
+      text(
+        "הסכום ששולם אינו תקין",
+        "Invalid paid amount",
+        "El importe pagado no es válido"
+      );
     return;
   }
 
-  if (
-    amountPaid >
-    amountDue
-  ) {
+  if (amountPaid > amountDue) {
     exceptionError.value =
-      isHebrew.value
-        ? "הסכום ששולם לא יכול להיות גדול מסכום התשלום"
-        : "Paid amount cannot exceed the scheduled amount";
-
+      text(
+        "הסכום ששולם לא יכול להיות גדול מסכום התשלום",
+        "Paid amount cannot exceed the scheduled amount",
+        "El importe pagado no puede superar el importe programado"
+      );
     return;
   }
 
-  savingException.value =
-    true;
-
-  exceptionError.value =
-    "";
+  savingException.value = true;
+  exceptionError.value = "";
 
   try {
     await updatePaymentException(
-      editingPayment.value
-        .payment_id,
+      editingPayment.value.payment_id,
       {
-        status:
-          exceptionStatus.value,
-
-        amount_paid:
-          amountPaid,
-
+        status: exceptionStatus.value,
+        amount_paid: amountPaid,
         note,
       }
     );
 
-    closeExceptionEditor();
-
-    paymentsLoaded.value =
-      false;
-
-    await loadPayments(
-      true
-    );
+    closePaymentEditor();
+    paymentsLoaded.value = false;
+    await loadPayments(true);
   } catch (
     requestError: any
   ) {
     const data =
-      requestError
-        ?.response
-        ?.data;
+      requestError?.response?.data;
 
     exceptionError.value =
       data?.note?.[0] ||
       data?.amount_paid?.[0] ||
       data?.status?.[0] ||
       data?.detail ||
-      (
-        isHebrew.value
-          ? "שמירת החריגה נכשלה"
-          : "Failed to save exception"
+      text(
+        "שמירת השינוי נכשלה",
+        "Failed to save the payment change",
+        "No se pudo guardar el cambio del pago"
       );
   } finally {
-    savingException.value =
-      false;
+    savingException.value = false;
   }
 }
 
-async function clearManualException() {
+
+async function clearManualException(): Promise<void> {
   if (
     !editingPayment.value ||
     savingException.value
@@ -1231,79 +806,90 @@ async function clearManualException() {
     return;
   }
 
-  savingException.value =
-    true;
-
-  exceptionError.value =
-    "";
+  savingException.value = true;
+  exceptionError.value = "";
 
   try {
     await updatePaymentException(
-      editingPayment.value
-        .payment_id,
+      editingPayment.value.payment_id,
       {
-        clear_exception:
-          true,
+        clear_exception: true,
       }
     );
 
-    closeExceptionEditor();
-
-    paymentsLoaded.value =
-      false;
-
-    await loadPayments(
-      true
-    );
+    closePaymentEditor();
+    paymentsLoaded.value = false;
+    await loadPayments(true);
   } catch (
     requestError: any
   ) {
     exceptionError.value =
-      requestError
-        ?.response
-        ?.data
-        ?.detail ||
-      (
-        isHebrew.value
-          ? "ביטול החריגה נכשל"
-          : "Failed to clear exception"
+      requestError?.response?.data?.detail ||
+      text(
+        "איפוס השינוי נכשל",
+        "Failed to reset the change",
+        "No se pudo restablecer el cambio"
       );
   } finally {
-    savingException.value =
-      false;
+    savingException.value = false;
   }
 }
 
-watch(
-  () =>
-    props.active,
 
+watch(
+  () => props.active,
   (isActive) => {
     if (isActive) {
       loadPayments();
     }
   },
-
   {
     immediate: true,
   }
 );
 </script>
 
+
 <style scoped>
 @keyframes spin {
   to {
-    transform: rotate(
-      360deg
-    );
+    transform: rotate(360deg);
   }
 }
 
 .animate-spin {
-  animation:
-    spin
-    1s
-    linear
-    infinite;
+  animation: spin 1s linear infinite;
+}
+
+.summary-card {
+  border: 1px solid var(--color-line);
+  border-radius: 0.75rem;
+  background: white;
+  padding: 0.75rem;
+}
+
+.summary-label {
+  color: var(--color-muted);
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+.summary-value {
+  margin-top: 0.25rem;
+  color: var(--color-ink);
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 600;
+}
+
+@media (min-width: 640px) {
+  .summary-card {
+    padding: 1rem;
+  }
+
+  .summary-value {
+    font-size: 1.125rem;
+    line-height: 1.75rem;
+  }
 }
 </style>

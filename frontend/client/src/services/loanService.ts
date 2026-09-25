@@ -4,7 +4,6 @@ import {
   LoanType,
   type Loan,
   type LoanChecksDetails,
-  type LoanFilters,
   type LoanListItem,
   type LoanStandingOrderDetails,
   type LoanStatus,
@@ -14,6 +13,23 @@ import type {
   ApiLoanDetails,
   ApiLoanListItem,
 } from "../types/api-loan";
+
+
+type ReportLoanRow = {
+  loan_id: string;
+  loan_type: "checks" | "standing_order";
+  borrower_name?: string;
+  trustee_name?: string;
+  community?: string;
+  amount: string | number;
+  start_date: string;
+  status: "ACTIVE" | "OVERDUE" | "CLOSED";
+};
+
+
+type ManagementReportResponse = {
+  loans?: ReportLoanRow[];
+};
 
 
 function mapBorrower(
@@ -148,6 +164,66 @@ function mapLoanListItem(
 }
 
 
+function mapReportLoanListItem(
+  row: ReportLoanRow
+): LoanListItem {
+  return {
+    id:
+      String(
+        row.loan_id
+      ),
+
+    type:
+      mapLoanType(
+        row.loan_type
+      ),
+
+    status:
+      mapLoanStatus(
+        row.status
+      ),
+
+    amount:
+      Number(
+        row.amount ||
+          0
+      ),
+
+    startDate:
+      row.start_date,
+
+    borrower: {
+      name:
+        String(
+          row.borrower_name ||
+          ""
+        ),
+
+      phone: "",
+    },
+
+    trustee:
+      row.trustee_name ||
+      row.community
+        ? {
+            name:
+              String(
+                row.trustee_name ||
+                ""
+              ),
+
+            community:
+              String(
+                row.community ||
+                ""
+              ) ||
+              undefined,
+          }
+        : null,
+  };
+}
+
+
 function mapLoanDetails(
   apiLoan: ApiLoanDetails
 ): Loan {
@@ -258,6 +334,10 @@ function mapLoanDetails(
     formFileUrl:
       apiLoan.form_file_url,
 
+    standingOrderFormFileUrl:
+      apiLoan.standing_order_form_file_url ||
+      null,
+
     borrower:
       mapBorrower(
         apiLoan
@@ -273,43 +353,27 @@ function mapLoanDetails(
 }
 
 
-async function getActiveLoans(
-  filters: LoanFilters = {}
+async function getLoanDirectory(
+  includeCompleted = false
 ): Promise<LoanListItem[]> {
-  const params: Record<
-    string,
-    string
-  > = {};
-
   if (
-    filters.type &&
-    filters.type !== "all"
+    includeCompleted
   ) {
-    params.type =
-      String(
-        filters.type
+    const response =
+      await api.get<ManagementReportResponse>(
+        "/reports/summary/"
       );
-  } else {
-    params.type =
-      "all";
-  }
 
-  if (
-    filters.status &&
-    filters.status !== "all"
-  ) {
-    params.status =
-      String(
-        filters.status
-      );
-  }
+    const rows =
+      Array.isArray(
+        response.data?.loans
+      )
+        ? response.data.loans
+        : [];
 
-  if (
-    filters.search
-      ?.trim()
-  ) {
-    params.search =
-      filters.search.trim();
+    return rows.map(
+      mapReportLoanListItem
+    );
   }
 
   const response =
@@ -318,7 +382,9 @@ async function getActiveLoans(
     >(
       "/loans/",
       {
-        params,
+        params: {
+          type: "all",
+        },
       }
     );
 
@@ -354,6 +420,6 @@ async function getLoanDetails(
 
 
 export default {
-  getActiveLoans,
+  getLoanDirectory,
   getLoanDetails,
 };

@@ -19,6 +19,7 @@ import AppLayout from "../components/AppLayout.vue";
 import FormCard from "../components/FormCard.vue";
 import FormInput from "../components/FormInput.vue";
 import FormDatePicker from "../components/FormDatePicker.vue";
+import TrusteePicker from "../components/TrusteePicker.vue";
 
 import api from "../services/api";
 
@@ -55,11 +56,13 @@ const loanId =
 
 
 const formLocale =
-  computed<"he" | "en">(
+  computed<"he" | "en" | "es">(
     () =>
       locale.value === "he"
         ? "he"
-        : "en"
+        : locale.value === "es"
+          ? "es"
+          : "en"
   );
 
 
@@ -104,7 +107,8 @@ const fieldErrors =
 
 type TrusteeOption = {
   id: string;
-  label: string;
+  name: string;
+  community?: string;
 };
 
 
@@ -147,75 +151,6 @@ const loanTypeLabel =
   });
 
 
-const statusLabel =
-  computed(() => {
-    const status =
-      loanData.value?.status;
-
-    if (
-      status ===
-      "OVERDUE"
-    ) {
-      return isHebrew.value
-        ? "באיחור"
-        : "Overdue";
-    }
-
-    if (
-      status ===
-      "CLOSED"
-    ) {
-      return isHebrew.value
-        ? "סגורה"
-        : "Closed";
-    }
-
-    return isHebrew.value
-      ? "פעילה"
-      : "Active";
-  });
-
-
-const statusClass =
-  computed(() => {
-    const status =
-      loanData.value?.status;
-
-    if (
-      status ===
-      "OVERDUE"
-    ) {
-      return (
-        "bg-danger/10 " +
-        "text-danger"
-      );
-    }
-
-    if (
-      status ===
-      "CLOSED"
-    ) {
-      return (
-        "bg-success/10 " +
-        "text-success-deep"
-      );
-    }
-
-    return (
-      "bg-brand/10 " +
-      "text-brand"
-    );
-  });
-
-
-const automaticStatusNote =
-  computed(() =>
-    isHebrew.value
-      ? "סטטוס ההלוואה מחושב אוטומטית לפי מצב התשלומים ולכן אינו נערך ידנית כאן."
-      : "Loan status is calculated automatically from payment status and is not edited manually here."
-  );
-
-
 const loadErrorLabel =
   computed(() =>
     isHebrew.value
@@ -256,30 +191,25 @@ const savingLabel =
   );
 
 
-const readOnlyLabel =
-  computed(() =>
-    isHebrew.value
-      ? "לקריאה בלבד"
-      : "Read only"
-  );
-
-
 function normalizeTrustee(
   raw: any
 ): TrusteeOption {
   const user =
     raw?.user_details ||
+    raw?.user ||
     {};
 
   const firstName =
     String(
       user.first_name ||
+      raw?.first_name ||
       ""
     ).trim();
 
   const lastName =
     String(
       user.last_name ||
+      raw?.last_name ||
       ""
     ).trim();
 
@@ -295,6 +225,7 @@ function normalizeTrustee(
   const username =
     String(
       user.username ||
+      raw?.username ||
       ""
     ).trim();
 
@@ -315,10 +246,8 @@ function normalizeTrustee(
         ""
       ),
 
-    label:
-      community
-        ? `${baseName} – ${community}`
-        : baseName,
+    name: baseName,
+    community,
   };
 }
 
@@ -807,465 +736,174 @@ watch(
 
 <template>
   <AppLayout
-    :title="
-      t(
-        'editLoan.title'
-      )
-    "
-    :subtitle="
-      loanData
-        ?.borrower
-        ?.name ||
-      ''
-    "
+    :title="t('editLoan.title')"
     :show-language-toggle="true"
     :show-back-button="true"
-    max-width="4xl"
+    max-width="5xl"
   >
-    <div
-      class="mx-auto w-full max-w-3xl"
-    >
-      <!-- Loading -->
+    <div class="mx-auto w-full max-w-4xl space-y-5">
       <div
-        v-if="
-          loading
-        "
-        class="flex flex-col items-center justify-center py-16"
+        v-if="loading"
+        class="flex flex-col items-center justify-center rounded-2xl border border-line bg-white py-16"
       >
         <div
           class="h-9 w-9 animate-spin rounded-full border-4 border-brand border-t-transparent"
         ></div>
 
-        <p
-          class="mt-4 text-sm text-muted"
-        >
-          {{
-            isHebrew
-              ? "טוען פרטי הלוואה..."
-              : "Loading loan details..."
-          }}
+        <p class="mt-4 text-sm text-muted">
+          {{ isHebrew ? "טוען פרטי הלוואה..." : "Loading loan details..." }}
         </p>
       </div>
 
-      <!-- Load error -->
       <div
-        v-else-if="
-          error &&
-          !loanData
-        "
+        v-else-if="error && !loanData"
         class="rounded-2xl border border-red-200 bg-red-50 p-6 text-center"
       >
-        <p
-          class="text-sm font-medium text-red-700"
-        >
+        <p class="text-sm font-medium text-red-700">
           {{ error }}
         </p>
 
         <button
           type="button"
           class="mt-4 rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-deep"
-          @click="
-            loadLoan
-          "
+          @click="loadLoan"
         >
-          {{
-            retryLabel
-          }}
+          {{ retryLabel }}
         </button>
       </div>
 
-      <template
-        v-else-if="
-          loanData
-        "
-      >
-        <!-- Save success -->
+      <template v-else-if="loanData">
         <div
-          v-if="
-            successMessage
-          "
-          class="mb-4 rounded-xl border border-success/30 bg-success/10 px-4 py-3 text-sm font-medium text-success-deep"
+          v-if="successMessage"
+          class="rounded-xl border border-success/30 bg-success/10 px-4 py-3 text-sm font-medium text-success-deep"
         >
-          {{
-            successMessage
-          }}
+          {{ successMessage }}
         </div>
 
-        <!-- Save error -->
         <div
-          v-if="
-            error
-          "
-          class="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700"
+          v-if="error"
+          class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700"
         >
           {{ error }}
         </div>
 
-        <FormCard
-          :title="
-            t(
-              'editLoan.cardTitle'
-            )
-          "
-          :badge="
-            loanId
-          "
-        >
-          <!-- Read-only loan context -->
-          <div
-            class="grid grid-cols-1 gap-3 rounded-xl border border-line bg-canvas p-4 sm:grid-cols-2"
-          >
-            <div>
-              <p
-                class="text-xs font-medium text-muted"
-              >
-                {{
-                  isHebrew
-                    ? "סוג הלוואה"
-                    : "Loan type"
-                }}
-              </p>
+        <!-- Loan context -->
+        <section class="rounded-2xl border border-line bg-white p-5 shadow-sm sm:p-6">
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div class="min-w-0">
+              <h2 class="mt-1 truncate text-xl font-bold text-ink">
+                {{ loanData.borrower?.name || "—" }}
+              </h2>
 
-              <p
-                class="mt-1 text-sm font-semibold text-ink"
-              >
-                {{
-                  loanTypeLabel
-                }}
-              </p>
             </div>
 
-            <div>
-              <div
-                class="flex items-center gap-2"
-              >
-                <p
-                  class="text-xs font-medium text-muted"
-                >
-                  {{
-                    t(
-                      "editLoan.fields.status"
-                    )
-                  }}
-                </p>
-
-                <span
-                  class="rounded-full bg-white px-2 py-0.5 text-[10px] font-medium text-muted"
-                >
-                  {{
-                    readOnlyLabel
-                  }}
-                </span>
-              </div>
-
-              <span
-                class="mt-1 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold"
-                :class="
-                  statusClass
-                "
-              >
-                {{
-                  statusLabel
-                }}
-              </span>
-            </div>
+            <span
+              class="inline-flex rounded-full bg-brand/10 px-3 py-1.5 text-xs font-semibold text-brand"
+            >
+              {{ loanTypeLabel }}
+            </span>
           </div>
+        </section>
 
-          <p
-            class="rounded-lg border border-brand/15 bg-brand/5 px-3 py-2 text-xs leading-5 text-ink-soft"
-          >
+        <!-- Trustee -->
+        <FormCard
+          :title="t('editLoan.sections.trustee')"
+        >
+          <TrusteePicker
+            v-model="form.trustee_id"
+            :options="trustees"
+            :label="t('editLoan.fields.trustee')"
+            :placeholder="isHebrew ? 'חיפוש נאמן לפי שם' : 'Search trustee by name'"
+            :error-message="fieldErrors.trustee_id || trusteesError"
+            :loading="trusteesLoading"
+            :required="true"
+            :isRTL="isRTL"
+            :locale="formLocale"
+            @update:model-value="delete fieldErrors.trustee_id"
+          />
+        </FormCard>
+
+        <!-- Editable loan fields -->
+        <FormCard
+          :title="isHebrew ? 'פרטי ההלוואה' : 'Loan details'"
+        >
+          <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+            <FormInput
+              v-model="form.amount"
+              :label="t('editLoan.fields.amount')"
+              :placeholder="t('editLoan.placeholders.amount')"
+              icon="dollar"
+              type="number"
+              inputMode="decimal"
+              :isRTL="isRTL"
+              :required="true"
+              min="0.01"
+              step="0.01"
+              :hasError="Boolean(fieldErrors.amount)"
+              :errorMessage="fieldErrors.amount"
+              @input="delete fieldErrors.amount"
+            />
+
+            <FormDatePicker
+              v-model="form.start_date"
+              :label="t('editLoan.fields.startDate')"
+              :placeholder="t('editLoan.placeholders.startDate')"
+              :locale="formLocale"
+              :isRTL="isRTL"
+              :required="true"
+              :hasError="Boolean(fieldErrors.start_date)"
+              :errorMessage="fieldErrors.start_date"
+            />
+
+            <FormInput
+              v-model="form.number_of_payments"
+              :label="t('editLoan.fields.numPayments')"
+              :placeholder="t('editLoan.placeholders.numPayments')"
+              type="number"
+              inputMode="numeric"
+              :isRTL="isRTL"
+              :required="true"
+              min="1"
+              step="1"
+              :hasError="Boolean(fieldErrors.number_of_payments)"
+              :errorMessage="fieldErrors.number_of_payments"
+              @input="delete fieldErrors.number_of_payments"
+            />
+          </div>
+        </FormCard>
+
+        <!-- Actions -->
+        <section
+          class="flex flex-col-reverse gap-3 rounded-2xl border border-line bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"
+        >
+          <p class="text-xs text-muted">
             {{
-              automaticStatusNote
+              isHebrew
+                ? "השינויים ייכנסו לתוקף לאחר לחיצה על שמירה."
+                : "Changes take effect after you select Save."
             }}
           </p>
 
-          <!-- Amount -->
-          <FormInput
-            v-model="
-              form.amount
-            "
-            :label="
-              t(
-                'editLoan.fields.amount'
-              )
-            "
-            :placeholder="
-              t(
-                'editLoan.placeholders.amount'
-              )
-            "
-            icon="dollar"
-            type="number"
-            inputMode="decimal"
-            :isRTL="
-              isRTL
-            "
-            :required="
-              true
-            "
-            min="0.01"
-            step="0.01"
-            :hasError="
-              Boolean(
-                fieldErrors.amount
-              )
-            "
-            :errorMessage="
-              fieldErrors.amount
-            "
-            @input="
-              delete fieldErrors.amount
-            "
-          />
-
-          <!-- Start date -->
-          <FormDatePicker
-            v-model="
-              form.start_date
-            "
-            :label="
-              t(
-                'editLoan.fields.startDate'
-              )
-            "
-            :placeholder="
-              t(
-                'editLoan.placeholders.startDate'
-              )
-            "
-            :locale="
-              formLocale
-            "
-            :isRTL="
-              isRTL
-            "
-            :required="
-              true
-            "
-            :hasError="
-              Boolean(
-                fieldErrors.start_date
-              )
-            "
-            :errorMessage="
-              fieldErrors.start_date
-            "
-          />
-
-          <!-- Number of payments -->
-          <FormInput
-            v-model="
-              form.number_of_payments
-            "
-            :label="
-              t(
-                'editLoan.fields.numPayments'
-              )
-            "
-            :placeholder="
-              t(
-                'editLoan.placeholders.numPayments'
-              )
-            "
-            type="number"
-            inputMode="numeric"
-            :isRTL="
-              isRTL
-            "
-            :required="
-              true
-            "
-            min="1"
-            step="1"
-            :hasError="
-              Boolean(
-                fieldErrors.number_of_payments
-              )
-            "
-            :errorMessage="
-              fieldErrors.number_of_payments
-            "
-            @input="
-              delete fieldErrors.number_of_payments
-            "
-          />
-
-          <!-- Trustee -->
-          <div
-            class="flex flex-col gap-2"
-          >
-            <h2
-              class="pt-2 text-lg font-semibold text-ink"
-              :dir="
-                isRTL
-                  ? 'rtl'
-                  : 'ltr'
-              "
-              :class="
-                isRTL
-                  ? 'text-right'
-                  : 'text-left'
-              "
-            >
-              {{
-                t(
-                  "editLoan.sections.trustee"
-                )
-              }}
-            </h2>
-
-            <p
-              :dir="
-                isRTL
-                  ? 'rtl'
-                  : 'ltr'
-              "
-              :class="
-                isRTL
-                  ? 'text-right'
-                  : 'text-left'
-              "
-              class="pb-1 text-sm font-medium text-muted"
-            >
-              <span
-                :class="
-                  fieldErrors.trustee_id
-                    ? 'text-danger'
-                    : 'text-muted'
-                "
-              >
-                *
-              </span>
-
-              {{
-                t(
-                  "editLoan.fields.trustee"
-                )
-              }}
-            </p>
-
-            <select
-              v-model="
-                form.trustee_id
-              "
-              :disabled="
-                trusteesLoading
-              "
-              :dir="
-                isRTL
-                  ? 'rtl'
-                  : 'ltr'
-              "
-              class="h-11 w-full rounded-lg border bg-white px-4 text-base outline-none transition focus:ring-2 disabled:cursor-wait disabled:bg-surface-muted"
-              :class="
-                fieldErrors.trustee_id
-                  ? 'border-danger focus:border-danger focus:ring-danger/20'
-                  : 'border-line focus:border-brand focus:ring-brand/20'
-              "
-              @change="
-                delete fieldErrors.trustee_id
-              "
-            >
-              <option
-                value=""
-                disabled
-              >
-                {{
-                  trusteesLoading
-                    ? (
-                        isHebrew
-                          ? "טוען נאמנים..."
-                          : "Loading trustees..."
-                      )
-                    : t(
-                        "editLoan.placeholders.trustee"
-                      )
-                }}
-              </option>
-
-              <option
-                v-for="
-                  trustee
-                  in trustees
-                "
-                :key="
-                  trustee.id
-                "
-                :value="
-                  trustee.id
-                "
-              >
-                {{
-                  trustee.label
-                }}
-              </option>
-            </select>
-
-            <p
-              v-if="
-                trusteesError
-              "
-              class="text-xs text-danger"
-            >
-              {{
-                trusteesError
-              }}
-            </p>
-
-            <p
-              v-if="
-                fieldErrors.trustee_id
-              "
-              class="text-xs text-danger"
-            >
-              {{
-                fieldErrors.trustee_id
-              }}
-            </p>
-          </div>
-
-          <!-- Actions -->
-          <div
-            class="flex flex-col-reverse gap-3 border-t border-line pt-5 sm:flex-row sm:justify-end"
-          >
+          <div class="flex flex-col-reverse gap-2 sm:flex-row">
             <button
               type="button"
-              :disabled="
-                saving
-              "
-              class="h-12 rounded-xl border border-line bg-white px-5 text-sm font-semibold text-ink-soft transition hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-50"
-              @click="
-                onCancel
-              "
+              :disabled="saving"
+              class="h-11 rounded-xl border border-line bg-white px-5 text-sm font-semibold text-ink-soft transition hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-50"
+              @click="onCancel"
             >
-              {{
-                t(
-                  "editLoan.actions.cancel"
-                )
-              }}
+              {{ t("editLoan.actions.cancel") }}
             </button>
 
             <button
               type="button"
-              :disabled="
-                saving ||
-                trusteesLoading
-              "
-              class="h-12 rounded-xl bg-brand px-6 text-sm font-semibold text-white shadow-lg shadow-brand/20 transition hover:bg-brand-deep disabled:cursor-not-allowed disabled:bg-faint disabled:shadow-none"
-              @click="
-                onSave
-              "
+              :disabled="saving || trusteesLoading"
+              class="h-11 rounded-xl bg-brand px-6 text-sm font-semibold text-white shadow-lg shadow-brand/20 transition hover:bg-brand-deep disabled:cursor-not-allowed disabled:bg-faint disabled:shadow-none"
+              @click="onSave"
             >
-              {{
-                saving
-                  ? savingLabel
-                  : t(
-                      "editLoan.actions.save"
-                    )
-              }}
+              {{ saving ? savingLabel : t("editLoan.actions.save") }}
             </button>
           </div>
-        </FormCard>
+        </section>
       </template>
     </div>
   </AppLayout>

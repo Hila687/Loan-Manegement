@@ -16,6 +16,7 @@ import FormCard from "../components/FormCard.vue";
 import FormInput from "../components/FormInput.vue";
 import FormDatePicker from "../components/FormDatePicker.vue";
 import LoanDocumentUpload from "../components/LoanDocumentUpload.vue";
+import TrusteePicker from "../components/TrusteePicker.vue";
 
 import api from "../services/api";
 
@@ -24,8 +25,8 @@ const { t, locale, isRTL } = useLocale();
 
 const router = useRouter();
 
-const formLocale = computed<"he" | "en">(() =>
-  locale.value === "he" ? "he" : "en"
+const formLocale = computed<"he" | "en" | "es">(() =>
+  locale.value === "he" ? "he" : locale.value === "es" ? "es" : "en"
 );
 
 const {
@@ -68,7 +69,7 @@ const loan = ref({
 type TrusteeOption = {
   id: string;
   name: string;
-  community: string;
+  community?: string;
 };
 
 
@@ -128,22 +129,8 @@ const trustees =
 const trusteesLoading =
   ref(false);
 
-const trusteeSearchQuery =
-  ref("");
-
-const showTrusteeDropdown =
-  ref(false);
-
-const highlightedTrusteeIndex =
-  ref(-1);
-
 const trusteesErrorMessage =
   ref("");
-
-const trusteeBlurTimeout =
-  ref<ReturnType<
-    typeof setTimeout
-  > | null>(null);
 
 
 const showSuccessModal =
@@ -190,11 +177,9 @@ const datePickerRef =
   ref<any>(null);
 
 
-// Native input ref.
+// TrusteePicker exposes a focus method.
 const trusteeInputRef =
-  ref<HTMLInputElement | null>(
-    null
-  );
+  ref<any>(null);
 
 
 const fields = [
@@ -270,12 +255,6 @@ onBeforeUnmount(() => {
       errorTimeout.value
     );
   }
-
-  if (trusteeBlurTimeout.value) {
-    clearTimeout(
-      trusteeBlurTimeout.value
-    );
-  }
 });
 
 
@@ -331,27 +310,6 @@ function normalizeTrustee(
     community,
   };
 }
-
-
-const filteredTrustees =
-  computed(() => {
-    const query =
-      trusteeSearchQuery.value
-        .trim()
-        .toLowerCase();
-
-    if (!query) {
-      return trustees.value;
-    }
-
-    // Trustee filtering is intentionally based on name only.
-    return trustees.value.filter(
-      (trustee) =>
-        trustee.name
-          .toLowerCase()
-          .includes(query)
-    );
-  });
 
 
 function isValidPhone(
@@ -509,236 +467,18 @@ async function fetchTrustees() {
 }
 
 
-function selectTrustee(
-  trustee: TrusteeOption
-) {
+function onTrusteePickerSelected(
+  trustee: TrusteeOption | null
+): void {
   borrower.value.trustee_id =
-    trustee.id;
+    trustee?.id || "";
 
   borrower.value.trustee_name =
-    trustee.name;
-
-  trusteeSearchQuery.value =
-    trustee.name;
-
-  showTrusteeDropdown.value =
-    false;
-
-  highlightedTrusteeIndex.value =
-    -1;
+    trustee?.name || "";
 
   clearFieldError(
     "trustee"
   );
-}
-
-
-function clearSelectedTrustee() {
-  borrower.value.trustee_id =
-    "";
-
-  borrower.value.trustee_name =
-    "";
-
-  trusteeSearchQuery.value =
-    "";
-
-  highlightedTrusteeIndex.value =
-    trustees.value.length > 0
-      ? 0
-      : -1;
-
-  clearFieldError(
-    "trustee"
-  );
-
-  trusteeInputRef.value
-    ?.focus();
-}
-
-
-function onTrusteeInput(
-  event: Event
-) {
-  const target =
-    event.target;
-
-  if (
-    !(
-      target instanceof
-      HTMLInputElement
-    )
-  ) {
-    return;
-  }
-
-  onTrusteeInputChange(
-    target.value
-  );
-}
-
-
-function onTrusteeInputChange(
-  value: string
-) {
-  trusteeSearchQuery.value =
-    value;
-
-  showTrusteeDropdown.value =
-    true;
-
-  borrower.value.trustee_id =
-    "";
-
-  borrower.value.trustee_name =
-    "";
-
-  clearFieldError(
-    "trustee"
-  );
-
-  highlightedTrusteeIndex.value =
-    filteredTrustees.value
-      .length > 0
-      ? 0
-      : -1;
-}
-
-
-function onTrusteeInputFocus() {
-  if (
-    trusteeBlurTimeout.value
-  ) {
-    clearTimeout(
-      trusteeBlurTimeout.value
-    );
-
-    trusteeBlurTimeout.value =
-      null;
-  }
-
-  showTrusteeDropdown.value =
-    true;
-
-  if (
-    trustees.value.length ===
-      0 &&
-    !trusteesLoading.value
-  ) {
-    fetchTrustees();
-  }
-
-  highlightedTrusteeIndex.value =
-    filteredTrustees.value
-      .length > 0
-      ? 0
-      : -1;
-}
-
-
-function onTrusteeKeydown(
-  event: KeyboardEvent
-) {
-  const list =
-    filteredTrustees.value;
-
-  const hasOptions =
-    list.length > 0;
-
-  if (
-    event.key ===
-      "ArrowDown" ||
-    event.key ===
-      "ArrowUp"
-  ) {
-    if (!hasOptions) {
-      handleFieldKeydown(
-        "trustee",
-        event
-      );
-
-      return;
-    }
-
-    event.preventDefault();
-
-    showTrusteeDropdown.value =
-      true;
-
-    if (
-      event.key ===
-      "ArrowDown"
-    ) {
-      highlightedTrusteeIndex.value =
-        highlightedTrusteeIndex.value <
-        list.length - 1
-          ? highlightedTrusteeIndex.value +
-            1
-          : 0;
-    } else {
-      highlightedTrusteeIndex.value =
-        highlightedTrusteeIndex.value >
-        0
-          ? highlightedTrusteeIndex.value -
-            1
-          : list.length - 1;
-    }
-
-    return;
-  }
-
-  if (
-    event.key === "Enter"
-  ) {
-    if (
-      showTrusteeDropdown.value &&
-      hasOptions &&
-      highlightedTrusteeIndex.value >=
-        0
-    ) {
-      event.preventDefault();
-
-      selectTrustee(
-        list[
-          highlightedTrusteeIndex.value
-        ]
-      );
-
-      return;
-    }
-
-    handleFieldKeydown(
-      "trustee",
-      event
-    );
-
-    return;
-  }
-
-  if (
-    event.key ===
-    "Escape"
-  ) {
-    event.preventDefault();
-
-    showTrusteeDropdown.value =
-      false;
-  }
-}
-
-
-function onTrusteeInputBlur() {
-  trusteeBlurTimeout.value =
-    setTimeout(() => {
-      showTrusteeDropdown.value =
-        false;
-
-      highlightedTrusteeIndex.value =
-        -1;
-
-      trusteeBlurTimeout.value =
-        null;
-    }, 200);
 }
 
 
@@ -938,15 +678,6 @@ function resetForm() {
 
   error.value =
     null;
-
-  trusteeSearchQuery.value =
-    "";
-
-  showTrusteeDropdown.value =
-    false;
-
-  highlightedTrusteeIndex.value =
-    -1;
 
   clearAllErrors();
 }
@@ -1695,6 +1426,36 @@ async function finishSuccessFlow() {
     <div
       class="flex h-full flex-col gap-6 xl:gap-5"
     >
+      <section
+        class="rounded-2xl border border-line bg-white p-4 shadow-sm sm:p-5"
+        :dir="isRTL ? 'rtl' : 'ltr'"
+      >
+        <div
+          class="max-w-2xl"
+          :class="isRTL ? 'ml-auto' : 'mr-auto'"
+        >
+          <TrusteePicker
+            ref="trusteeInputRef"
+            v-model="borrower.trustee_id"
+            :options="trustees"
+            :label="t('loanForm.fields.trustee')"
+            :placeholder="
+              locale === 'he'
+                ? 'חיפוש נאמן לפי שם'
+                : 'Search trustee by name'
+            "
+            :error-message="
+              fieldErrorMessages.trustee || trusteesErrorMessage
+            "
+            :loading="trusteesLoading"
+            :required="true"
+            :isRTL="isRTL"
+            :locale="formLocale"
+            @selected="onTrusteePickerSelected"
+          />
+        </div>
+      </section>
+
       <div
         class="grid grid-cols-1 gap-6 auto-rows-max lg:grid-cols-2 xl:grid-cols-3 xl:gap-5"
       >
@@ -1939,302 +1700,6 @@ async function finishSuccessFlow() {
             "
           />
 
-
-          <!-- Trustee Selection -->
-          <label
-            class="flex flex-col"
-          >
-            <p
-              :dir="
-                isRTL
-                  ? 'rtl'
-                  : 'ltr'
-              "
-              :class="
-                isRTL
-                  ? 'text-right'
-                  : 'text-left'
-              "
-              class="pb-1.5 text-sm font-medium leading-normal text-muted xl:pb-2"
-            >
-              <span
-                :class="
-                  validationErrors.trustee
-                    ? 'text-danger'
-                    : 'text-muted'
-                "
-              >
-                *
-              </span>
-
-              {{
-                t(
-                  "loanForm.fields.trustee"
-                )
-              }}
-            </p>
-
-
-            <div
-              class="relative"
-            >
-              <span
-                :class="[
-                  'pointer-events-none absolute inset-y-0 flex items-center text-muted',
-                  isRTL
-                    ? 'right-0 pr-4'
-                    : 'left-0 pl-4',
-                ]"
-              >
-                <svg
-                  class="h-4 w-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <circle
-                    cx="11"
-                    cy="11"
-                    r="8"
-                  />
-
-                  <path
-                    d="m21 21-4.35-4.35"
-                  />
-                </svg>
-              </span>
-
-
-              <input
-                ref="trusteeInputRef"
-                :value="
-                  trusteeSearchQuery
-                "
-                type="text"
-                autocomplete="off"
-                :dir="
-                  isRTL
-                    ? 'rtl'
-                    : 'ltr'
-                "
-                :class="[
-                  'form-input flex h-11 w-full min-w-0 resize-none overflow-hidden rounded-lg border',
-                  'bg-white text-base font-normal leading-normal text-black placeholder:text-muted',
-                  'focus:outline-0 focus:ring-2 xl:h-12',
-                  isRTL
-                    ? 'pr-10 pl-4'
-                    : 'pl-10 pr-4',
-                  validationErrors.trustee
-                    ? 'border-danger focus:border-danger focus:ring-danger/20'
-                    : 'border-line focus:border-brand focus:ring-brand/20',
-                ]"
-                :placeholder="
-                  locale === 'he'
-                    ? 'חיפוש נאמן לפי שם'
-                    : 'Search trustee by name'
-                "
-                @input="
-                  onTrusteeInput
-                "
-                @focus="
-                  onTrusteeInputFocus
-                "
-                @blur="
-                  onTrusteeInputBlur
-                "
-                @keydown="
-                  onTrusteeKeydown
-                "
-              />
-
-
-              <div
-                v-if="
-                  trusteesLoading
-                "
-                :class="[
-                  'pointer-events-none absolute inset-y-0 flex items-center',
-                  isRTL
-                    ? 'left-0 pl-4'
-                    : 'right-0 pr-4',
-                ]"
-              >
-                <div
-                  class="h-4 w-4 animate-spin rounded-full border-2 border-brand border-t-transparent"
-                ></div>
-              </div>
-
-
-              <div
-                v-if="
-                  showTrusteeDropdown &&
-                  !borrower.trustee_id
-                "
-                class="absolute top-full right-0 left-0 z-20 mt-1 max-h-52 overflow-y-auto rounded-lg border border-line bg-white shadow-lg"
-              >
-                <div
-                  v-if="
-                    trusteesLoading
-                  "
-                  class="px-4 py-3 text-center text-sm text-muted"
-                >
-                  {{
-                    t(
-                      "loanForm.messages.loadingTrustees"
-                    )
-                  }}
-                </div>
-
-
-                <template
-                  v-else
-                >
-                  <button
-                    v-for="(
-                      trustee,
-                      index
-                    ) in filteredTrustees"
-                    :key="
-                      trustee.id
-                    "
-                    type="button"
-                    :class="[
-                      'w-full border-b border-line px-4 py-2.5 text-sm transition-colors last:border-b-0',
-                      index ===
-                      highlightedTrusteeIndex
-                        ? 'bg-brand/10'
-                        : 'hover:bg-brand/10',
-                    ]"
-                    :dir="
-                      isRTL
-                        ? 'rtl'
-                        : 'ltr'
-                    "
-                    @mousedown.prevent
-                    @click="
-                      selectTrustee(
-                        trustee
-                      )
-                    "
-                  >
-                    <div
-                      class="flex min-w-0 flex-col"
-                      :class="
-                        isRTL
-                          ? 'text-right'
-                          : 'text-left'
-                      "
-                    >
-                      <span
-                        class="truncate font-medium text-ink"
-                      >
-                        {{
-                          trustee.name
-                        }}
-                      </span>
-
-                      <span
-                        v-if="
-                          trustee.community
-                        "
-                        class="mt-0.5 truncate text-xs text-faint"
-                      >
-                        {{
-                          trustee.community
-                        }}
-                      </span>
-                    </div>
-                  </button>
-
-
-                  <div
-                    v-if="
-                      filteredTrustees.length ===
-                      0
-                    "
-                    class="px-4 py-3 text-center text-sm text-muted"
-                  >
-                    {{
-                      t(
-                        "loanForm.messages.noTrustees"
-                      )
-                    }}
-                  </div>
-                </template>
-              </div>
-            </div>
-
-
-            <div
-              v-if="
-                borrower.trustee_id
-              "
-              class="mt-2 flex items-center justify-between gap-3 rounded-lg border border-brand/20 bg-brand/5 p-3"
-            >
-              <p
-                class="min-w-0 truncate text-sm font-medium text-black"
-              >
-                {{
-                  borrower.trustee_name
-                }}
-              </p>
-
-              <button
-                type="button"
-                class="flex-shrink-0 text-muted transition-colors hover:text-danger"
-                :aria-label="
-                  locale === 'he'
-                    ? 'הסרת נאמן'
-                    : 'Remove trustee'
-                "
-                @click="
-                  clearSelectedTrustee
-                "
-              >
-                <svg
-                  class="h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-
-
-            <p
-              v-if="
-                validationErrors.trustee &&
-                fieldErrorMessages.trustee
-              "
-              class="mt-1 text-xs text-danger"
-            >
-              {{
-                fieldErrorMessages.trustee
-              }}
-            </p>
-
-
-            <p
-              v-if="
-                trusteesErrorMessage
-              "
-              class="mt-1 text-xs text-danger"
-            >
-              {{
-                trusteesErrorMessage
-              }}
-            </p>
-          </label>
         </FormCard>
 
 

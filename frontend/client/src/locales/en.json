@@ -78,7 +78,8 @@
     "admins": "Administrators",
     "logout": "Log out",
     "menu": "Menu",
-    "closeMenu": "Close menu"
+    "closeMenu": "Close menu",
+    "archive": "Loan Archive"
   },
   "app": {
     "title": "Gemach"
@@ -181,7 +182,7 @@
     "noRole": "No role"
   },
   "loanList": {
-    "title": "Active loans",
+    "title": "Loans",
     "subtitle": "View and manage all active loans in the Gemach, with search, filters, and quick actions.",
     "stats": {
       "totalLoans": "Total loans",
@@ -217,7 +218,7 @@
     "messages": {
       "loading": "Loading loans...",
       "noLoans": "No loans to display",
-      "noLoansDesc": "When loans are created, they will appear here in the active loans list.",
+      "noLoansDesc": "Loans that belong in this view will appear here.",
       "noFilteredLoans": "No loans match the current filters",
       "noFilteredLoansDesc": "Try clearing one or more filters or adjusting your search term.",
       "error": "There was a problem loading the loans."
@@ -373,8 +374,8 @@
     },
     "cards": {
       "activeLoans": "Active loans",
-      "overdueLoans": "Overdue loans",
-      "closedLoans": "Closed loans",
+      "overdueLoans": "Loans needing attention",
+      "closedLoans": "Completed loans",
       "activeAmount": "Active loan amount",
       "totalDonations": "Total donations",
       "myDonations": "My donations"
@@ -388,8 +389,8 @@
     },
     "status": {
       "active": "Active",
-      "overdue": "Overdue",
-      "closed": "Closed"
+      "overdue": "Needs attention",
+      "closed": "Completed"
     },
     "statusChart": {
       "title": "Loans by status",

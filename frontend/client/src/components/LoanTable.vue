@@ -1,46 +1,31 @@
 <template>
-  <div
-    class="bg-white rounded-xl border border-line overflow-hidden shadow-sm"
-  >
-    <!-- Initial loading state -->
+  <div class="overflow-hidden rounded-2xl border border-line bg-white shadow-sm">
     <div
-      v-if="
-        loading &&
-        loans.length === 0
-      "
-      class="flex flex-col items-center justify-center py-14 px-6"
+      v-if="loading && loans.length === 0"
+      class="flex flex-col items-center justify-center px-6 py-14"
     >
       <div
         class="h-8 w-8 animate-spin rounded-full border-4 border-brand border-t-transparent"
-      />
+      ></div>
 
-      <p
-        class="mt-4 text-sm text-muted"
-      >
-        {{
-          t(
-            "loanList.messages.loading"
-          )
-        }}
+      <p class="mt-4 text-sm text-muted">
+        {{ t("loanList.messages.loading") }}
       </p>
     </div>
 
-    <!-- Empty state -->
     <div
-      v-else-if="
-        !loading &&
-        loans.length === 0
-      "
-      class="flex flex-col items-center justify-center py-14 px-6 text-center"
+      v-else-if="!loading && loans.length === 0"
+      class="flex flex-col items-center justify-center px-6 py-14 text-center"
     >
       <div
-        class="w-12 h-12 rounded-xl bg-brand/10 text-brand flex items-center justify-center"
+        class="flex h-12 w-12 items-center justify-center rounded-xl bg-brand/10 text-brand"
       >
         <svg
-          class="w-6 h-6"
+          class="h-6 w-6"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
+          aria-hidden="true"
         >
           <path
             stroke-linecap="round"
@@ -51,505 +36,222 @@
         </svg>
       </div>
 
-      <h3
-        class="mt-4 text-base font-semibold text-ink"
-      >
-        {{
-          t(
-            emptyMessage
-          )
-        }}
+      <h3 class="mt-4 text-base font-semibold text-ink">
+        {{ t(emptyMessage) }}
       </h3>
 
-      <p
-        class="mt-1 max-w-md text-sm text-muted"
-      >
-        {{
-          t(
-            emptyDescription
-          )
-        }}
+      <p class="mt-1 max-w-md text-sm text-muted">
+        {{ t(emptyDescription) }}
       </p>
     </div>
 
-    <template v-else>
-      <!-- Desktop table -->
-      <div
-        class="hidden md:block overflow-x-auto"
+    <div
+      v-else
+      class="divide-y divide-line"
+    >
+      <article
+        v-for="loan in loans"
+        :key="loan.id"
+        class="bg-white"
       >
-        <table
-          class="min-w-full divide-y divide-line"
+        <!-- Mobile loan card -->
+        <button
+          type="button"
+          class="w-full p-4 text-start transition hover:bg-canvas/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand/40 sm:hidden"
+          :dir="isRTL ? 'rtl' : 'ltr'"
+          :aria-expanded="expandedLoanId === loan.id"
+          @click="toggleRowExpand(loan.id)"
         >
-          <thead
-            class="bg-canvas"
-          >
-            <tr>
-              <th
-                class="px-4 py-3 w-8"
-              ></th>
-
-              <th
-                v-for="column in columns"
-                :key="column.key"
-                class="px-4 py-3 text-sm font-semibold text-ink-soft"
-                :class="
-                  isRTL
-                    ? 'text-right'
-                    : 'text-left'
-                "
-                :style="
-                  column.minWidth
-                    ? `min-width:${column.minWidth}`
-                    : ''
-                "
-              >
-                {{
-                  column.label
-                }}
-              </th>
-            </tr>
-          </thead>
-
-          <tbody
-            class="divide-y divide-line"
-          >
-            <template
-              v-for="loan in loans"
-              :key="loan.id"
-            >
-              <tr
-                class="hover:bg-canvas/50 transition-colors"
-              >
-                <!-- Expand button -->
-                <td
-                  class="px-4 py-4 text-center"
-                >
-                  <button
-                    type="button"
-                    class="w-8 h-8 inline-flex items-center justify-center rounded-lg text-muted hover:bg-brand/10 hover:text-brand transition-colors"
-                    :title="
-                      expandedLoanId ===
-                      loan.id
-                        ? t(
-                            'loanList.hideDetails'
-                          )
-                        : t(
-                            'loanList.showDetails'
-                          )
-                    "
-                    @click.stop="
-                      toggleRowExpand(
-                        loan.id
-                      )
-                    "
-                  >
-                    <svg
-                      class="w-4 h-4 transition-transform"
-                      :class="
-                        expandedLoanId ===
-                        loan.id
-                          ? 'rotate-180'
-                          : ''
-                      "
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
-                  </button>
-                </td>
-
-                <!-- Borrower -->
-                <td
-                  class="px-4 py-4"
-                >
-                  <div
-                    class="text-sm font-medium text-ink"
-                  >
-                    {{
-                      loan.borrower.name ||
-                      "—"
-                    }}
-                  </div>
-                </td>
-
-                <!-- Phone -->
-                <td
-                  class="px-4 py-4"
-                >
-                  <div
-                    class="text-sm text-ink"
-                  >
-                    {{
-                      formatPhone(
-                        loan.borrower.phone
-                      )
-                    }}
-                  </div>
-                </td>
-
-                <!-- Email -->
-                <td
-                  class="px-4 py-4 text-sm text-ink"
-                >
-                  {{
-                    loan.borrower.email ||
-                    "—"
-                  }}
-                </td>
-
-                <!-- Trustee -->
-                <td
-                  class="px-4 py-4 text-sm text-ink"
-                >
-                  {{
-                    loan.trustee?.name ||
-                    loan.trustee?.community ||
-                    "—"
-                  }}
-                </td>
-
-                <!-- Amount -->
-                <td
-                  class="px-4 py-4"
-                >
-                  <span
-                    class="text-sm font-medium text-ink"
-                  >
-                    {{
-                      formatCurrency(
-                        loan.amount
-                      )
-                    }}
-                  </span>
-                </td>
-
-                <!-- Type -->
-                <td
-                  class="px-4 py-4"
-                >
-                  <span
-                    class="inline-flex px-3 py-1 rounded-full text-xs font-medium"
-                    :class="
-                      loan.type ===
-                      'checks'
-                        ? 'bg-brand/10 text-brand'
-                        : 'bg-warning/10 text-warning'
-                    "
-                  >
-                    {{
-                      t(
-                        getTypeLabelKey(
-                          loan.type
-                        )
-                      )
-                    }}
-                  </span>
-                </td>
-
-                <!-- Status -->
-                <td
-                  class="px-4 py-4"
-                >
-                  <span
-                    class="inline-flex px-3 py-1 rounded-full text-xs font-semibold"
-                    :class="
-                      getStatusClass(
-                        loan.status
-                      )
-                    "
-                  >
-                    {{
-                      getStatusLabel(
-                        loan.status
-                      )
-                    }}
-                  </span>
-                </td>
-              </tr>
-
-              <!-- Expanded details -->
-              <tr
-                v-if="
-                  expandedLoanId ===
-                  loan.id
-                "
-              >
-                <td
-                  :colspan="
-                    columns.length + 1
-                  "
-                  class="px-4 py-6 bg-canvas/30"
-                >
-                  <div
-                    v-if="
-                      loadingDetails[
-                        loan.id
-                      ]
-                    "
-                    class="flex justify-center py-8"
-                  >
-                    <div
-                      class="h-8 w-8 animate-spin rounded-full border-4 border-brand border-t-transparent"
-                    />
-                  </div>
-
-                  <div
-                    v-else-if="
-                      detailsError[
-                        loan.id
-                      ]
-                    "
-                    class="text-center py-6"
-                  >
-                    <p
-                      class="text-sm text-red-600"
-                    >
-                      {{
-                        t(
-                          "loanList.messages.error"
-                        )
-                      }}
-                    </p>
-
-                    <button
-                      type="button"
-                      class="mt-3 px-4 py-2 bg-brand text-white text-sm font-semibold rounded-lg hover:bg-brand-deep transition-colors"
-                      @click="
-                        loadLoanDetails(
-                          loan.id,
-                          true
-                        )
-                      "
-                    >
-                      {{
-                        t(
-                          "loanList.actions.retry"
-                        )
-                      }}
-                    </button>
-                  </div>
-
-                  <LoanDetailsPanel
-                    v-else-if="
-                      loanDetails[
-                        loan.id
-                      ]
-                    "
-                    :loan="
-                      loanDetails[
-                        loan.id
-                      ]
-                    "
-                  />
-                </td>
-              </tr>
-            </template>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Mobile cards -->
-      <div
-        class="md:hidden divide-y divide-line"
-      >
-        <article
-          v-for="loan in loans"
-          :key="loan.id"
-          class="p-4 sm:p-5"
-        >
-          <button
-            type="button"
-            class="w-full"
-            :class="
-              isRTL
-                ? 'text-right'
-                : 'text-left'
-            "
-            @click="
-              toggleRowExpand(
-                loan.id
-              )
-            "
-          >
-            <div
-              class="flex justify-between items-start gap-4"
-            >
-              <div
-                class="min-w-0"
-              >
-                <div
-                  class="font-semibold text-ink truncate"
-                >
-                  {{
-                    loan.borrower.name ||
-                    "—"
-                  }}
-                </div>
-
-                <div
-                  class="text-xs text-muted mt-1"
-                >
-                  {{
-                    formatPhone(
-                      loan.borrower.phone
-                    )
-                  }}
-                </div>
-              </div>
-
-              <div
-                class="flex-shrink-0 font-semibold text-ink"
-              >
-                {{
-                  formatCurrency(
-                    loan.amount
-                  )
-                }}
-              </div>
-            </div>
-
-            <div
-              class="mt-3 grid grid-cols-1 gap-2 text-sm text-ink-soft"
-            >
-              <p
-                class="truncate"
-              >
-                {{
-                  loan.borrower.email ||
-                  "—"
-                }}
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <p class="truncate text-lg font-bold text-ink">
+                {{ loan.borrower.name || "—" }}
               </p>
 
-              <p
-                class="truncate"
-              >
-                {{
-                  loan.trustee?.name ||
-                  loan.trustee?.community ||
-                  "—"
-                }}
+              <p class="mt-1 text-xs text-muted">
+                {{ formatDate(loan.startDate) }}
               </p>
             </div>
 
-            <div
-              class="mt-3 flex flex-wrap items-center gap-2"
+            <span
+              class="inline-flex flex-shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
+              :class="getStatusPillClass(loan.status)"
             >
               <span
-                class="px-2.5 py-1 rounded-full text-xs font-medium"
-                :class="
-                  loan.type ===
-                  'checks'
-                    ? 'bg-brand/10 text-brand'
-                    : 'bg-warning/10 text-warning'
-                "
-              >
-                {{
-                  t(
-                    getTypeLabelKey(
-                      loan.type
-                    )
-                  )
-                }}
-              </span>
+                class="h-2 w-2 rounded-full"
+                :class="getStatusDotClass(loan.status)"
+              ></span>
+              {{ getStatusLabel(loan.status) }}
+            </span>
+          </div>
 
-              <span
-                class="px-2.5 py-1 rounded-full text-xs font-semibold"
-                :class="
-                  getStatusClass(
-                    loan.status
-                  )
-                "
+          <div class="mt-4 flex items-end justify-between gap-3">
+            <div>
+              <p
+                dir="ltr"
+                class="text-2xl font-bold text-ink"
               >
-                {{
-                  getStatusLabel(
-                    loan.status
-                  )
-                }}
-              </span>
+                {{ formatCurrency(loan.amount) }}
+              </p>
+
+              <div class="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
+                <span class="rounded-lg bg-surface-muted px-2 py-1 font-medium text-ink-soft">
+                  {{ t(getTypeLabelKey(loan.type)) }}
+                </span>
+
+                <span v-if="loan.trustee?.name" class="truncate">
+                  {{ loan.trustee.name }}
+                </span>
+              </div>
             </div>
-          </button>
+
+            <span
+              class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-surface-muted text-muted transition"
+              :class="expandedLoanId === loan.id ? 'bg-brand/10 text-brand' : ''"
+              aria-hidden="true"
+            >
+              <svg
+                class="h-4 w-4 transition-transform"
+                :class="expandedLoanId === loan.id ? 'rotate-180' : ''"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </span>
+          </div>
+        </button>
+
+        <!-- Desktop loan row -->
+        <button
+          type="button"
+          class="hidden w-full gap-4 p-5 text-start transition hover:bg-canvas/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand/40 sm:grid sm:grid-cols-2 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)_auto_minmax(0,0.9fr)_auto] lg:items-center"
+          :dir="isRTL ? 'rtl' : 'ltr'"
+          :aria-expanded="expandedLoanId === loan.id"
+          @click="toggleRowExpand(loan.id)"
+        >
+          <div class="min-w-0">
+            <p class="truncate text-base font-bold text-ink sm:text-lg">
+              {{ loan.borrower.name || "—" }}
+            </p>
+
+            <p class="mt-1 text-xs text-muted">
+              {{ formatDate(loan.startDate) }}
+            </p>
+          </div>
+
+          <div class="min-w-0">
+            <p class="text-xs font-medium text-muted">
+              {{ t("loanList.table.trustee") }}
+            </p>
+
+            <p class="mt-1 truncate text-sm font-semibold text-ink-soft">
+              {{ trusteeLabel(loan) }}
+            </p>
+
+            <p
+              v-if="loan.trustee?.community && loan.trustee?.name"
+              class="mt-0.5 truncate text-xs text-muted"
+            >
+              {{ loan.trustee.community }}
+            </p>
+          </div>
+
+          <p
+            dir="ltr"
+            class="self-center whitespace-nowrap text-lg font-bold text-ink"
+          >
+            {{ formatCurrency(loan.amount) }}
+          </p>
+
+          <div class="flex min-w-0 items-center gap-2 self-center text-sm">
+            <span
+              class="h-2.5 w-2.5 flex-shrink-0 rounded-full"
+              :class="getStatusDotClass(loan.status)"
+            ></span>
+
+            <span class="font-semibold" :class="getStatusTextClass(loan.status)">
+              {{ getStatusLabel(loan.status) }}
+            </span>
+
+            <span class="text-line">·</span>
+
+            <span class="truncate text-muted">
+              {{ t(getTypeLabelKey(loan.type)) }}
+            </span>
+          </div>
+
+          <div class="flex items-center justify-end self-center sm:col-start-2 sm:row-start-2 lg:col-start-auto lg:row-start-auto">
+            <span
+              class="flex h-9 w-9 items-center justify-center rounded-full bg-surface-muted text-muted transition"
+              :class="expandedLoanId === loan.id ? 'bg-brand/10 text-brand' : ''"
+              aria-hidden="true"
+            >
+              <svg
+                class="h-4 w-4 transition-transform"
+                :class="expandedLoanId === loan.id ? 'rotate-180' : ''"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </span>
+          </div>
+        </button>
+
+        <div
+          v-if="expandedLoanId === loan.id"
+          class="border-t border-line bg-canvas/30 p-3 sm:p-5"
+        >
+          <div
+            v-if="loadingDetails[loan.id]"
+            class="flex justify-center py-8"
+          >
+            <div
+              class="h-8 w-8 animate-spin rounded-full border-4 border-brand border-t-transparent"
+            ></div>
+          </div>
 
           <div
-            v-if="
-              expandedLoanId ===
-              loan.id
-            "
-            class="mt-4"
+            v-else-if="detailsError[loan.id]"
+            class="py-6 text-center"
           >
-            <div
-              v-if="
-                loadingDetails[
-                  loan.id
-                ]
-              "
-              class="flex justify-center py-4"
+            <p class="text-sm text-red-600">
+              {{ t("loanList.messages.error") }}
+            </p>
+
+            <button
+              type="button"
+              class="mt-3 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-deep"
+              @click.stop="loadLoanDetails(loan.id, true)"
             >
-              <div
-                class="h-6 w-6 animate-spin rounded-full border-4 border-brand border-t-transparent"
-              />
-            </div>
-
-            <div
-              v-else-if="
-                detailsError[
-                  loan.id
-                ]
-              "
-              class="text-center py-4"
-            >
-              <p
-                class="text-sm text-red-600"
-              >
-                {{
-                  t(
-                    "loanList.messages.error"
-                  )
-                }}
-              </p>
-
-              <button
-                type="button"
-                class="mt-2 px-3 py-2 bg-brand text-white rounded-lg text-xs font-semibold"
-                @click="
-                  loadLoanDetails(
-                    loan.id,
-                    true
-                  )
-                "
-              >
-                {{
-                  t(
-                    "loanList.actions.retry"
-                  )
-                }}
-              </button>
-            </div>
-
-            <LoanDetailsPanel
-              v-else-if="
-                loanDetails[
-                  loan.id
-                ]
-              "
-              :loan="
-                loanDetails[
-                  loan.id
-                ]
-              "
-            />
+              {{ t("loanList.actions.retry") }}
+            </button>
           </div>
-        </article>
-      </div>
-    </template>
+
+          <LoanDetailsPanel
+            v-else-if="loanDetails[loan.id]"
+            :loan="loanDetails[loan.id]"
+            :show-status="false"
+          />
+        </div>
+      </article>
+    </div>
   </div>
 </template>
+
 
 <script setup lang="ts">
 import {
@@ -574,10 +276,12 @@ import LoanDetailsPanel
 import loanService
   from "../services/loanService";
 
+
 interface Props {
   loans: LoanListItem[];
   loading?: boolean;
   isRTL: boolean;
+  locale?: string;
   t: (
     key: string
   ) => string;
@@ -587,22 +291,22 @@ interface Props {
     string | null;
 }
 
+
 const props =
   withDefaults(
     defineProps<Props>(),
     {
       loading: false,
-
+      locale: "he",
       emptyMessage:
         "loanList.messages.noLoans",
-
       emptyDescription:
         "loanList.messages.noLoansDesc",
-
       openedLoanId:
         null,
     }
   );
+
 
 const emit =
   defineEmits<{
@@ -614,11 +318,13 @@ const emit =
     ): void;
   }>();
 
+
 const expandedLoanId =
   computed(
     () =>
       props.openedLoanId
   );
+
 
 const loanDetails =
   reactive<
@@ -628,6 +334,7 @@ const loanDetails =
     >
   >({});
 
+
 const loadingDetails =
   reactive<
     Record<
@@ -635,6 +342,7 @@ const loadingDetails =
       boolean
     >
   >({});
+
 
 const detailsError =
   reactive<
@@ -644,98 +352,11 @@ const detailsError =
     >
   >({});
 
-const columns =
-  computed(() => [
-    {
-      key:
-        "borrower",
-
-      label:
-        props.t(
-          "loanList.table.borrower"
-        ),
-
-      minWidth:
-        "180px",
-    },
-    {
-      key:
-        "phone",
-
-      label:
-        props.t(
-          "loanList.table.phone"
-        ),
-
-      minWidth:
-        "140px",
-    },
-    {
-      key:
-        "email",
-
-      label:
-        props.t(
-          "loanList.table.email"
-        ),
-
-      minWidth:
-        "200px",
-    },
-    {
-      key:
-        "trustee",
-
-      label:
-        props.t(
-          "loanList.table.trustee"
-        ),
-
-      minWidth:
-        "180px",
-    },
-    {
-      key:
-        "amount",
-
-      label:
-        props.t(
-          "loanList.table.amount"
-        ),
-
-      minWidth:
-        "120px",
-    },
-    {
-      key:
-        "type",
-
-      label:
-        props.t(
-          "loanList.table.type"
-        ),
-
-      minWidth:
-        "140px",
-    },
-    {
-      key:
-        "status",
-
-      label:
-        props.isRTL
-          ? "סטטוס"
-          : "Status",
-
-      minWidth:
-        "120px",
-    },
-  ]);
 
 async function loadLoanDetails(
   loanId: string,
   force = false
-) {
+): Promise<void> {
   if (
     loanDetails[loanId] &&
     !force
@@ -743,36 +364,31 @@ async function loadLoanDetails(
     return;
   }
 
-  loadingDetails[
-    loanId
-  ] = true;
+  loadingDetails[loanId] =
+    true;
 
-  detailsError[
-    loanId
-  ] = false;
+  detailsError[loanId] =
+    false;
 
   try {
-    loanDetails[
-      loanId
-    ] =
+    loanDetails[loanId] =
       await loanService
         .getLoanDetails(
           loanId
         );
   } catch {
-    detailsError[
-      loanId
-    ] = true;
+    detailsError[loanId] =
+      true;
   } finally {
-    loadingDetails[
-      loanId
-    ] = false;
+    loadingDetails[loanId] =
+      false;
   }
 }
 
+
 function toggleRowExpand(
   loanId: string
-) {
+): void {
   const nextLoanId =
     expandedLoanId.value ===
     loanId
@@ -785,10 +401,10 @@ function toggleRowExpand(
   );
 }
 
+
 watch(
   () =>
     props.openedLoanId,
-
   (loanId) => {
     if (loanId) {
       loadLoanDetails(
@@ -796,38 +412,39 @@ watch(
       );
     }
   },
-
   {
     immediate: true,
   }
 );
 
-function formatPhone(
-  phone?: string
-) {
+
+function trusteeLabel(
+  loan: LoanListItem
+): string {
   return (
-    phone?.trim() ||
+    loan.trustee?.name ||
+    loan.trustee?.community ||
     "—"
   );
 }
 
+
 function formatCurrency(
   amount: number
-) {
-  return new Intl.NumberFormat(
-    props.isRTL
+): string {
+  const formatterLocale =
+    props.locale === "he"
       ? "he-IL"
-      : "en-US",
+      : props.locale === "es"
+        ? "es-ES"
+        : "en-US";
 
+  return new Intl.NumberFormat(
+    formatterLocale,
     {
-      style:
-        "currency",
-
-      currency:
-        "ILS",
-
-      maximumFractionDigits:
-        2,
+      style: "currency",
+      currency: "ILS",
+      maximumFractionDigits: 2,
     }
   ).format(
     Number(
@@ -836,9 +453,49 @@ function formatCurrency(
   );
 }
 
+
+function formatDate(
+  value: string
+): string {
+  if (!value) {
+    return "—";
+  }
+
+  const normalized =
+    value.length === 10
+      ? `${value}T00:00:00`
+      : value;
+
+  const date =
+    new Date(
+      normalized
+    );
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+    return value;
+  }
+
+  const formatterLocale =
+    props.locale === "he"
+      ? "he-IL"
+      : props.locale === "es"
+        ? "es-ES"
+        : "en-US";
+
+  return date
+    .toLocaleDateString(
+      formatterLocale
+    );
+}
+
+
 function getTypeLabelKey(
   type: LoanType
-) {
+): string {
   return (
     type ===
     LoanType.CHECKS
@@ -847,75 +504,95 @@ function getTypeLabelKey(
   );
 }
 
+
 function getStatusLabel(
   status: LoanStatus
-) {
+): string {
   if (
-    props.isRTL
+    props.locale === "he"
   ) {
-    if (
-      status ===
-      "OVERDUE"
-    ) {
-      return "באיחור";
+    if (status === "OVERDUE") {
+      return "בעייתית";
     }
 
-    if (
-      status ===
-      "CLOSED"
-    ) {
-      return "סגורה";
+    if (status === "CLOSED") {
+      return "הסתיימה";
     }
 
     return "פעילה";
   }
 
   if (
-    status ===
-    "OVERDUE"
+    props.locale === "es"
   ) {
-    return "Overdue";
+    if (status === "OVERDUE") {
+      return "Problemático";
+    }
+
+    if (status === "CLOSED") {
+      return "Finalizado";
+    }
+
+    return "Activo";
   }
 
-  if (
-    status ===
-    "CLOSED"
-  ) {
-    return "Closed";
+  if (status === "OVERDUE") {
+    return "Needs attention";
+  }
+
+  if (status === "CLOSED") {
+    return "Completed";
   }
 
   return "Active";
 }
 
-function getStatusClass(
+
+function getStatusDotClass(
   status: LoanStatus
-) {
-  if (
-    status ===
-    "OVERDUE"
-  ) {
-    return (
-      "bg-danger/10 " +
-      "text-danger"
-    );
+): string {
+  if (status === "OVERDUE") {
+    return "bg-danger";
   }
 
-  if (
-    status ===
-    "CLOSED"
-  ) {
-    return (
-      "bg-success/10 " +
-      "text-success-deep"
-    );
+  if (status === "CLOSED") {
+    return "bg-success";
   }
 
-  return (
-    "bg-brand/10 " +
-    "text-brand"
-  );
+  return "bg-brand";
+}
+
+
+function getStatusTextClass(
+  status: LoanStatus
+): string {
+  if (status === "OVERDUE") {
+    return "text-danger";
+  }
+
+  if (status === "CLOSED") {
+    return "text-success-deep";
+  }
+
+  return "text-brand";
+}
+
+
+function getStatusPillClass(
+  status: LoanStatus
+): string {
+  if (status === "OVERDUE") {
+    return "bg-danger/10 text-danger";
+  }
+
+  if (status === "CLOSED") {
+    return "bg-success/10 text-success-deep";
+  }
+
+  return "bg-brand/10 text-brand";
 }
 </script>
+
 
 <style scoped>
 @keyframes spin {

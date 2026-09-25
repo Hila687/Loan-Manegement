@@ -1,31 +1,19 @@
 <template>
   <AppLayout
     :title="title"
-    :subtitle="subtitle"
     :show-language-toggle="true"
     max-width="4xl"
   >
-    <div
-      class="mx-auto w-full max-w-3xl space-y-5 sm:space-y-6"
-    >
-      <!-- Loading -->
+    <div class="mx-auto w-full max-w-3xl space-y-5 sm:space-y-6">
       <div
         v-if="loading"
         class="flex flex-col items-center justify-center rounded-2xl border border-line bg-white py-16"
       >
-        <div
-          class="h-9 w-9 animate-spin rounded-full border-4 border-brand border-t-transparent"
-        ></div>
-
-        <p
-          class="mt-4 text-sm text-muted"
-        >
-          {{ loadingLabel }}
-        </p>
+        <div class="h-9 w-9 animate-spin rounded-full border-4 border-brand border-t-transparent"></div>
+        <p class="mt-4 text-sm text-muted">{{ loadingLabel }}</p>
       </div>
 
       <template v-else>
-        <!-- Success -->
         <div
           v-if="successMessage"
           class="rounded-xl border border-success/30 bg-success/10 px-4 py-3 text-sm font-medium text-success-deep"
@@ -33,7 +21,6 @@
           {{ successMessage }}
         </div>
 
-        <!-- Error -->
         <div
           v-if="errorMessage"
           class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700"
@@ -41,57 +28,28 @@
           {{ errorMessage }}
         </div>
 
-        <!-- Reminder settings -->
-        <section
-          class="rounded-2xl border border-line bg-white p-5 shadow-sm sm:p-6"
-        >
-          <div
-            class="flex items-start justify-between gap-4"
-          >
-            <div>
-              <h2
-                class="text-lg font-bold text-ink"
-              >
-                {{ settingsTitle }}
-              </h2>
+        <section class="rounded-2xl border border-line bg-white p-5 shadow-sm sm:p-6">
+          <div class="flex items-center justify-between gap-4">
+            <h2 class="text-lg font-bold text-ink">
+              {{ settingsTitle }}
+            </h2>
 
-              <p
-                class="mt-1 text-sm leading-6 text-muted"
-              >
-                {{ settingsDescription }}
-              </p>
-            </div>
-
-            <label
-              class="flex cursor-pointer items-center gap-2"
-            >
+            <label class="flex cursor-pointer items-center gap-2">
               <input
                 v-model="settings.enabled"
                 type="checkbox"
                 class="h-5 w-5 rounded border-line accent-success"
               />
 
-              <span
-                class="text-sm font-medium text-ink-soft"
-              >
-                {{
-                  settings.enabled
-                    ? enabledLabel
-                    : disabledLabel
-                }}
+              <span class="text-sm font-medium text-ink-soft">
+                {{ settings.enabled ? enabledLabel : disabledLabel }}
               </span>
             </label>
           </div>
 
-          <div
-            class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2"
-          >
-            <label
-              class="flex flex-col gap-1.5"
-            >
-              <span
-                class="text-sm font-medium text-ink-soft"
-              >
+          <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <label class="flex flex-col gap-1.5">
+              <span class="text-sm font-medium text-ink-soft">
                 {{ channelLabel }}
               </span>
 
@@ -100,33 +58,19 @@
                 :disabled="!settings.enabled"
                 class="h-11 rounded-lg border border-line bg-white px-3 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:bg-surface-muted disabled:text-faint"
               >
-                <option value="SMS">
-                  SMS
-                </option>
-
-                <option value="WHATSAPP">
-                  WhatsApp
-                </option>
-
-                <option value="BOTH">
-                  {{ bothLabel }}
-                </option>
+                <option value="SMS">SMS</option>
+                <option value="WHATSAPP">WhatsApp</option>
+                <option value="BOTH">{{ bothLabel }}</option>
               </select>
             </label>
 
-            <label
-              class="flex flex-col gap-1.5"
-            >
-              <span
-                class="text-sm font-medium text-ink-soft"
-              >
+            <label class="flex flex-col gap-1.5">
+              <span class="text-sm font-medium text-ink-soft">
                 {{ daysBeforeLabel }}
               </span>
 
               <input
-                v-model.number="
-                  settings.days_before_due
-                "
+                v-model.number="settings.days_before_due"
                 type="number"
                 min="0"
                 max="30"
@@ -137,82 +81,39 @@
             </label>
           </div>
 
-          <div
-            class="mt-5 rounded-xl border border-brand/15 bg-brand/5 p-4 text-sm leading-6 text-ink-soft"
-          >
-            {{ securityNote }}
-          </div>
-
-          <div
-            class="mt-6 flex justify-end"
-          >
+          <div class="mt-6 flex justify-end">
             <button
               type="button"
               :disabled="saving"
-              class="h-11 rounded-xl bg-brand px-5 text-sm font-semibold text-white shadow-lg shadow-brand/20 transition hover:bg-brand-deep disabled:bg-faint"
+              class="h-11 cursor-pointer rounded-xl bg-brand px-5 text-sm font-semibold text-white shadow-lg shadow-brand/20 transition hover:bg-brand-deep disabled:cursor-not-allowed disabled:bg-faint"
               @click="saveSettings"
             >
-              {{
-                saving
-                  ? savingLabel
-                  : saveLabel
-              }}
+              {{ saving ? savingLabel : saveLabel }}
             </button>
           </div>
         </section>
 
-        <!-- Manual run -->
-        <section
-          class="rounded-2xl border border-line bg-white p-5 shadow-sm sm:p-6"
-        >
-          <h2
-            class="text-lg font-bold text-ink"
-          >
-            {{ runTitle }}
-          </h2>
-
-          <p
-            class="mt-1 text-sm leading-6 text-muted"
-          >
-            {{ runDescription }}
-          </p>
-
+        <section class="space-y-4">
           <button
             type="button"
-            :disabled="
-              running ||
-              !settings.enabled
-            "
-            class="mt-5 h-11 w-full rounded-xl border border-brand/20 bg-brand/5 px-5 text-sm font-semibold text-brand transition hover:bg-brand/10 disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-faint sm:w-auto"
+            :disabled="running || !settings.enabled"
+            class="h-12 w-full cursor-pointer rounded-xl bg-brand px-5 text-sm font-semibold text-white shadow-lg shadow-brand/20 transition hover:bg-brand-deep disabled:cursor-not-allowed disabled:bg-faint sm:w-auto"
             @click="runReminders"
           >
-            {{
-              running
-                ? runningLabel
-                : runButtonLabel
-            }}
+            {{ running ? runningLabel : sendNowButtonLabel }}
           </button>
 
           <div
             v-if="runResult"
-            class="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4"
+            class="grid grid-cols-2 gap-3 sm:grid-cols-4"
           >
             <div
               v-for="metric in runMetrics"
               :key="metric.key"
-              class="rounded-xl border border-line bg-canvas p-3"
+              class="rounded-xl border border-line bg-white p-3 shadow-sm"
             >
-              <p
-                class="text-xs text-muted"
-              >
-                {{ metric.label }}
-              </p>
-
-              <p
-                class="mt-1 text-lg font-bold text-ink"
-              >
-                {{ metric.value }}
-              </p>
+              <p class="text-xs text-muted">{{ metric.label }}</p>
+              <p class="mt-1 text-lg font-bold text-ink">{{ metric.value }}</p>
             </div>
           </div>
         </section>
@@ -229,15 +130,10 @@ import {
   ref,
 } from "vue";
 
-import AppLayout
-  from "../components/AppLayout.vue";
+import AppLayout from "../components/AppLayout.vue";
+import api from "../services/api";
+import { useLocale } from "../composables/useLocale";
 
-import api
-  from "../services/api";
-
-import {
-  useLocale,
-} from "../composables/useLocale";
 
 type ReminderChannel =
   | "SMS"
@@ -254,11 +150,21 @@ const {
   locale,
 } = useLocale();
 
-const isHebrew =
-  computed(
-    () =>
-      locale.value === "he"
-  );
+function text(
+  he: string,
+  en: string,
+  es: string
+): string {
+  if (locale.value === "he") {
+    return he;
+  }
+
+  if (locale.value === "es") {
+    return es;
+  }
+
+  return en;
+}
 
 const settings =
   reactive<ReminderSettings>({
@@ -267,260 +173,139 @@ const settings =
     days_before_due: 1,
   });
 
-const loading =
-  ref(true);
+const loading = ref(true);
+const saving = ref(false);
+const running = ref(false);
+const errorMessage = ref("");
+const successMessage = ref("");
+const runResult = ref<Record<string, any> | null>(null);
 
-const saving =
-  ref(false);
+const title = computed(() =>
+  text(
+    "תזכורות תשלום",
+    "Payment Reminders",
+    "Recordatorios de pago"
+  )
+);
 
-const running =
-  ref(false);
+const loadingLabel = computed(() =>
+  text(
+    "טוען הגדרות...",
+    "Loading settings...",
+    "Cargando configuración..."
+  )
+);
 
-const errorMessage =
-  ref("");
+const settingsTitle = computed(() =>
+  text(
+    "הגדרות תזכורות",
+    "Reminder settings",
+    "Configuración de recordatorios"
+  )
+);
 
-const successMessage =
-  ref("");
+const enabledLabel = computed(() =>
+  text("פעיל", "Enabled", "Activo")
+);
 
-const runResult =
-  ref<
-    Record<
-      string,
-      any
-    > | null
-  >(null);
+const disabledLabel = computed(() =>
+  text("כבוי", "Disabled", "Desactivado")
+);
 
-const title =
-  computed(() =>
-    isHebrew.value
-      ? "תזכורות תשלום"
-      : "Payment Reminders"
-  );
+const channelLabel = computed(() =>
+  text("ערוץ שליחה", "Delivery channel", "Canal de envío")
+);
 
-const subtitle =
-  computed(() =>
-    isHebrew.value
-      ? "הגדרת תזכורות SMS ו-WhatsApp לתשלומים קרובים"
-      : "Configure SMS and WhatsApp reminders for upcoming payments"
-  );
+const daysBeforeLabel = computed(() =>
+  text(
+    "ימים לפני מועד התשלום",
+    "Days before due date",
+    "Días antes del vencimiento"
+  )
+);
 
-const loadingLabel =
-  computed(() =>
-    isHebrew.value
-      ? "טוען הגדרות..."
-      : "Loading settings..."
-  );
+const bothLabel = computed(() =>
+  text(
+    "SMS ו-WhatsApp",
+    "SMS and WhatsApp",
+    "SMS y WhatsApp"
+  )
+);
 
-const settingsTitle =
-  computed(() =>
-    isHebrew.value
-      ? "הגדרות תזכורות"
-      : "Reminder settings"
-  );
+const saveLabel = computed(() =>
+  text("שמירת הגדרות", "Save settings", "Guardar configuración")
+);
 
-const settingsDescription =
-  computed(() =>
-    isHebrew.value
-      ? "המערכת יכולה לשלוח תזכורת אוטומטית לפני מועד התשלום."
-      : "The system can automatically send a reminder before a payment is due."
-  );
+const savingLabel = computed(() =>
+  text("שומר...", "Saving...", "Guardando...")
+);
 
-const enabledLabel =
-  computed(() =>
-    isHebrew.value
-      ? "פעיל"
-      : "Enabled"
-  );
 
-const disabledLabel =
-  computed(() =>
-    isHebrew.value
-      ? "כבוי"
-      : "Disabled"
-  );
+const sendNowButtonLabel = computed(() =>
+  text(
+    "שליחת תזכורת עכשיו",
+    "Send reminders now",
+    "Enviar recordatorios ahora"
+  )
+);
 
-const channelLabel =
-  computed(() =>
-    isHebrew.value
-      ? "ערוץ שליחה"
-      : "Delivery channel"
-  );
+const runningLabel = computed(() =>
+  text("שולח...", "Sending...", "Enviando...")
+);
 
-const daysBeforeLabel =
-  computed(() =>
-    isHebrew.value
-      ? "ימים לפני מועד התשלום"
-      : "Days before due date"
-  );
+const runMetrics = computed(() => {
+  if (!runResult.value) {
+    return [];
+  }
 
-const bothLabel =
-  computed(() =>
-    isHebrew.value
-      ? "SMS ו-WhatsApp"
-      : "SMS and WhatsApp"
-  );
+  const source = runResult.value;
 
-const securityNote =
-  computed(() =>
-    isHebrew.value
-      ? "פרטי הספק והסודות נשמרים רק במשתני הסביבה של השרת ואינם נשלחים לדפדפן."
-      : "Provider credentials and secrets are stored only in server environment variables and are never sent to the browser."
-  );
+  const definitions = [
+    {
+      key: "checked",
+      aliases: ["checked", "processed", "payments_checked"],
+      label: text("נבדקו", "Checked", "Revisados"),
+    },
+    {
+      key: "sent",
+      aliases: ["sent", "sent_count"],
+      label: text("נשלחו", "Sent", "Enviados"),
+    },
+    {
+      key: "skipped",
+      aliases: ["skipped", "skipped_count"],
+      label: text("דולגו", "Skipped", "Omitidos"),
+    },
+    {
+      key: "failed",
+      aliases: ["failed", "failed_count", "errors"],
+      label: text("נכשלו", "Failed", "Fallidos"),
+    },
+  ];
 
-const saveLabel =
-  computed(() =>
-    isHebrew.value
-      ? "שמירת הגדרות"
-      : "Save settings"
-  );
-
-const savingLabel =
-  computed(() =>
-    isHebrew.value
-      ? "שומר..."
-      : "Saving..."
-  );
-
-const runTitle =
-  computed(() =>
-    isHebrew.value
-      ? "הרצה ידנית"
-      : "Manual run"
-  );
-
-const runDescription =
-  computed(() =>
-    isHebrew.value
-      ? "ניתן להריץ כעת בדיקה ושליחה עבור תשלומים שעומדים בתנאי התזכורת. מנגנון מניעת כפילויות נשמר בצד השרת."
-      : "Run the reminder process now for payments that match the reminder rule. Duplicate prevention is enforced on the server."
-  );
-
-const runButtonLabel =
-  computed(() =>
-    isHebrew.value
-      ? "הרצת תזכורות עכשיו"
-      : "Run reminders now"
-  );
-
-const runningLabel =
-  computed(() =>
-    isHebrew.value
-      ? "מריץ..."
-      : "Running..."
-  );
-
-const runMetrics =
-  computed(() => {
-    if (!runResult.value) {
-      return [];
-    }
-
-    const source =
-      runResult.value;
-
-    const definitions = [
-      {
-        key: "checked",
-
-        aliases: [
-          "checked",
-          "processed",
-          "payments_checked",
-        ],
-
-        label:
-          isHebrew.value
-            ? "נבדקו"
-            : "Checked",
-      },
-
-      {
-        key: "sent",
-
-        aliases: [
-          "sent",
-          "sent_count",
-        ],
-
-        label:
-          isHebrew.value
-            ? "נשלחו"
-            : "Sent",
-      },
-
-      {
-        key: "skipped",
-
-        aliases: [
-          "skipped",
-          "skipped_count",
-        ],
-
-        label:
-          isHebrew.value
-            ? "דולגו"
-            : "Skipped",
-      },
-
-      {
-        key: "failed",
-
-        aliases: [
-          "failed",
-          "failed_count",
-          "errors",
-        ],
-
-        label:
-          isHebrew.value
-            ? "נכשלו"
-            : "Failed",
-      },
-    ];
-
-    return definitions.map(
-      (definition) => {
-        const alias =
-          definition.aliases.find(
-            (key) =>
-              source[key] !==
-                undefined &&
-              source[key] !==
-                null
-          );
-
-        return {
-          key:
-            definition.key,
-
-          label:
-            definition.label,
-
-          value:
-            Number(
-              alias
-                ? source[alias]
-                : 0
-            ),
-        };
-      }
+  return definitions.map((definition) => {
+    const alias = definition.aliases.find(
+      (key) =>
+        source[key] !== undefined &&
+        source[key] !== null
     );
+
+    return {
+      key: definition.key,
+      label: definition.label,
+      value: Number(alias ? source[alias] : 0),
+    };
   });
+});
 
 function normalizeSettings(
   data: any
 ): void {
   settings.enabled =
-    Boolean(
-      data?.enabled ??
-      false
-    );
+    Boolean(data?.enabled ?? false);
 
   const channel =
-    String(
-      data?.channel ||
-      "SMS"
-    ).toUpperCase();
+    String(data?.channel || "SMS").toUpperCase();
 
   settings.channel =
     channel === "WHATSAPP" ||
@@ -536,24 +321,15 @@ function normalizeSettings(
     );
 
   settings.days_before_due =
-    Number.isInteger(
-      days
-    ) &&
+    Number.isInteger(days) &&
     days >= 0
-      ? Math.min(
-          days,
-          30
-        )
+      ? Math.min(days, 30)
       : 1;
 }
 
-async function loadSettings():
-  Promise<void> {
-  loading.value =
-    true;
-
-  errorMessage.value =
-    "";
+async function loadSettings(): Promise<void> {
+  loading.value = true;
+  errorMessage.value = "";
 
   try {
     const response =
@@ -562,119 +338,88 @@ async function loadSettings():
       );
 
     normalizeSettings(
-      response.data ||
-      {}
+      response.data || {}
     );
   } catch (
     requestError: any
   ) {
     errorMessage.value =
-      requestError
-        ?.response
-        ?.data
-        ?.detail ||
-      (
-        isHebrew.value
-          ? "טעינת הגדרות התזכורות נכשלה."
-          : "Failed to load reminder settings."
+      requestError?.response?.data?.detail ||
+      text(
+        "טעינת הגדרות התזכורות נכשלה.",
+        "Failed to load reminder settings.",
+        "No se pudo cargar la configuración de recordatorios."
       );
   } finally {
-    loading.value =
-      false;
+    loading.value = false;
   }
 }
 
-async function saveSettings():
-  Promise<void> {
+async function saveSettings(): Promise<void> {
   if (saving.value) {
     return;
   }
 
   const days =
-    Number(
-      settings.days_before_due
-    );
+    Number(settings.days_before_due);
 
   if (
-    !Number.isInteger(
-      days
-    ) ||
+    !Number.isInteger(days) ||
     days < 0 ||
     days > 30
   ) {
     errorMessage.value =
-      isHebrew.value
-        ? "מספר הימים חייב להיות בין 0 ל-30."
-        : "Days before due date must be between 0 and 30.";
-
+      text(
+        "מספר הימים חייב להיות בין 0 ל-30.",
+        "Days before due date must be between 0 and 30.",
+        "Los días deben estar entre 0 y 30."
+      );
     return;
   }
 
-  saving.value =
-    true;
-
-  errorMessage.value =
-    "";
-
-  successMessage.value =
-    "";
+  saving.value = true;
+  errorMessage.value = "";
+  successMessage.value = "";
 
   try {
     const response =
       await api.patch(
         "/reminders/settings/",
         {
-          enabled:
-            settings.enabled,
-
-          channel:
-            settings.channel,
-
-          days_before_due:
-            days,
+          enabled: settings.enabled,
+          channel: settings.channel,
+          days_before_due: days,
         }
       );
 
     normalizeSettings(
-      response.data ||
-      settings
+      response.data || settings
     );
 
     successMessage.value =
-      isHebrew.value
-        ? "הגדרות התזכורות נשמרו."
-        : "Reminder settings saved.";
+      text(
+        "הגדרות התזכורות נשמרו.",
+        "Reminder settings saved.",
+        "Configuración guardada."
+      );
   } catch (
     requestError: any
   ) {
     errorMessage.value =
-      requestError
-        ?.response
-        ?.data
-        ?.detail ||
-      requestError
-        ?.response
-        ?.data
-        ?.days_before_due
-        ?.[0] ||
-      requestError
-        ?.response
-        ?.data
-        ?.channel
-        ?.[0] ||
-      (
-        isHebrew.value
-          ? "שמירת ההגדרות נכשלה."
-          : "Failed to save reminder settings."
+      requestError?.response?.data?.detail ||
+      requestError?.response?.data?.days_before_due?.[0] ||
+      requestError?.response?.data?.channel?.[0] ||
+      text(
+        "שמירת ההגדרות נכשלה.",
+        "Failed to save reminder settings.",
+        "No se pudo guardar la configuración."
       );
   } finally {
-    saving.value =
-      false;
+    saving.value = false;
   }
 }
 
-async function runReminders():
-  Promise<void> {
+async function runReminders(): Promise<void> {
   if (
     running.value ||
     !settings.enabled
@@ -682,17 +427,10 @@ async function runReminders():
     return;
   }
 
-  running.value =
-    true;
-
-  errorMessage.value =
-    "";
-
-  successMessage.value =
-    "";
-
-  runResult.value =
-    null;
+  running.value = true;
+  errorMessage.value = "";
+  successMessage.value = "";
+  runResult.value = null;
 
   try {
     const response =
@@ -703,31 +441,28 @@ async function runReminders():
 
     runResult.value =
       response.data &&
-      typeof response.data ===
-        "object"
+      typeof response.data === "object"
         ? response.data
         : {};
 
     successMessage.value =
-      isHebrew.value
-        ? "הרצת התזכורות הסתיימה."
-        : "Reminder run completed.";
+      text(
+        "שליחת התזכורות הסתיימה.",
+        "Reminder sending completed.",
+        "El envío de recordatorios ha finalizado."
+      );
   } catch (
     requestError: any
   ) {
     errorMessage.value =
-      requestError
-        ?.response
-        ?.data
-        ?.detail ||
-      (
-        isHebrew.value
-          ? "הרצת התזכורות נכשלה."
-          : "Failed to run reminders."
+      requestError?.response?.data?.detail ||
+      text(
+        "שליחת התזכורות נכשלה.",
+        "Failed to send reminders.",
+        "No se pudieron enviar los recordatorios."
       );
   } finally {
-    running.value =
-      false;
+    running.value = false;
   }
 }
 
@@ -739,17 +474,11 @@ onMounted(() => {
 <style scoped>
 @keyframes spin {
   to {
-    transform: rotate(
-      360deg
-    );
+    transform: rotate(360deg);
   }
 }
 
 .animate-spin {
-  animation:
-    spin
-    1s
-    linear
-    infinite;
+  animation: spin 1s linear infinite;
 }
 </style>

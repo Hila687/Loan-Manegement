@@ -141,6 +141,46 @@ const routes = [
 
   {
     path:
+      "/archive/:id",
+
+    name:
+      "LoanArchiveWithDetails",
+
+    component:
+      LoanListPage,
+
+    meta: {
+      requiresAuth:
+        true,
+
+      roles: [
+        "admin",
+      ],
+    },
+  },
+
+  {
+    path:
+      "/archive",
+
+    name:
+      "LoanArchive",
+
+    component:
+      LoanListPage,
+
+    meta: {
+      requiresAuth:
+        true,
+
+      roles: [
+        "admin",
+      ],
+    },
+  },
+
+  {
+    path:
       "/loans/:id/edit",
 
     name:

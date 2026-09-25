@@ -23,29 +23,10 @@
 
         <!-- Loan information -->
         <section>
-          <div
-            class="mb-4 flex flex-wrap items-center justify-between gap-3"
-          >
-            <h2
-              class="text-lg font-semibold text-ink"
-            >
-              {{
-                t(
-                  "loanDetails.loanInfo"
-                )
-              }}
+          <div class="mb-4">
+            <h2 class="text-lg font-semibold text-ink">
+              {{ t("loanDetails.loanInfo") }}
             </h2>
-
-            <span
-              class="inline-flex rounded-full px-3 py-1 text-xs font-semibold"
-              :class="
-                loanStatusClass
-              "
-            >
-              {{
-                loanStatusLabel
-              }}
-            </span>
           </div>
 
           <div
@@ -367,13 +348,6 @@
                   }}
                 </p>
 
-                <p
-                  class="mt-1 text-xs text-muted"
-                >
-                  {{
-                    signedFormSecurityLabel
-                  }}
-                </p>
               </div>
             </div>
 
@@ -398,6 +372,63 @@
             {{
               signedFormMissingLabel
             }}
+          </p>
+        </section>
+
+        <section
+          v-if="loan.type === 'standing_order'"
+          class="mt-4"
+        >
+          <h2 class="text-lg font-semibold text-ink">
+            {{ standingOrderFormTitle }}
+          </h2>
+
+          <div
+            v-if="loan.standingOrderFormFileUrl"
+            class="mt-3 flex flex-col gap-3 rounded-xl border border-violet/20 bg-violet/5 p-4 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <div class="flex items-start gap-3">
+              <div
+                class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-white text-violet shadow-sm"
+              >
+                <svg
+                  class="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M7 3h7l5 5v13H7a2 2 0 01-2-2V5a2 2 0 012-2zm7 0v6h6"
+                  />
+                </svg>
+              </div>
+
+              <div>
+                <p class="text-sm font-semibold text-ink">
+                  {{ standingOrderFormAvailableLabel }}
+                </p>
+
+              </div>
+            </div>
+
+            <a
+              :href="loan.standingOrderFormFileUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex h-10 items-center justify-center rounded-lg bg-violet px-4 text-sm font-semibold text-white transition hover:opacity-90"
+            >
+              {{ signedFormOpenLabel }}
+            </a>
+          </div>
+
+          <p
+            v-else
+            class="mt-3 rounded-xl border border-line bg-canvas p-4 text-sm text-muted"
+          >
+            {{ standingOrderFormMissingLabel }}
           </p>
         </section>
 
@@ -460,13 +491,16 @@
                   }}
                 </span>
 
-                <span dir="ltr">
-                  {{
-                    loan.trustee
-                      .phone ||
-                    "—"
-                  }}
-                </span>
+                <a
+                  v-if="loan.trustee.phone"
+                  :href="phoneHref(loan.trustee.phone)"
+                  dir="ltr"
+                  class="w-fit font-semibold text-brand hover:underline"
+                >
+                  {{ loan.trustee.phone }}
+                </a>
+
+                <span v-else>—</span>
               </div>
 
               <div
@@ -578,9 +612,20 @@ import PaymentScheduleTab
   from "./PaymentScheduleTab.vue";
 
 const props =
-  defineProps<{
-    loan: Loan;
-  }>();
+  withDefaults(
+    defineProps<{
+      loan: Loan;
+      showStatus?: boolean;
+    }>(),
+    {
+      showStatus: true,
+    }
+  );
+
+const showStatus =
+  computed(() =>
+    props.showStatus
+  );
 
 const {
   t,
@@ -589,6 +634,23 @@ const {
 
 const auth =
   useAuth();
+
+
+function text(
+  he: string,
+  en: string,
+  es: string
+): string {
+  if (locale.value === "he") {
+    return he;
+  }
+
+  if (locale.value === "es") {
+    return es;
+  }
+
+  return en;
+}
 
 const activeTab =
   ref<
@@ -607,18 +669,9 @@ const isHebrew =
 
 const loanTypeLabel =
   computed(() =>
-    props.loan.type ===
-    "checks"
-      ? (
-          isHebrew.value
-            ? "צ'קים"
-            : "Checks"
-        )
-      : (
-          isHebrew.value
-            ? "הוראת קבע"
-            : "Standing order"
-        )
+    props.loan.type === "checks"
+      ? text("צ'קים", "Checks", "Cheques")
+      : text("הוראת קבע", "Standing order", "Domiciliación")
   );
 
 const loanStatusLabel =
@@ -628,8 +681,8 @@ const loanStatusLabel =
       "OVERDUE"
     ) {
       return isHebrew.value
-        ? "באיחור"
-        : "Overdue";
+        ? "בעייתית"
+        : "Needs attention";
     }
 
     if (
@@ -637,8 +690,8 @@ const loanStatusLabel =
       "CLOSED"
     ) {
       return isHebrew.value
-        ? "סגורה"
-        : "Closed";
+        ? "הסתיימה"
+        : "Completed";
     }
 
     return isHebrew.value
@@ -725,46 +778,72 @@ const standingDetails =
 
 const signedFormTitle =
   computed(() =>
-    isHebrew.value
-      ? "טופס הלוואה חתום"
-      : "Signed loan form"
+    text(
+      "טופס הלוואה חתום",
+      "Signed loan form",
+      "Formulario de préstamo firmado"
+    )
   );
 
 const signedFormAvailableLabel =
   computed(() =>
-    isHebrew.value
-      ? "המסמך החתום שמור במערכת"
-      : "Signed document is stored"
-  );
-
-const signedFormSecurityLabel =
-  computed(() =>
-    isHebrew.value
-      ? "המסמך נפתח דרך נתיב מוגן ודורש משתמש מורשה."
-      : "The document is served through a protected authorized endpoint."
+    text(
+      "המסמך החתום שמור במערכת",
+      "Signed document is stored",
+      "El documento firmado está guardado"
+    )
   );
 
 const signedFormOpenLabel =
   computed(() =>
-    isHebrew.value
-      ? "פתיחת המסמך"
-      : "Open document"
+    text("פתיחת המסמך", "Open document", "Abrir documento")
   );
 
 const signedFormMissingLabel =
   computed(() =>
-    isHebrew.value
-      ? "לא נמצא מסמך חתום עבור הלוואה זו."
-      : "No signed document is stored for this loan."
+    text(
+      "לא נמצא מסמך חתום עבור הלוואה זו.",
+      "No signed document is stored for this loan.",
+      "No hay un documento firmado guardado para este préstamo."
+    )
+  );
+
+const standingOrderFormTitle =
+  computed(() =>
+    text(
+      "אישור הוראת קבע",
+      "Standing order authorization",
+      "Autorización de domiciliación"
+    )
+  );
+
+const standingOrderFormAvailableLabel =
+  computed(() =>
+    text(
+      "אישור הוראת הקבע שמור במערכת",
+      "Standing order authorization is stored",
+      "La autorización está guardada"
+    )
+  );
+
+const standingOrderFormMissingLabel =
+  computed(() =>
+    text(
+      "לא נמצא אישור הוראת קבע עבור הלוואה זו.",
+      "No standing order authorization is stored for this loan.",
+      "No hay una autorización de domiciliación guardada para este préstamo."
+    )
   );
 
 function formatCurrency(
   amount: number
 ) {
   return new Intl.NumberFormat(
-    isHebrew.value
+    locale.value === "he"
       ? "he-IL"
-      : "en-US",
+      : locale.value === "es"
+        ? "es-ES"
+        : "en-US",
     {
       style: "currency",
       currency: "ILS",
@@ -808,6 +887,20 @@ function formatDate(
       : "en-US"
   );
 }
+
+function phoneHref(
+  phone: string
+): string {
+  const cleaned =
+    String(phone || "")
+      .replace(
+        /[^\d+]/g,
+        ""
+      );
+
+  return `tel:${cleaned}`;
+}
+
 
 function handleTabChange(
   tab:

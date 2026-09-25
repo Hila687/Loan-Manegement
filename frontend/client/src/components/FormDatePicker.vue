@@ -1,195 +1,157 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, onBeforeUnmount } from "vue";
-import flatpickr from "flatpickr";
-import "flatpickr/dist/flatpickr.min.css";
-import { Hebrew } from "flatpickr/dist/l10n/he";
+import {
+  computed,
+  ref,
+} from "vue";
+
 
 interface Props {
   modelValue: string;
   label: string;
-  placeholder: string;
+  placeholder?: string;
   isRTL?: boolean;
   hasError?: boolean;
   errorMessage?: string;
   required?: boolean;
-  locale?: "he" | "en";
+  locale?: "he" | "en" | "es";
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  isRTL: false,
-  required: false,
-  locale: "he",
-});
+
+const props = withDefaults(
+  defineProps<Props>(),
+  {
+    placeholder: "",
+    isRTL: false,
+    hasError: false,
+    errorMessage: "",
+    required: false,
+    locale: "he",
+  }
+);
+
 
 const emit = defineEmits<{
   "update:modelValue": [value: string];
   keydown: [event: KeyboardEvent];
 }>();
 
-// Reference to the visible input element
-const dateInputRef = ref<HTMLInputElement | null>(null);
 
-// Wrapper for the field – the calendar will be attached here
-const wrapperRef = ref<HTMLElement | null>(null);
+const dateInputRef =
+  ref<HTMLInputElement | null>(
+    null
+  );
 
-// Flatpickr instance
-let datePickerInstance: any = null;
 
-// Label helpers
-const labelDir = computed(() => (props.isRTL ? "rtl" : "ltr"));
-const labelAlign = computed(() => (props.isRTL ? "text-right" : "text-left"));
-const iconDir = computed(() =>
-  props.isRTL ? "left-0 pl-3" : "right-0 pr-3"
-);
+const labelDir =
+  computed(() =>
+    props.isRTL
+      ? "rtl"
+      : "ltr"
+  );
 
-// Initialize flatpickr on mount
-onMounted(() => {
-  if (!dateInputRef.value) return;
 
-  // Localize Hebrew strings
-  flatpickr.localize(Hebrew);
+const labelAlign =
+  computed(() =>
+    props.isRTL
+      ? "text-right"
+      : "text-left"
+  );
 
-  datePickerInstance = flatpickr(dateInputRef.value, {
-    mode: "single",
-    dateFormat: "Y-m-d",
-    //minDate: "today",
-    locale: props.locale === "he" ? "he" : "en",
 
-    // IMPORTANT:
-    // Attach the calendar inside the field wrapper instead of <body>,
-    // so it scrolls together with the form and doesn't create huge page height.
-    appendTo: wrapperRef.value ?? undefined,
-    static: true,
-    position: "auto",
+function onInput(
+  event: Event
+): void {
+  const target =
+    event.target;
 
-    onChange: (selectedDates: Date[]) => {
-      if (selectedDates.length > 0) {
-        const date = selectedDates[0];
-
-        // Use local date parts to avoid timezone (UTC) shift that may cause off-by-one day bugs.
-        const yyyy = date.getFullYear();
-        const mm = String(date.getMonth() + 1).padStart(2, "0");
-        const dd = String(date.getDate()).padStart(2, "0");
-
-        emit("update:modelValue", `${yyyy}-${mm}-${dd}`);
-      }
-    },
-
-  });
-
-  // Sync initial value if exists
-  if (props.modelValue && datePickerInstance) {
-    datePickerInstance.setDate(props.modelValue, false);
+  if (
+    !(
+      target instanceof
+      HTMLInputElement
+    )
+  ) {
+    return;
   }
-});
 
-// Clean up instance
-onBeforeUnmount(() => {
-  if (datePickerInstance) {
-    datePickerInstance.destroy();
-    datePickerInstance = null;
-  }
-});
-
-// Watch for external modelValue changes (e.g. resetForm)
-watch(
-  () => props.modelValue,
-  (newValue) => {
-    if (!datePickerInstance) return;
-    if (!newValue) {
-      datePickerInstance.clear();
-    } else {
-      datePickerInstance.setDate(newValue, false);
-    }
-  }
-);
-
-// Watch for locale change from parent
-watch(
-  () => props.locale,
-  (newLocale) => {
-    if (!datePickerInstance) return;
-    datePickerInstance.set("locale", newLocale === "he" ? "he" : "en");
-  }
-);
-
-// Expose focus so parent can focus this field via ref
-function focus() {
-  if (dateInputRef.value) {
-    dateInputRef.value.focus();
-  }
+  emit(
+    "update:modelValue",
+    target.value
+  );
 }
 
-defineExpose({ focus });
+
+function focus(): void {
+  dateInputRef.value
+    ?.focus();
+}
+
+
+defineExpose({
+  focus,
+});
 </script>
 
+
 <template>
-  <label class="flex flex-col">
-    <!-- Label -->
+  <label
+    class="flex flex-col"
+  >
     <p
       :dir="labelDir"
       :class="labelAlign"
-      class="pb-1.5 xl:pb-2 text-sm font-medium leading-normal text-muted"
+      class="pb-1.5 text-sm font-medium leading-normal text-muted xl:pb-2"
     >
       <span
         v-if="required"
         :class="hasError ? 'text-danger' : 'text-muted'"
-        >*</span
       >
+        *
+      </span>
+
       {{ label }}
     </p>
 
-    <!-- Wrapper: calendar is appended here, not to <body> -->
-    <div class="relative" ref="wrapperRef">
-      <!-- Date input -->
+    <div
+      class="relative"
+    >
       <input
         ref="dateInputRef"
-        type="text"
-        :dir="isRTL ? 'rtl' : 'ltr'"
+        :value="modelValue"
+        type="date"
+        :lang="locale"
+        dir="ltr"
         :class="[
-          'form-input flex h-11 xl:h-12 w-full min-w-0 resize-none overflow-hidden rounded-lg border',
-          'bg-white px-3.5 text-base font-normal leading-normal text-black placeholder:text-muted',
-          'focus:outline-0 focus:ring-2 cursor-pointer',
-          isRTL ? 'pr-10 pl-4' : 'pl-4 pr-10',
+          'h-12 w-full rounded-xl border bg-white px-4 text-base font-medium text-ink outline-none transition',
+          'focus:ring-2',
           hasError
             ? 'border-danger focus:border-danger focus:ring-danger/20'
             : 'border-line focus:border-brand focus:ring-brand/20',
         ]"
-        :placeholder="placeholder"
-        readonly
+        @input="onInput"
         @keydown="emit('keydown', $event)"
       />
-
-      <!-- Calendar Icon -->
-      <span
-        :class="[
-          'pointer-events-none absolute inset-y-0 flex items-center text-muted',
-          iconDir,
-        ]"
-      >
-        <svg
-          class="w-4 h-4"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-          <line x1="16" y1="2" x2="16" y2="6" />
-          <line x1="8" y1="2" x2="8" y2="6" />
-          <line x1="3" y1="10" x2="21" y2="10" />
-        </svg>
-      </span>
     </div>
 
-    <!-- Error Message -->
     <p
       v-if="hasError && errorMessage"
       class="mt-1 text-xs text-danger"
+      :dir="labelDir"
+      :class="labelAlign"
     >
       {{ errorMessage }}
     </p>
   </label>
 </template>
+
+
+<style scoped>
+input[type="date"] {
+  min-width: 0;
+  color-scheme: light;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.7;
+}
+</style>

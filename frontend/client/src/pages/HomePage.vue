@@ -1,7 +1,6 @@
 <template>
   <AppLayout
     :title="t('home.title')"
-    :subtitle="t('home.subtitle')"
     :show-language-toggle="true"
     :show-back-button="false"
     max-width="full"
@@ -42,7 +41,7 @@
             </p>
 
             <h2
-              class="text-2xl sm:text-3xl lg:text-4xl font-bold break-words"
+              class="whitespace-nowrap text-[clamp(1.35rem,5.8vw,2.5rem)] font-bold leading-tight"
             >
               {{ auth.displayName.value }}
             </h2>
@@ -65,7 +64,7 @@
             <p
               class="text-white/80 text-xs sm:text-sm lg:text-base font-medium mb-1 sm:mb-2"
             >
-              {{ t("home.stats.activeLoans") }}
+              {{ openLoansLabel }}
             </p>
 
             <div
@@ -87,7 +86,7 @@
             <p
               class="text-white/80 text-xs sm:text-sm lg:text-base font-medium mb-1 sm:mb-2"
             >
-              {{ t("home.stats.totalAmount") }}
+              {{ openAmountLabel }}
             </p>
 
             <div
@@ -97,7 +96,7 @@
 
             <p
               v-else
-              class="text-2xl sm:text-3xl lg:text-4xl font-bold break-words"
+              class="whitespace-nowrap text-[clamp(1.35rem,5.8vw,2.5rem)] font-bold leading-tight"
             >
               {{ formatCurrency(stats.totalAmount) }}
             </p>
@@ -482,6 +481,39 @@ const stats = reactive({
 });
 
 
+function text(
+  he: string,
+  en: string,
+  es: string
+): string {
+  if (locale.value === "he") {
+    return he;
+  }
+
+  if (locale.value === "es") {
+    return es;
+  }
+
+  return en;
+}
+
+const openLoansLabel = computed(() =>
+  text(
+    "הלוואות פתוחות",
+    "Open loans",
+    "Préstamos abiertos"
+  )
+);
+
+const openAmountLabel = computed(() =>
+  text(
+    "סכום הלוואות פתוחות",
+    "Open loan amount",
+    "Importe de préstamos abiertos"
+  )
+);
+
+
 const canViewLoans = computed(
   () =>
     auth.isAdmin.value ||
@@ -561,18 +593,25 @@ const loansCardDescription =
 function formatCurrency(
   value: number
 ): string {
-  return new Intl.NumberFormat(
+  const formatterLocale =
     locale.value === "he"
       ? "he-IL"
-      : "en-US",
-    {
-      style: "currency",
-      currency: "ILS",
-      maximumFractionDigits: 2,
-    }
-  ).format(
-    Number(value || 0)
-  );
+      : locale.value === "es"
+        ? "es-ES"
+        : "en-US";
+
+  const formatted =
+    new Intl.NumberFormat(
+      formatterLocale,
+      {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+      }
+    ).format(
+      Number(value || 0)
+    );
+
+  return `₪\u00A0${formatted}`;
 }
 
 
@@ -581,24 +620,66 @@ async function loadSummary() {
   loadError.value = false;
 
   try {
-    const response =
-      await api.get(
-        "/dashboard/loan-summary/"
-      );
+    if (canViewLoans.value) {
+      const response =
+        await api.get(
+          "/loans/",
+          {
+            params: {
+              type: "all",
+            },
+          }
+        );
 
-    stats.activeLoans =
-      Number(
-        response.data
-          ?.active_loans_count ||
-          0
-      );
+      const rows =
+        Array.isArray(
+          response.data
+        )
+          ? response.data
+          : [];
 
-    stats.totalAmount =
-      Number(
-        response.data
-          ?.total_active_loans_amount ||
+      const openRows =
+        rows.filter(
+          (loan: any) =>
+            String(
+              loan?.status ||
+              "ACTIVE"
+            ).toUpperCase() !==
+            "CLOSED"
+        );
+
+      stats.activeLoans =
+        openRows.length;
+
+      stats.totalAmount =
+        openRows.reduce(
+          (total: number, loan: any) =>
+            total +
+            Number(
+              loan?.amount || 0
+            ),
           0
-      );
+        );
+    } else {
+      const response =
+        await api.get(
+          "/dashboard/loan-summary/"
+        );
+
+      stats.activeLoans =
+        Number(
+          response.data
+            ?.active_loans_count ||
+            0
+        );
+
+      stats.totalAmount =
+        Number(
+          response.data
+            ?.total_active_loans_amount ||
+            0
+        );
+    }
   } catch {
     stats.activeLoans = 0;
     stats.totalAmount = 0;

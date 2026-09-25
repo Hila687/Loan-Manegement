@@ -110,6 +110,21 @@
           </svg>
 
           <svg
+            v-else-if="item.icon === 'archive'"
+            class="w-5 h-5 xl:w-6 xl:h-6 flex-shrink-0 transition-transform group-hover:scale-110"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 7h16M6 7v12h12V7M9 11h6M5 4h14a1 1 0 011 1v2H4V5a1 1 0 011-1z"
+            />
+          </svg>
+
+          <svg
             v-else-if="item.icon === 'dashboard'"
             class="w-5 h-5 xl:w-6 xl:h-6 flex-shrink-0 transition-transform group-hover:scale-110"
             fill="none"
@@ -250,24 +265,17 @@
           </p>
         </div>
 
-        <div class="grid grid-cols-2 gap-2">
-          <button
-            v-if="showLanguageToggle"
-            type="button"
-            class="h-10 rounded-xl border border-line bg-white text-sm font-medium text-ink-soft hover:border-brand hover:text-brand transition-all active:scale-95"
-            @click="toggleLanguage"
-          >
-            {{ locale === "he" ? "EN" : "HE" }}
-          </button>
+        <button
+          type="button"
+          class="h-10 w-full rounded-xl border border-red-100 bg-red-50 text-sm font-medium text-red-600 transition-all hover:bg-red-100 active:scale-[0.99]"
+          @click="performLogout"
+        >
+          {{ t("nav.logout") }}
+        </button>
 
-          <button
-            type="button"
-            class="h-10 rounded-xl border border-red-100 bg-red-50 text-sm font-medium text-red-600 hover:bg-red-100 transition-all active:scale-95"
-            @click="performLogout"
-          >
-            {{ t("nav.logout") }}
-          </button>
-        </div>
+        <p class="mt-3 text-center text-[11px] font-medium text-muted">
+          Yael
+        </p>
       </div>
     </aside>
 
@@ -312,12 +320,6 @@
               {{ title }}
             </h1>
 
-            <p
-              v-if="subtitle"
-              class="text-sm xl:text-base text-muted mt-0.5 line-clamp-1"
-            >
-              {{ subtitle }}
-            </p>
           </div>
         </div>
 
@@ -335,30 +337,9 @@
             </p>
           </div>
 
-          <button
+          <LanguageSelector
             v-if="showLanguageToggle"
-            type="button"
-            class="flex items-center gap-2 px-4 py-2 xl:px-5 xl:py-2.5 rounded-xl border-2 border-line bg-white text-sm xl:text-base font-medium transition-all hover:bg-surface-muted hover:border-brand hover:text-brand active:scale-95"
-            @click="toggleLanguage"
-          >
-            <svg
-              class="w-4 h-4 xl:w-5 xl:h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10"
-              />
-            </svg>
-
-            <span>
-              {{ locale === "he" ? "EN" : "HE" }}
-            </span>
-          </button>
+          />
         </div>
       </header>
 
@@ -408,14 +389,9 @@
         </div>
 
         <div class="flex items-center gap-2 flex-shrink-0">
-          <button
+          <LanguageSelector
             v-if="showLanguageToggle"
-            type="button"
-            class="px-3 py-1.5 rounded-lg border border-line bg-white text-xs font-medium text-ink-soft hover:border-brand hover:text-brand transition-all active:scale-95"
-            @click="toggleLanguage"
-          >
-            {{ locale === "he" ? "EN" : "HE" }}
-          </button>
+          />
 
           <button
             type="button"
@@ -598,6 +574,10 @@
           >
             {{ t("nav.logout") }}
           </button>
+
+          <p class="text-center text-[11px] font-medium text-muted">
+            Yael
+          </p>
         </div>
       </aside>
     </transition>
@@ -620,6 +600,9 @@ import {
   useLocale,
 } from "../composables/useLocale";
 
+import LanguageSelector
+  from "./LanguageSelector.vue";
+
 import {
   type UserRole,
   useAuth,
@@ -633,6 +616,7 @@ type NavigationItem = {
     | "home"
     | "plus"
     | "loans"
+    | "archive"
     | "dashboard"
     | "people"
     | "trustee"
@@ -671,10 +655,8 @@ const router = useRouter();
 
 const {
   t,
-  locale,
   dir,
   isRTL,
-  setLanguage,
 } = useLocale();
 
 const auth = useAuth();
@@ -688,6 +670,17 @@ const navigationItems: NavigationItem[] = [
     label: "nav.home",
     icon: "home",
     exact: true,
+    roles: [
+      "admin",
+      "trustee",
+      "borrower",
+      "donor",
+    ],
+  },
+  {
+    to: "/dashboard",
+    label: "nav.dashboard",
+    icon: "dashboard",
     roles: [
       "admin",
       "trustee",
@@ -712,17 +705,6 @@ const navigationItems: NavigationItem[] = [
     ],
   },
   {
-    to: "/dashboard",
-    label: "nav.dashboard",
-    icon: "dashboard",
-    roles: [
-      "admin",
-      "trustee",
-      "borrower",
-      "donor",
-    ],
-  },
-  {
     to: "/borrowers",
     label: "nav.borrowers",
     icon: "people",
@@ -741,6 +723,12 @@ const navigationItems: NavigationItem[] = [
       "trustee",
       "borrower",
     ],
+  },
+  {
+    to: "/archive",
+    label: "nav.archive",
+    icon: "archive",
+    roles: ["admin"],
   },
   {
     to: "/donors",
@@ -847,14 +835,6 @@ function isRouteActive(
   );
 }
 
-
-function toggleLanguage() {
-  setLanguage(
-    locale.value === "he"
-      ? "en"
-      : "he"
-  );
-}
 
 
 function goBack() {

@@ -73,6 +73,10 @@ export interface Loan {
     | string
     | null;
 
+  standingOrderFormFileUrl?:
+    | string
+    | null;
+
   borrower: Borrower;
 
   trustee:

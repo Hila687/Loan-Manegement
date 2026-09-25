@@ -83,6 +83,10 @@ export interface ApiLoanDetails
     | string
     | null;
 
+  standing_order_form_file_url?:
+    | string
+    | null;
+
   details:
     | ApiLoanChecksDetails
     | ApiLoanStandingOrderDetails;

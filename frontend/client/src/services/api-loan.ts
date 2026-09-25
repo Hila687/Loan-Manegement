@@ -23,6 +23,7 @@ export async function fetchLoans(
       {
         params: {
           type,
+
           ...(search
             ? {
                 search,

@@ -1,0 +1,415 @@
+{
+  "home": {
+    "gemachLabel": "Sistema de gestión del Guemaj",
+    "title": "Guemaj Jasdei Yaakov",
+    "subtitle": "Aquí puedes ver todos los préstamos activos, crear nuevos préstamos y gestionar las operaciones del Guemaj de forma organizada y sencilla.",
+    "welcome": "Bienvenido",
+    "welcomeMessage": "Consulta rápidamente los préstamos activos y accede a las acciones principales que utilizas con más frecuencia.",
+    "stats": {
+      "activeLoans": "Préstamos activos",
+      "totalAmount": "Importe total pendiente"
+    },
+    "actions": {
+      "createLoan": {
+        "badge": "Nuevo préstamo",
+        "title": "Crear nuevo préstamo",
+        "description": "Abre un nuevo préstamo para un prestatario, incluyendo los datos del responsable y un calendario de pagos automático."
+      },
+      "viewLoans": {
+        "title": "Ver préstamos activos",
+        "description": "Consulta y filtra todos los préstamos abiertos del sistema por prestatario, responsable y estado."
+      },
+      "communityLoans": {
+        "title": "Préstamos de la comunidad",
+        "description": "Consulta los préstamos y prestatarios asignados a tu comunidad."
+      },
+      "myLoan": {
+        "title": "Mi préstamo",
+        "description": "Consulta los detalles, el estado y el calendario de pagos de tu préstamo."
+      },
+      "viewDonations": {
+        "title": "Mis donaciones",
+        "description": "Consulta tu historial de donaciones y el resumen de tus aportes."
+      }
+    },
+    "quickActions": {
+      "dashboard": "Panel y análisis",
+      "dashboardDesc": "Consulta resúmenes, indicadores y datos clave del Guemaj.",
+      "reports": "Informes",
+      "reportsDesc": "Genera resúmenes por prestatario, responsable y rango de fechas.",
+      "settings": "Configuración",
+      "settingsDesc": "Gestiona la configuración del sistema, la localización y los permisos.",
+      "reminders": "Recordatorios de pago",
+      "remindersDesc": "Configura recordatorios automáticos por SMS y WhatsApp."
+    },
+    "recentActivity": {
+      "title": "Actividad reciente",
+      "empty": "Los préstamos, pagos y actualizaciones recientes aparecerán aquí cuando el sistema esté en uso."
+    },
+    "statActiveLoans": "Préstamos activos",
+    "statThisMonth": "Préstamos abiertos este mes",
+    "statTrustees": "Responsables activos",
+    "activeLoansCardTitle": "Préstamos activos",
+    "activeLoansCardDescription": "Consulta la lista de todos los préstamos abiertos, incluyendo prestatario, responsable e importe.",
+    "createLoanCardTitle": "Crear nuevo préstamo",
+    "createLoanCardDescription": "Abre un nuevo préstamo para un prestatario, incluyendo los datos del responsable y las condiciones de pago.",
+    "footerNote": "En futuras versiones aparecerá aquí un panel con gráficos, alertas e información del sistema.",
+    "roleMessages": {
+      "admin": "Gestiona préstamos, usuarios, donaciones, informes y actividad del sistema desde un solo lugar.",
+      "trustee": "Consulta los prestatarios y préstamos que pertenecen a tu comunidad.",
+      "borrower": "Consulta los detalles de tu préstamo y tu calendario de pagos.",
+      "donor": "Consulta tus donaciones y los resúmenes generales del Guemaj."
+    },
+    "messages": {
+      "summaryLoadError": "No se pudo cargar parte de la información del resumen."
+    }
+  },
+  "nav": {
+    "home": "Inicio",
+    "createLoan": "Crear préstamo",
+    "activeLoans": "Préstamos",
+    "dashboard": "Panel",
+    "borrowers": "Prestatarios",
+    "trustees": "Responsables",
+    "donors": "Donantes",
+    "donations": "Donaciones",
+    "reports": "Informes",
+    "reminders": "Recordatorios",
+    "admins": "Administradores",
+    "logout": "Cerrar sesión",
+    "menu": "Menú",
+    "closeMenu": "Cerrar menú",
+    "archive": "Archivo de préstamos"
+  },
+  "app": {
+    "title": "Guemaj"
+  },
+  "loanForm": {
+    "title": "Nuevo préstamo",
+    "sections": {
+      "borrower": "Datos del prestatario",
+      "loan": "Datos del préstamo",
+      "file": "Formulario firmado"
+    },
+    "badges": {
+      "borrower": "1 / 3",
+      "loan": "2 / 3",
+      "file": "3 / 3"
+    },
+    "fields": {
+      "borrowerFirstName": "Nombre",
+      "borrowerFirstNamePlaceholder": "Introduce el nombre",
+      "borrowerLastName": "Apellido",
+      "borrowerLastNamePlaceholder": "Introduce el apellido",
+      "borrowerIdNumber": "Número de identificación",
+      "borrowerIdNumberPlaceholder": "Introduce el número de identificación",
+      "borrowerEmail": "Correo electrónico",
+      "borrowerEmailPlaceholder": "Introduce el correo electrónico",
+      "borrowerPhone": "Teléfono",
+      "borrowerPhonePlaceholder": "Introduce el número de teléfono",
+      "borrowerAddress": "Dirección",
+      "borrowerAddressPlaceholder": "Introduce la dirección",
+      "trustee": "Responsable",
+      "trusteePlaceholder": "Buscar responsable por nombre",
+      "signedForm": "Contrato de préstamo firmado",
+      "standingOrderForm": "Formulario de autorización de domiciliación",
+      "amount": "Importe del préstamo",
+      "amountPlaceholder": "0.00",
+      "startDate": "Fecha de inicio",
+      "startDatePlaceholder": "Selecciona una fecha",
+      "numPayments": "Número de pagos",
+      "numPaymentsPlaceholder": "p. ej., 25",
+      "loanType": "Tipo de préstamo"
+    },
+    "loanTypes": {
+      "checks": "Cheques",
+      "standingOrder": "Domiciliación bancaria"
+    },
+    "trustees": {
+      "t1": "Responsable 1",
+      "t2": "Responsable 2"
+    },
+    "labels": {
+      "trusteeId": "ID del responsable:"
+    },
+    "messages": {
+      "validationError": "Corrige los campos marcados en rojo",
+      "requiredFieldsError": "Completa todos los campos obligatorios",
+      "nameRequired": "El nombre es obligatorio",
+      "idNumberRequired": "El número de identificación es obligatorio",
+      "phoneInvalid": "Número de teléfono no válido",
+      "amountInvalid": "El importe debe ser mayor que 0",
+      "startDateInvalid": "La fecha de inicio es obligatoria",
+      "numPaymentsInvalid": "El número de pagos debe ser al menos 1",
+      "noTrustees": "No se encontraron responsables",
+      "loadingTrustees": "Cargando responsables...",
+      "trusteesLoadError": "No se pudieron cargar los responsables",
+      "fileNotSelected": "No se ha seleccionado ningún archivo",
+      "fileRequired": "El archivo es obligatorio. Sube el formulario firmado",
+      "uploadFailed": "Error al subir el archivo. Inténtalo de nuevo",
+      "success": "Préstamo creado correctamente",
+      "genericError": "Error al crear el préstamo",
+      "standingOrderFormRequired": "El formulario de autorización de domiciliación es obligatorio"
+    },
+    "buttons": {
+      "clearForm": "Limpiar formulario",
+      "submit": "Guardar préstamo",
+      "submitting": "Guardando..."
+    }
+  },
+  "usersList": {
+    "title": "Prueba API – Lista de usuarios",
+    "loading": "Cargando datos...",
+    "noUsers": "No se encontraron usuarios.",
+    "table": {
+      "id": "ID",
+      "username": "Nombre de usuario",
+      "role": "Rol"
+    },
+    "buttons": {
+      "loadUsers": "Cargar usuarios",
+      "retry": "Intentar de nuevo",
+      "refresh": "Actualizar usuarios"
+    },
+    "messages": {
+      "loadFailed": "No se pudieron cargar los usuarios. Inténtalo de nuevo más tarde.",
+      "errorDetails": "La solicitud de red falló. Comprueba tu conexión e inténtalo de nuevo."
+    },
+    "roles": {
+      "admin": "Administrador"
+    },
+    "idLabel": "ID",
+    "noRole": "Sin rol"
+  },
+  "loanList": {
+    "title": "Préstamos",
+    "subtitle": "Consulta y gestiona todos los préstamos del Guemaj con búsqueda, filtros y acciones rápidas.",
+    "stats": {
+      "totalLoans": "Total de préstamos",
+      "totalAmount": "Importe total pendiente",
+      "filtered": "Estado de los filtros",
+      "active": "Filtros aplicados",
+      "none": "Sin filtros"
+    },
+    "search": {
+      "placeholder": "Buscar por prestatario, responsable, teléfono o correo electrónico"
+    },
+    "showDetails": "Mostrar detalles",
+    "hideDetails": "Ocultar detalles",
+    "table": {
+      "borrower": "Prestatario",
+      "phone": "Teléfono",
+      "email": "Correo electrónico",
+      "trustee": "Responsable",
+      "amount": "Importe",
+      "type": "Tipo de préstamo"
+    },
+    "types": {
+      "checks": "Cheques",
+      "standingOrders": "Domiciliaciones"
+    },
+    "filters": {
+      "title": "Filtrar"
+    },
+    "actions": {
+      "refresh": "Actualizar préstamos",
+      "retry": "Intentar de nuevo"
+    },
+    "messages": {
+      "loading": "Cargando préstamos...",
+      "noLoans": "No hay préstamos para mostrar",
+      "noLoansDesc": "Los préstamos que correspondan a esta vista aparecerán aquí.",
+      "noFilteredLoans": "Ningún préstamo coincide con los filtros actuales",
+      "noFilteredLoansDesc": "Prueba a quitar uno o más filtros o a cambiar el texto de búsqueda.",
+      "error": "Hubo un problema al cargar los préstamos."
+    }
+  },
+  "loanDetails": {
+    "title": "Detalles del préstamo",
+    "tabDetails": "Detalles",
+    "tabSchedule": "Calendario de pagos",
+    "borrowerInfo": "Información del prestatario",
+    "loanInfo": "Información del préstamo",
+    "trustee": "Responsable",
+    "additionalDetails": "Detalles adicionales:",
+    "name": "Nombre:",
+    "phone": "Teléfono:",
+    "email": "Correo electrónico:",
+    "address": "Dirección:",
+    "idNumber": "Número de identificación:",
+    "createdAt": "Creado el:",
+    "loanId": "ID del préstamo:",
+    "type": "Tipo de préstamo:",
+    "amount": "Importe del préstamo:",
+    "status": "Estado:",
+    "startDate": "Fecha de inicio:",
+    "community": "Comunidad:",
+    "notes": "Notas:",
+    "editButton": "Editar préstamo",
+    "notFound": "Préstamo no encontrado.",
+    "checkDetails": "Detalles de los cheques:",
+    "numPayments": "Número de pagos:",
+    "predefinedSchedule": "Calendario predefinido:",
+    "monthlyAmount": "Importe mensual:",
+    "chargeDay": "Día de cobro:",
+    "stopDate": "Fecha de finalización:",
+    "yes": "Sí",
+    "no": "No"
+  },
+  "payments": {
+    "loading": "Cargando calendario de pagos...",
+    "error": "No se pudo cargar el calendario de pagos.",
+    "empty": "No se encontraron pagos.",
+    "openToLoad": "Abre la pestaña para cargar el calendario de pagos.",
+    "summary": {
+      "totalAmount": "Importe total",
+      "paidAmount": "Pagado",
+      "remainingAmount": "Pendiente",
+      "paymentsProgress": "Pagos"
+    },
+    "table": {
+      "dueDate": "Fecha de vencimiento",
+      "amountDue": "Importe a pagar",
+      "amountPaid": "Importe pagado",
+      "status": "Estado"
+    },
+    "status": {
+      "paid": "Pagado",
+      "pending": "Pendiente"
+    }
+  },
+  "loan": {
+    "filterByType": "Filtrar por tipo de préstamo",
+    "all": "Todos los tipos de préstamo",
+    "checks": "Cheques",
+    "standingOrders": "Domiciliaciones",
+    "types": {
+      "checks": "Cheques",
+      "standingOrder": "Domiciliación bancaria"
+    }
+  },
+  "editLoan": {
+    "title": "Editar préstamo",
+    "cardTitle": "Editar préstamo existente",
+    "sections": {
+      "trustee": "Datos del responsable"
+    },
+    "fields": {
+      "amount": "Importe",
+      "startDate": "Fecha de inicio",
+      "numPayments": "Número de pagos",
+      "trustee": "Responsable",
+      "status": "Estado"
+    },
+    "placeholders": {
+      "amount": "Introduce el importe",
+      "startDate": "Selecciona una fecha",
+      "numPayments": "Introduce el número de pagos",
+      "trustee": "Selecciona un responsable"
+    },
+    "actions": {
+      "cancel": "Cancelar",
+      "save": "Guardar"
+    }
+  },
+  "common": {
+    "remove": "Eliminar",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "refresh": "Actualizar",
+    "retry": "Reintentar",
+    "loading": "Cargando...",
+    "search": "Buscar",
+    "all": "Todos",
+    "yes": "Sí",
+    "no": "No",
+    "back": "Volver"
+  },
+  "roles": {
+    "admin": "Administrador",
+    "trustee": "Responsable",
+    "borrower": "Prestatario",
+    "donor": "Donante"
+  },
+  "lang": {
+    "he": "עברית",
+    "en": "English",
+    "es": "Español"
+  },
+  "auth": {
+    "login": {
+      "organization": "Guemaj Jasdei Yaakov",
+      "title": "Iniciar sesión",
+      "subtitle": "Inicia sesión para continuar al sistema de gestión del Guemaj.",
+      "username": "Nombre de usuario",
+      "password": "Contraseña",
+      "submit": "Iniciar sesión",
+      "loading": "Iniciando sesión...",
+      "required": "El nombre de usuario y la contraseña son obligatorios.",
+      "invalid": "Nombre de usuario o contraseña incorrectos.",
+      "tooManyAttempts": "Demasiados intentos de inicio de sesión. Inténtalo de nuevo más tarde.",
+      "securityNote": "Tu sesión está protegida y el acceso está limitado según tu rol."
+    },
+    "changePassword": {
+      "title": "Cambiar contraseña",
+      "subtitle": "Crea una nueva contraseña antes de continuar.",
+      "current": "Contraseña actual",
+      "new": "Nueva contraseña",
+      "confirm": "Confirmar nueva contraseña",
+      "submit": "Guardar contraseña",
+      "saving": "Guardando...",
+      "required": "Todos los campos de contraseña son obligatorios.",
+      "notMatch": "Las nuevas contraseñas no coinciden.",
+      "samePassword": "La nueva contraseña debe ser diferente de la actual.",
+      "error": "No se pudo cambiar la contraseña."
+    }
+  },
+  "dashboard": {
+    "title": "Panel",
+    "subtitle": "Vista actual de préstamos, pagos, donaciones y actividad del Guemaj.",
+    "messages": {
+      "loadError": "No se pudieron cargar los datos del panel."
+    },
+    "cards": {
+      "activeLoans": "Préstamos activos",
+      "overdueLoans": "Préstamos que requieren atención",
+      "closedLoans": "Préstamos finalizados",
+      "activeAmount": "Importe de préstamos activos",
+      "totalDonations": "Total de donaciones",
+      "myDonations": "Mis donaciones"
+    },
+    "activeAmountDescription": "Importe total actualmente asignado a préstamos activos.",
+    "donationsDescription": "Total de donaciones registradas en el sistema.",
+    "people": {
+      "borrowers": "Prestatarios",
+      "trustees": "Responsables",
+      "donors": "Donantes"
+    },
+    "status": {
+      "active": "Activo",
+      "overdue": "Requiere atención",
+      "closed": "Finalizado"
+    },
+    "statusChart": {
+      "title": "Préstamos por estado",
+      "subtitle": "Distribución de préstamos activos, con incidencias y finalizados.",
+      "loans": "préstamos"
+    },
+    "communityChart": {
+      "title": "Préstamos por comunidad",
+      "subtitle": "Distribución de préstamos activos entre las comunidades de los responsables."
+    },
+    "trustee": {
+      "title": "Resumen de la comunidad",
+      "community": "Comunidad",
+      "borrowers": "Prestatarios de tu comunidad"
+    },
+    "donor": {
+      "title": "Resumen de donaciones",
+      "subtitle": "Tu actividad de donaciones y el resumen general del Guemaj."
+    }
+  }
+}

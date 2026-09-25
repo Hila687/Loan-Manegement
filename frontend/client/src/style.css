@@ -42,6 +42,14 @@
 }
 
 /* ---------- Base ---------- */
+/* גודל תיבה עקבי לכל האלמנטים — מונע מקרים שבהם padding/border
+   מרחיבים אלמנט מעבר לרוחב ההורה שלו ויוצרים גלילה לרוחב */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 html,
 body,
 #app {
@@ -49,13 +57,28 @@ body,
   margin: 0;
 }
 
+html {
+  /* רשת ביטחון: שום תוכן (כולל פופאפים ממוקמים באופן מוחלט כמו
+     לוח השנה) לא אמור לגרום לגלילה אופקית של הדף כולו */
+  overflow-x: hidden;
+}
+
 body {
+  overflow-x: hidden;
   background-color: var(--color-canvas);
   color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+  height: auto;
 }
 
 h1,
@@ -200,5 +223,154 @@ input[type="number"],
   table {
     border-collapse: separate;
     border-spacing: 0;
+  }
+}
+
+/* ============================================================
+   Flatpickr — לוח שנה ממותג
+   ה־CSS שמגיע עם הספרייה הוא עיצוב ברירת מחדל גנרי שלא תואם
+   לשפה העיצובית של האתר, ובנוסף יש לו רוחב קבוע שלא תמיד
+   מתאים למסכים צרים. השכבה הזו מיישרת אותו עם צבעי/צורת ה-
+   design tokens (--color-brand וכו') ומוודאת שהוא תמיד נשאר
+   בתוך גבולות המסך כדי שלא ייווצר גלילה לרוחב.
+   ============================================================ */
+.flatpickr-calendar {
+  box-sizing: border-box;
+  width: 300px;
+  max-width: calc(100vw - 2rem);
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: 1rem;
+  box-shadow: var(--shadow-lift);
+  font-family: var(--font-sans);
+  padding: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.flatpickr-calendar.static {
+  position: absolute;
+  max-width: min(300px, calc(100vw - 2rem));
+}
+
+.flatpickr-calendar::before,
+.flatpickr-calendar::after {
+  display: none;
+}
+
+.flatpickr-months {
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.flatpickr-months .flatpickr-month {
+  color: var(--color-ink);
+  fill: var(--color-ink);
+  height: 2.25rem;
+}
+
+.flatpickr-current-month {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  padding: 0;
+}
+
+.flatpickr-current-month .flatpickr-monthDropdown-months,
+.flatpickr-current-month input.cur-year {
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.flatpickr-months .flatpickr-prev-month,
+.flatpickr-months .flatpickr-next-month {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  top: 0.15rem;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.6rem;
+  fill: var(--color-muted);
+  transition: background-color 0.15s ease, fill 0.15s ease;
+}
+
+.flatpickr-months .flatpickr-prev-month:hover,
+.flatpickr-months .flatpickr-next-month:hover {
+  background-color: var(--color-brand-soft);
+  fill: var(--color-brand);
+}
+
+.flatpickr-weekdays {
+  margin-bottom: 0.25rem;
+}
+
+span.flatpickr-weekday {
+  color: var(--color-faint);
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: transparent;
+}
+
+.flatpickr-days {
+  border: none;
+}
+
+.dayContainer {
+  width: 100%;
+  min-width: 100%;
+}
+
+.flatpickr-day {
+  color: var(--color-ink-soft);
+  border-radius: 0.6rem;
+  font-size: 0.875rem;
+  max-width: none;
+  height: 2.25rem;
+  line-height: 2.25rem;
+}
+
+.flatpickr-day.today {
+  border-color: var(--color-brand);
+}
+
+.flatpickr-day:hover,
+.flatpickr-day:focus {
+  background: var(--color-brand-soft);
+  border-color: var(--color-brand-soft);
+  color: var(--color-brand-deep);
+}
+
+.flatpickr-day.selected,
+.flatpickr-day.selected:hover,
+.flatpickr-day.selected:focus {
+  background: var(--color-brand);
+  border-color: var(--color-brand);
+  color: #fff;
+  font-weight: 600;
+}
+
+.flatpickr-day.today.selected {
+  border-color: var(--color-brand);
+}
+
+.flatpickr-day.flatpickr-disabled,
+.flatpickr-day.prevMonthDay,
+.flatpickr-day.nextMonthDay {
+  color: var(--color-faint);
+}
+
+.flatpickr-day.flatpickr-disabled {
+  opacity: 0.4;
+}
+
+/* בנייד: לוח קצת יותר צר כדי להשאיר שוליים נוחים משני הצדדים */
+@media (max-width: 420px) {
+  .flatpickr-calendar {
+    width: 100%;
+    max-width: calc(100vw - 2rem);
+  }
+
+  .flatpickr-day {
+    height: 2.5rem;
+    line-height: 2.5rem;
   }
 }
