@@ -86,6 +86,16 @@ class UserProfile(models.Model):
         default=True,
     )
 
+    # ID number for sign-in with a one-time SMS code.
+    # Borrowers keep theirs on Borrower.id_number; this field is for
+    # trustees, donors and admins.
+    id_number = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True,
+        db_index=True,
+    )
+
     def __str__(self):
         return self.user.username
 
@@ -615,4 +625,49 @@ class ReminderLog(models.Model):
                 ],
                 name="unique_daily_payment_reminder",
             ),
+        ]
+
+class LoginCode(models.Model):
+    """A one-time sign-in code sent by SMS / WhatsApp."""
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="login_codes",
+    )
+
+    code_hash = models.CharField(
+        max_length=128,
+    )
+
+    channel = models.CharField(
+        max_length=20,
+        default="SMS",
+    )
+
+    sent_to = models.CharField(
+        max_length=50,
+        blank=True,
+        default="",
+    )
+
+    attempts = models.PositiveSmallIntegerField(
+        default=0,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        db_index=True,
+    )
+
+    expires_at = models.DateTimeField()
+
+    used_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    class Meta:
+        ordering = [
+            "-created_at",
         ]

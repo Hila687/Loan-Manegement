@@ -85,6 +85,12 @@ class UserProfileSerializer(
 class TrusteeSerializer(
     serializers.ModelSerializer
 ):
+    id_number = serializers.CharField(
+        source="user.profile.id_number",
+        read_only=True,
+        allow_null=True,
+    )
+
     user_details = UserSerializer(
         source="user",
         read_only=True,
@@ -112,6 +118,7 @@ class TrusteeSerializer(
         fields = [
             "trustee_id",
             "user_details",
+            "id_number",
             "phone",
             "is_active",
             "community",
@@ -131,6 +138,12 @@ class TrusteeSerializer(
 class TrusteeCreateSerializer(
     serializers.Serializer
 ):
+    id_number = serializers.CharField(
+        max_length=20,
+        required=False,
+        allow_blank=True,
+    )
+
     first_name = serializers.CharField(
         max_length=150
     )
@@ -260,6 +273,12 @@ class BorrowerSerializer(
 class DonorSerializer(
     serializers.ModelSerializer
 ):
+    id_number = serializers.CharField(
+        source="user.profile.id_number",
+        read_only=True,
+        allow_null=True,
+    )
+
     user_details = UserSerializer(
         source="user",
         read_only=True,
@@ -280,6 +299,7 @@ class DonorSerializer(
         fields = [
             "donor_id",
             "user_details",
+            "id_number",
             "phone",
             "is_active",
             "notes",
@@ -319,6 +339,12 @@ class DonorSerializer(
 class DonorCreateSerializer(
     serializers.Serializer
 ):
+    id_number = serializers.CharField(
+        max_length=20,
+        required=False,
+        allow_blank=True,
+    )
+
     first_name = serializers.CharField(
         max_length=150
     )
@@ -409,6 +435,12 @@ class DonationSerializer(
 class AdminUserSerializer(
     serializers.ModelSerializer
 ):
+    id_number = serializers.CharField(
+        source="profile.id_number",
+        read_only=True,
+        allow_null=True,
+    )
+
     phone = serializers.CharField(
         source="profile.phone",
         read_only=True,
@@ -430,6 +462,7 @@ class AdminUserSerializer(
             "first_name",
             "last_name",
             "email",
+            "id_number",
             "phone",
             "is_active",
             "is_superuser",
@@ -442,6 +475,12 @@ class AdminUserSerializer(
 class AdminCreateSerializer(
     serializers.Serializer
 ):
+    id_number = serializers.CharField(
+        max_length=20,
+        required=False,
+        allow_blank=True,
+    )
+
     first_name = serializers.CharField(
         max_length=150
     )
@@ -480,6 +519,27 @@ class LoanListSerializer(
 
     trustee = serializers.DictField(
         allow_null=True
+    )
+
+    remaining_amount = serializers.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+    )
+
+    paid_amount = serializers.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+    )
+
+    payments_total = serializers.IntegerField()
+    payments_paid = serializers.IntegerField()
+
+    next_payment = serializers.DictField(
+        allow_null=True,
+    )
+
+    problem = serializers.DictField(
+        allow_null=True,
     )
 
 

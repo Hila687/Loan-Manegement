@@ -674,7 +674,6 @@ const navigationItems: NavigationItem[] = [
       "admin",
       "trustee",
       "borrower",
-      "donor",
     ],
   },
   {
@@ -685,7 +684,6 @@ const navigationItems: NavigationItem[] = [
       "admin",
       "trustee",
       "borrower",
-      "donor",
     ],
   },
   {
@@ -711,7 +709,6 @@ const navigationItems: NavigationItem[] = [
     roles: [
       "admin",
       "trustee",
-      "borrower",
     ],
   },
   {
@@ -742,7 +739,6 @@ const navigationItems: NavigationItem[] = [
     icon: "donation",
     roles: [
       "admin",
-      "donor",
     ],
   },
   {

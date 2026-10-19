@@ -45,6 +45,8 @@ from .serializers import (
     TrusteeUpdateSerializer,
     UserProfileSerializer,
 )
+from .credentials import credentials_payload
+from .otp import set_profile_id_number
 from .services import (
     audit,
     create_role_user,
@@ -278,12 +280,10 @@ class BorrowerViewSet(viewsets.ModelViewSet):
 
         response_data[
             "credentials"
-        ] = {
-            "username":
-                user.username,
-            "temporary_password":
-                temporary_password,
-        }
+        ] = credentials_payload(
+            user,
+            temporary_password,
+        )
 
         return Response(
             response_data,
@@ -348,12 +348,10 @@ class BorrowerViewSet(viewsets.ModelViewSet):
                 ]
             )
 
-            credentials = {
-                "username":
-                    user.username,
-                "temporary_password":
-                    temporary_password,
-            }
+            credentials = credentials_payload(
+            user,
+            temporary_password,
+        )
 
         else:
             user = borrower.user
@@ -473,6 +471,52 @@ class BorrowerViewSet(viewsets.ModelViewSet):
             status=
                 status.HTTP_204_NO_CONTENT
         )
+
+
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="reset-password",
+        permission_classes=[
+            IsAdminRole
+        ],
+    )
+    @transaction.atomic
+    def reset_password(
+        self,
+        request,
+        pk=None,
+    ):
+        borrower = self.get_object()
+
+        if borrower.user is None:
+            # Older borrowers may have been saved without an account.
+            user, temporary_password = create_role_user(
+                role_key="borrower",
+                username_seed=borrower.id_number,
+                first_name=borrower.first_name or "",
+                last_name=borrower.last_name or "",
+                email=borrower.email or "",
+                phone=borrower.phone or "",
+            )
+            borrower.user = user
+            borrower.save(update_fields=["user"])
+        else:
+            temporary_password = reset_user_password(
+                borrower.user
+            )
+
+        audit(
+            request.user,
+            "RESET_BORROWER_PASSWORD",
+            "Borrower",
+            borrower.borrower_id,
+        )
+
+        return Response(credentials_payload(
+            borrower.user,
+            temporary_password,
+        ))
 
 
 class TrusteeViewSet(viewsets.ModelViewSet):
@@ -608,6 +652,11 @@ class TrusteeViewSet(viewsets.ModelViewSet):
                 ),
         )
 
+        set_profile_id_number(
+            user,
+            request.data,
+        )
+
         audit(
             request.user,
             "CREATE_TRUSTEE",
@@ -623,12 +672,10 @@ class TrusteeViewSet(viewsets.ModelViewSet):
 
         response_data[
             "credentials"
-        ] = {
-            "username":
-                user.username,
-            "temporary_password":
-                temporary_password,
-        }
+        ] = credentials_payload(
+            user,
+            temporary_password,
+        )
 
         return Response(
             response_data,
@@ -709,6 +756,11 @@ class TrusteeViewSet(viewsets.ModelViewSet):
             )
 
         trustee.save()
+
+        set_profile_id_number(
+            user,
+            request.data,
+        )
 
         audit(
             request.user,
@@ -792,12 +844,10 @@ class TrusteeViewSet(viewsets.ModelViewSet):
             trustee.trustee_id,
         )
 
-        return Response({
-            "username":
-                trustee.user.username,
-            "temporary_password":
-                temporary_password,
-        })
+        return Response(credentials_payload(
+            trustee.user,
+            temporary_password,
+        ))
 
 
 class DonorViewSet(viewsets.ModelViewSet):
@@ -917,6 +967,11 @@ class DonorViewSet(viewsets.ModelViewSet):
                 ),
         )
 
+        set_profile_id_number(
+            user,
+            request.data,
+        )
+
         audit(
             request.user,
             "CREATE_DONOR",
@@ -930,14 +985,9 @@ class DonorViewSet(viewsets.ModelViewSet):
             ).data
         )
 
-        response_data[
-            "credentials"
-        ] = {
-            "username":
-                user.username,
-            "temporary_password":
-                temporary_password,
-        }
+        # Donors do not sign in to the system: no password at all.
+        user.set_unusable_password()
+        user.save(update_fields=["password"])
 
         return Response(
             response_data,
@@ -1015,6 +1065,11 @@ class DonorViewSet(viewsets.ModelViewSet):
             )
 
         donor.save()
+
+        set_profile_id_number(
+            user,
+            request.data,
+        )
 
         audit(
             request.user,
@@ -1105,12 +1160,10 @@ class DonorViewSet(viewsets.ModelViewSet):
             donor.donor_id,
         )
 
-        return Response({
-            "username":
-                donor.user.username,
-            "temporary_password":
-                temporary_password,
-        })
+        return Response(credentials_payload(
+            donor.user,
+            temporary_password,
+        ))
 
 
 class DonationViewSet(
@@ -1316,6 +1369,11 @@ class AdminUserViewSet(
             )
         )
 
+        set_profile_id_number(
+            user,
+            request.data,
+        )
+
         audit(
             request.user,
             "CREATE_ADMIN",
@@ -1331,12 +1389,10 @@ class AdminUserViewSet(
 
         response_data[
             "credentials"
-        ] = {
-            "username":
-                user.username,
-            "temporary_password":
-                temporary_password,
-        }
+        ] = credentials_payload(
+            user,
+            temporary_password,
+        )
 
         return Response(
             response_data,
@@ -1465,6 +1521,11 @@ class AdminUserViewSet(
                         "phone",
                     ]
                 )
+
+        set_profile_id_number(
+            target,
+            request.data,
+        )
 
         audit(
             request.user,
@@ -1610,12 +1671,10 @@ class AdminUserViewSet(
             target.id,
         )
 
-        return Response({
-            "username":
-                target.username,
-            "temporary_password":
-                temporary_password,
-        })
+        return Response(credentials_payload(
+            target,
+            temporary_password,
+        ))
 
 
 class DashboardLoanSummaryView(
@@ -1691,6 +1750,133 @@ class DashboardLoanSummaryView(
                 checks_total
                 + standing_total,
         })
+
+
+def month_key(value):
+    return f"{value.year:04d}-{value.month:02d}"
+
+
+def next_months(count, start=None):
+    """['2026-10', '2026-11', ...] starting from this month."""
+    from django.utils import timezone
+
+    start = start or timezone.localdate().replace(day=1)
+    months = []
+    year, month = start.year, start.month
+
+    for _ in range(count):
+        months.append(f"{year:04d}-{month:02d}")
+        month += 1
+        if month > 12:
+            month, year = 1, year + 1
+
+    return months
+
+
+def dashboard_payment_figures(loans):
+    """
+    Money figures for the dashboard charts, over the given loans:
+    how much was repaid vs. still owed, what is missing because of
+    problems, what is due in each of the next six months, and the
+    open balance per community.
+    """
+    from django.utils import timezone
+
+    from .services import get_payment_queryset_for_loan
+
+    today = timezone.localdate()
+    upcoming_keys = next_months(6)
+    upcoming = {key: {"month": key, "amount": decimal_zero(), "count": 0} for key in upcoming_keys}
+
+    paid = decimal_zero()
+    remaining = decimal_zero()
+    missing = decimal_zero()
+    by_community = {}
+    next_payment = None
+
+    for loan in loans:
+        payments = list(get_payment_queryset_for_loan(loan))
+
+        if payments:
+            loan_total = sum((p.amount for p in payments), decimal_zero())
+            loan_paid = sum((p.amount_paid for p in payments), decimal_zero())
+        else:
+            loan_total, loan_paid = Decimal(loan.amount), decimal_zero()
+
+        loan_remaining = max(loan_total - loan_paid, decimal_zero())
+
+        if loan.status != "CLOSED":
+            paid += loan_paid
+            remaining += loan_remaining
+
+            community = loan.trustee.community if loan.trustee else "—"
+            row = by_community.setdefault(
+                community,
+                {"community": community, "remaining_amount": decimal_zero(), "loans_count": 0},
+            )
+            row["remaining_amount"] += loan_remaining
+            row["loans_count"] += 1
+
+        for p in payments:
+            if p.status == "LATE" or (
+                p.is_manual_exception and p.due_date <= today and p.amount_paid < p.amount
+            ):
+                missing += p.amount - p.amount_paid
+
+            if p.status == "PENDING" and p.due_date >= today and (
+                next_payment is None or p.due_date < next_payment.due_date
+            ):
+                next_payment = p
+
+            if p.status == "PENDING" and p.due_date >= today.replace(day=1):
+                key = month_key(p.due_date)
+                if key in upcoming:
+                    upcoming[key]["amount"] += p.amount
+                    upcoming[key]["count"] += 1
+
+    return {
+        "repayment": {
+            "paid": paid,
+            "remaining": remaining,
+            "missing": missing,
+        },
+        "upcoming_by_month": [upcoming[key] for key in upcoming_keys],
+        "next_payment": (
+            {"due_date": next_payment.due_date.isoformat(), "amount": next_payment.amount}
+            if next_payment
+            else None
+        ),
+        "balance_by_community": sorted(
+            by_community.values(),
+            key=lambda row: row["remaining_amount"],
+            reverse=True,
+        ),
+    }
+
+
+def donations_by_month(months=12):
+    """Donation totals for the last `months` months, oldest first."""
+    from django.utils import timezone
+
+    today = timezone.localdate().replace(day=1)
+    year, month = today.year, today.month - (months - 1)
+    while month <= 0:
+        month += 12
+        year -= 1
+
+    from datetime import date
+
+    keys = next_months(months, date(year, month, 1))
+    totals = {key: {"month": key, "amount": decimal_zero(), "count": 0} for key in keys}
+
+    for donation in Donation.objects.filter(donation_date__gte=date(year, month, 1)):
+        key = month_key(donation.donation_date)
+        if key in totals:
+            totals[key]["amount"] += donation.amount
+            totals[key]["count"] += 1
+
+    return [totals[key] for key in keys]
+
 
 class DashboardOverviewView(APIView):
     permission_classes = [
@@ -1781,7 +1967,13 @@ class DashboardOverviewView(APIView):
             or decimal_zero()
         )
 
+        figures = dashboard_payment_figures(
+            list(checks.select_related("trustee"))
+            + list(standing.select_related("trustee"))
+        )
+
         response_data = {
+            **figures,
             "loan_status": {
                 "active":
                     active_count,
@@ -1794,11 +1986,18 @@ class DashboardOverviewView(APIView):
             "active_loans_amount":
                 active_amount,
 
-            "total_donations_amount":
-                donation_total,
         }
 
         if role == ROLE_ADMIN:
+            # Donation figures are for the Gemach's managers only.
+            response_data[
+                "total_donations_amount"
+            ] = donation_total
+
+            response_data[
+                "donations_by_month"
+            ] = donations_by_month()
+
             response_data[
                 "people"
             ] = {

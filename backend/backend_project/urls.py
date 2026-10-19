@@ -8,6 +8,9 @@ from core.auth_views import (
     LoginView,
     LogoutView,
     MeView,
+    OtpRequestView,
+    OtpVerifyView,
+    SendCredentialsView,
 )
 from core.loans_views import (
     LoanDetailView,
@@ -119,6 +122,24 @@ urlpatterns = [
         "api/auth/change-password/",
         ChangePasswordView.as_view(),
         name="auth-change-password",
+    ),
+
+    path(
+        "api/auth/otp/request/",
+        OtpRequestView.as_view(),
+        name="auth-otp-request",
+    ),
+
+    path(
+        "api/auth/otp/verify/",
+        OtpVerifyView.as_view(),
+        name="auth-otp-verify",
+    ),
+
+    path(
+        "api/auth/send-credentials/",
+        SendCredentialsView.as_view(),
+        name="auth-send-credentials",
     ),
 
     path(

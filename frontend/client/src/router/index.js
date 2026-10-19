@@ -91,7 +91,6 @@ const routes = [
         "admin",
         "trustee",
         "borrower",
-        "donor",
       ],
     },
   },
@@ -114,7 +113,6 @@ const routes = [
         "admin",
         "trustee",
         "borrower",
-        "donor",
       ],
     },
   },
@@ -327,7 +325,6 @@ const routes = [
       roles: [
         "admin",
         "trustee",
-        "borrower",
       ],
     },
   },
@@ -380,7 +377,6 @@ const routes = [
 
       roles: [
         "admin",
-        "donor",
       ],
     },
   },
@@ -406,7 +402,6 @@ const routes = [
 
       roles: [
         "admin",
-        "donor",
       ],
     },
   },

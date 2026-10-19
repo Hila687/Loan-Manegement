@@ -5,22 +5,22 @@
     <div class="flex border-b mb-4">
       <button
         class="px-4 py-2 -mb-px border-b-2 font-medium transition-colors"
-        :class="selectedTab === 'details'
-          ? 'border-blue-600 text-blue-600'
-          : 'border-transparent text-muted hover:text-ink-soft'"
-        @click="setTab('details')"
-      >
-        {{ t("loanDetails.tabDetails") }}
-      </button>
-
-      <button
-        class="px-4 py-2 -mb-px border-b-2 font-medium transition-colors"
         :class="selectedTab === 'schedule'
           ? 'border-blue-600 text-blue-600'
           : 'border-transparent text-muted hover:text-ink-soft'"
         @click="setTab('schedule')"
       >
         {{ t("loanDetails.tabSchedule") }}
+      </button>
+
+      <button
+        class="px-4 py-2 -mb-px border-b-2 font-medium transition-colors"
+        :class="selectedTab === 'details'
+          ? 'border-blue-600 text-blue-600'
+          : 'border-transparent text-muted hover:text-ink-soft'"
+        @click="setTab('details')"
+      >
+        {{ t("loanDetails.tabDetails") }}
       </button>
     </div>
 
@@ -50,7 +50,8 @@ const emit = defineEmits<{
   (e: "tab-change", tab: "details" | "schedule"): void;
 }>();
 
-const selectedTab = ref<"details" | "schedule">("details");
+// The payment schedule is what people look for first.
+const selectedTab = ref<"details" | "schedule">("schedule");
 
 function setTab(tab: "details" | "schedule") {
   selectedTab.value = tab;

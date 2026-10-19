@@ -12,6 +12,7 @@ import { useFormValidation } from "../composables/useFormValidation";
 import { useFormFields } from "../composables/useFormFields";
 
 import AppLayout from "../components/AppLayout.vue";
+import CredentialsPanel, { type LoginCredentials } from "../components/CredentialsPanel.vue";
 import FormCard from "../components/FormCard.vue";
 import FormInput from "../components/FormInput.vue";
 import FormDatePicker from "../components/FormDatePicker.vue";
@@ -73,10 +74,7 @@ type TrusteeOption = {
 };
 
 
-type BorrowerCredentials = {
-  username: string;
-  temporary_password: string;
-};
+type BorrowerCredentials = LoginCredentials;
 
 
 const MAX_FILE_SIZE =
@@ -1289,6 +1287,28 @@ async function submit() {
                   .temporary_password ||
                   ""
               ),
+
+            login_hints:
+              credentials.login_hints ||
+              {},
+
+            can_send:
+              credentials.can_send,
+
+            phone_masked:
+              credentials.phone_masked ||
+              "",
+
+            code_login:
+              Boolean(
+                credentials.code_login
+              ),
+
+            can_send_sms:
+              credentials.can_send_sms,
+
+            can_send_email:
+              credentials.can_send_email,
           }
         : null;
 
@@ -1343,33 +1363,6 @@ async function submit() {
     showErrorMessage();
   } finally {
     loading.value =
-      false;
-  }
-}
-
-
-async function copyCredentials() {
-  if (
-    !borrowerCredentials.value
-  ) {
-    return;
-  }
-
-  const text =
-    `Username: ${borrowerCredentials.value.username}\n` +
-    `Temporary password: ${borrowerCredentials.value.temporary_password}`;
-
-  try {
-    await navigator
-      .clipboard
-      .writeText(
-        text
-      );
-
-    credentialsCopied.value =
-      true;
-  } catch {
-    credentialsCopied.value =
       false;
   }
 }
@@ -2110,102 +2103,11 @@ async function finishSuccessFlow() {
           </p>
 
 
-          <div
-            v-if="
-              borrowerCredentials
-            "
-            class="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4"
-          >
-            <p
-              class="text-sm font-semibold text-amber-900"
-            >
-              {{
-                locale === "he"
-                  ? "פרטי כניסה זמניים ללווה"
-                  : "Temporary borrower credentials"
-              }}
-            </p>
-
-
-            <p
-              class="mt-1 text-xs leading-5 text-amber-800"
-            >
-              {{
-                locale === "he"
-                  ? "יש למסור אותם ללווה בצורה מאובטחת. הסיסמה תוצג כאן פעם אחת בלבד."
-                  : "Give these credentials to the borrower securely. The password is shown here only once."
-              }}
-            </p>
-
-
-            <div
-              class="mt-4 space-y-3"
-            >
-              <div>
-                <p
-                  class="text-xs text-muted"
-                >
-                  {{
-                    locale === "he"
-                      ? "שם משתמש"
-                      : "Username"
-                  }}
-                </p>
-
-                <p
-                  class="mt-1 break-all rounded-lg bg-white px-3 py-2 font-mono text-sm text-ink"
-                >
-                  {{
-                    borrowerCredentials.username
-                  }}
-                </p>
-              </div>
-
-
-              <div>
-                <p
-                  class="text-xs text-muted"
-                >
-                  {{
-                    locale === "he"
-                      ? "סיסמה זמנית"
-                      : "Temporary password"
-                  }}
-                </p>
-
-                <p
-                  class="mt-1 break-all rounded-lg bg-white px-3 py-2 font-mono text-sm text-ink"
-                >
-                  {{
-                    borrowerCredentials.temporary_password
-                  }}
-                </p>
-              </div>
-            </div>
-
-
-            <button
-              type="button"
-              class="mt-4 w-full rounded-xl border border-amber-300 bg-white px-4 py-2.5 text-sm font-semibold text-amber-900 transition hover:bg-amber-100"
-              @click="
-                copyCredentials
-              "
-            >
-              {{
-                credentialsCopied
-                  ? (
-                      locale === "he"
-                        ? "הועתק"
-                        : "Copied"
-                    )
-                  : (
-                      locale === "he"
-                        ? "העתקת פרטים"
-                        : "Copy credentials"
-                    )
-              }}
-            </button>
-          </div>
+          <CredentialsPanel
+            v-if="borrowerCredentials"
+            class="mt-5 text-start"
+            :credentials="borrowerCredentials"
+          />
 
 
           <button

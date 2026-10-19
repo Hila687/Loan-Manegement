@@ -33,7 +33,9 @@ from .serializers import (
     LoanListSerializer,
     LoanUpdateSerializer,
 )
+from .credentials import credentials_payload
 from .services import (
+    get_payment_queryset_for_loan,
     audit,
     create_role_user,
     generate_payment_schedule,
@@ -111,11 +113,81 @@ def trustee_summary(
     }
 
 
+def payment_overview(loan):
+    """
+    Remaining balance and, for problem loans, what exactly is wrong.
+
+    A payment is a problem when the admin marked it late (bounced check,
+    failed standing order) or recorded it as only partly paid.
+    """
+    from django.utils import timezone
+
+    today = timezone.localdate()
+    payments = list(get_payment_queryset_for_loan(loan))
+
+    total = sum((p.amount for p in payments), Decimal("0.00"))
+    paid = sum((p.amount_paid for p in payments), Decimal("0.00"))
+
+    if not payments:
+        total = Decimal(loan.amount)
+
+    problems = []
+
+    for p in payments:
+        missing = p.amount - p.amount_paid
+
+        if p.status == "LATE" or (
+            p.is_manual_exception
+            and missing > 0
+            and p.due_date <= today
+        ):
+            problems.append({
+                "due_date": p.due_date.isoformat(),
+                "amount": str(p.amount),
+                "missing": str(max(missing, Decimal("0.00"))),
+                "status": p.status,
+                "note": p.exception_note or "",
+            })
+
+    upcoming = next(
+        (p for p in payments if p.status == "PENDING" and p.due_date > today),
+        None,
+    )
+
+    return {
+        "remaining_amount": str(max(total - paid, Decimal("0.00"))),
+        "paid_amount": str(paid),
+        "payments_total": len(payments),
+        "payments_paid": sum(1 for p in payments if p.status == "PAID"),
+        "next_payment": (
+            {
+                "due_date": upcoming.due_date.isoformat(),
+                "amount": str(upcoming.amount),
+            }
+            if upcoming
+            else None
+        ),
+        "problem": (
+            {
+                "count": len(problems),
+                "missing_amount": str(
+                    sum((Decimal(x["missing"]) for x in problems), Decimal("0.00"))
+                ),
+                "notes": sorted({x["note"] for x in problems if x["note"]}),
+                "payments": problems,
+            }
+            if problems
+            else None
+        ),
+    }
+
+
 def loan_list_item(
     loan,
     loan_type,
 ):
     return {
+        **payment_overview(loan),
         "loan_id":
             loan.loan_id,
 
@@ -189,10 +261,18 @@ class LoanListView(APIView):
           standing,
         )
 
+        # ?include_closed=1 also returns finished loans (archive / "all").
+        include_closed = (
+            request.GET.get("include_closed", "")
+            .strip()
+            .lower()
+            in {"1", "true", "yes"}
+        )
+
         checks, standing = (
           scoped_loan_querysets(
              request.user,
-             active_only=True,
+             active_only=not include_closed,
             )
         )
 
@@ -468,13 +548,10 @@ class LoanListView(APIView):
                         )
                     )
 
-                    credentials = {
-                        "username":
-                            user.username,
-
-                        "temporary_password":
-                            temporary_password,
-                    }
+                    credentials = credentials_payload(
+            user,
+            temporary_password,
+        )
 
                 else:
                     borrower.trustee = trustee
@@ -537,13 +614,10 @@ class LoanListView(APIView):
 
                         borrower.user = user
 
-                        credentials = {
-                            "username":
-                                user.username,
-
-                            "temporary_password":
-                                temporary_password,
-                        }
+                        credentials = credentials_payload(
+            user,
+            temporary_password,
+        )
 
                     else:
                         borrower.user.first_name = (
@@ -755,9 +829,14 @@ class LoanListView(APIView):
         }
 
         if credentials:
+            # Rebuild now that the borrower is saved and linked,
+            # so the login hints (ID number, phone) are complete.
             response_data[
                 "borrower_credentials"
-            ] = credentials
+            ] = credentials_payload(
+                loan.borrower.user,
+                credentials["temporary_password"],
+            )
 
         return Response(
             response_data,

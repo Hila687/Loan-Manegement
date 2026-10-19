@@ -35,6 +35,9 @@ export type AuthUser = {
 
   must_change_password:
     boolean;
+
+  is_superuser?:
+    boolean;
 };
 
 type LoginPayload = {
@@ -176,6 +179,11 @@ function normalizeUser(
         source.profile
           ?.must_change_password ??
         false
+      ),
+
+    is_superuser:
+      Boolean(
+        source.is_superuser
       ),
   };
 }
@@ -382,6 +390,60 @@ const displayName =
     );
   });
 
+type CodeRequestPayload = {
+  id_number: string;
+  phone?: string;
+  email?: string;
+  channel?: "SMS" | "EMAIL";
+};
+
+type CodeLoginPayload = CodeRequestPayload & {
+  code: string;
+};
+
+// Step 1 of password-free sign-in: text a code to the phone on file.
+async function requestLoginCode(
+  payload: CodeRequestPayload
+): Promise<{ resend_in?: number; dev_code?: string }> {
+  await ensureCsrf();
+
+  const response = await api.post(
+    "/auth/otp/request/",
+    payload
+  );
+
+  return response.data || {};
+}
+
+// Step 2: sign in with the code.
+async function loginWithCode(
+  payload: CodeLoginPayload
+): Promise<AuthUser> {
+  loading.value = true;
+
+  try {
+    await ensureCsrf();
+
+    const response = await api.post(
+      "/auth/otp/verify/",
+      payload
+    );
+
+    const normalized = normalizeUser(response.data);
+
+    if (!normalized) {
+      throw new Error("Invalid login response");
+    }
+
+    user.value = normalized;
+    initialized.value = true;
+
+    return normalized;
+  } finally {
+    loading.value = false;
+  }
+}
+
 export function useAuth() {
   return {
     user,
@@ -400,6 +462,8 @@ export function useAuth() {
 
     initialize,
     login,
+    requestLoginCode,
+    loginWithCode,
     logout,
     changePassword,
   };

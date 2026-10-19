@@ -222,6 +222,14 @@
       "noFilteredLoans": "No loans match the current filters",
       "noFilteredLoansDesc": "Try clearing one or more filters or adjusting your search term.",
       "error": "There was a problem loading the loans."
+    },
+    "row": {
+      "remaining": "Balance due",
+      "ofTotal": "of {total}",
+      "problemOne": "1 payment not paid",
+      "problemMany": "{count} payments not paid",
+      "missing": "{amount} missing",
+      "since": "since {date}"
     }
   },
   "loanDetails": {
@@ -343,14 +351,24 @@
       "organization": "Gemach Chasdei Yaakov",
       "title": "Sign in",
       "subtitle": "Sign in to continue to the Gemach management system.",
-      "username": "Username",
+      "username": "ID number, phone or username",
       "password": "Password",
       "submit": "Sign in",
       "loading": "Signing in...",
-      "required": "Username and password are required.",
-      "invalid": "Invalid username or password.",
+      "required": "Please enter your sign-in details and password.",
+      "invalid": "The details or password are incorrect.",
       "tooManyAttempts": "Too many sign-in attempts. Please try again later.",
-      "securityNote": "Your session is protected and access is limited according to your role."
+      "securityNote": "Your session is protected and access is limited according to your role.",
+      "usernamePlaceholder": "e.g. 054-1234567",
+      "usernameHelp": "You can sign in with your ID number, phone number, email or the username you received.",
+      "noAccess": "This account does not have access to the system. Please contact the Gemach administrator.",
+      "ambiguous": "Several accounts match these details. Please sign in with your username.",
+      "network": "Cannot reach the server. Check your connection and try again.",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
+      "forgot": "Forgot password / didn't get login details",
+      "forgotTitle": "How do I get a password?",
+      "forgotText": "Accounts are opened by the Gemach administrator. If you forgot your password or never received login details, contact the Gemach administrator or your community trustee. They will send you a new temporary password by SMS or WhatsApp."
     },
     "changePassword": {
       "title": "Change password",
@@ -364,6 +382,35 @@
       "notMatch": "The new passwords do not match.",
       "samePassword": "The new password must be different from the current password.",
       "error": "Failed to change password."
+    },
+    "code": {
+      "idNumber": "ID number",
+      "phone": "Mobile phone number",
+      "phoneHelp": "The number registered with the Gemach. A sign-in code will be sent to it.",
+      "sendBy": "Where should we send the code?",
+      "send": "Send code",
+      "sending": "Sending...",
+      "required": "Please enter your ID number and phone or email.",
+      "sent": "If these details match our records, a code is on its way by SMS. It is valid for 10 minutes.",
+      "code": "Sign-in code (6 digits)",
+      "codeRequired": "Please enter the 6-digit code.",
+      "invalid": "The code is incorrect. If no code arrived, check that your ID number and phone are correct.",
+      "expired": "The code has expired. Please request a new one.",
+      "tooSoon": "A code was just sent. You can request a new one in a minute.",
+      "sendFailed": "We could not send the code. Try again or contact the Gemach.",
+      "resend": "Send a new code",
+      "resendIn": "Resend in {seconds} s",
+      "editDetails": "Change details",
+      "devCode": "Development mode – no SMS service configured. Code:",
+      "usePassword": "Sign in with username and password",
+      "useCode": "Sign in with ID number and SMS code",
+      "trouble": "Not getting a code?",
+      "troubleText": "The code is sent only to the phone or email registered with the Gemach. If your details changed or you don't have an account, contact the Gemach administrator or your community trustee.",
+      "bySms": "SMS to phone",
+      "byEmail": "Email",
+      "email": "Email address",
+      "emailHelp": "The email registered with the Gemach. A sign-in code will be sent to it.",
+      "sentEmail": "If these details match our records, a code is on its way by email. It is valid for 10 minutes."
     }
   },
   "dashboard": {
@@ -410,5 +457,34 @@
       "title": "Donation overview",
       "subtitle": "Your donation activity and the general Gemach summary."
     }
+  },
+  "credentials": {
+    "title": "Website login details",
+    "notice": "The temporary password is shown here only once. Send it straight to the user's phone, or copy it and pass it on. They will be asked to choose a new password on first sign-in.",
+    "username": "Username",
+    "temporaryPassword": "Temporary password",
+    "site": "Website",
+    "hintIdNumber": "Can also sign in with ID number: {value}",
+    "hintPhone": "Can also sign in with phone number: {value}",
+    "copy": "Copy",
+    "copied": "Copied",
+    "sendSms": "Send by SMS",
+    "sending": "Sending...",
+    "sent": "Login details sent to {to}",
+    "noPhone": "No phone number on file, so it can't be sent. Copy it and pass it on manually.",
+    "notTemporary": "The password was already changed or reset. Reset again to send.",
+    "sendFailed": "Sending failed – SMS or email is not configured on the server. Copy and pass it on manually.",
+    "sendError": "Sending failed. Please try again.",
+    "reset": "Reset password",
+    "resetConfirm": "Reset the password for {name}? The current password will stop working and a new temporary password will be created.",
+    "resetTitle": "New temporary password",
+    "resetting": "Resetting...",
+    "codeLoginTitle": "Signing in",
+    "codeLoginText": "They sign in with ID number {id} and their phone or email, and get a sign-in code. No password needed.",
+    "sendWelcome": "Send account-opened message",
+    "passwordFallback": "Password sign-in details (backup)",
+    "noCodeLogin": "To sign in with an SMS code, save an ID number and mobile phone for them. Until then they sign in with this username and temporary password:",
+    "sendEmail": "Send by email",
+    "noEmail": "No email address on file."
   }
 }

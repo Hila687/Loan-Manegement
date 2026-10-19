@@ -146,6 +146,17 @@
             </button>
 
             <button
+              v-if="canResetPassword"
+              type="button"
+              :disabled="resettingId === getItemId(item)"
+              class="cursor-pointer rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800 transition hover:bg-amber-100 disabled:opacity-60"
+              :title="t('credentials.reset')"
+              @click="resetPassword(item)"
+            >
+              {{ resettingId === getItemId(item) ? t("credentials.resetting") : t("credentials.reset") }}
+            </button>
+
+            <button
               type="button"
               class="cursor-pointer rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-100"
               @click="requestDelete(item)"
@@ -186,8 +197,10 @@
             <template v-if="section === 'trustees'">
               <TextField v-model="form.first_name" :label="firstNameLabel" :required="true" />
               <TextField v-model="form.last_name" :label="lastNameLabel" :required="true" />
+              <TextField v-model="form.id_number" :label="idNumberLabel" />
               <TextField v-model="form.email" :label="emailLabel" type="email" />
               <TextField v-model="form.phone" :label="phoneLabel" type="tel" />
+              <p class="-mt-2 text-xs leading-5 text-muted">{{ codeLoginFieldHint }}</p>
               <TextField v-model="form.community" :label="communityLabel" :required="true" />
               <TextAreaField v-model="form.notes" :label="notesLabel" />
             </template>
@@ -218,8 +231,10 @@
 
               <TextField v-model="form.first_name" :label="firstNameLabel" :required="true" />
               <TextField v-model="form.last_name" :label="lastNameLabel" :required="true" />
+              <TextField v-model="form.id_number" :label="idNumberLabel" />
               <TextField v-model="form.email" :label="emailLabel" type="email" :required="true" />
               <TextField v-model="form.phone" :label="phoneLabel" type="tel" />
+              <p class="-mt-2 text-xs leading-5 text-muted">{{ codeLoginFieldHint }}</p>
             </template>
 
             <template v-else-if="section === 'borrowers'">
@@ -266,7 +281,7 @@
                 </select>
               </label>
 
-              <TextField v-model="form.amount" :label="amountLabel" type="number" :required="true" />
+              <TextField v-model="form.amount" :label="donationAmountLabel" type="number" :required="true" />
               <TextField v-model="form.donation_date" :label="dateLabel" type="date" :required="true" />
               <TextAreaField v-model="form.notes" :label="notesLabel" />
             </template>
@@ -303,38 +318,10 @@
             v-else
             class="mt-5"
           >
-            <div class="rounded-2xl border border-amber-200 bg-amber-50 p-4">
-              <h3 class="text-sm font-bold text-amber-900">
-                {{ credentialsTitle }}
-              </h3>
-              <p class="mt-1 text-xs leading-5 text-amber-800">
-                {{ credentialsNotice }}
-              </p>
-
-              <div class="mt-4 space-y-3">
-                <div>
-                  <p class="text-xs text-amber-800">{{ usernameLabel }}</p>
-                  <p dir="ltr" class="mt-1 break-all rounded-lg bg-white px-3 py-2 font-mono text-sm text-ink">
-                    {{ temporaryCredentials.username }}
-                  </p>
-                </div>
-
-                <div>
-                  <p class="text-xs text-amber-800">{{ temporaryPasswordLabel }}</p>
-                  <p dir="ltr" class="mt-1 break-all rounded-lg bg-white px-3 py-2 font-mono text-sm text-ink">
-                    {{ temporaryCredentials.temporary_password }}
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                class="mt-4 w-full cursor-pointer rounded-xl border border-amber-300 bg-white px-4 py-2.5 text-sm font-semibold text-amber-900 transition hover:bg-amber-100"
-                @click="copyCredentials"
-              >
-                {{ credentialsCopied ? copiedLabel : copyLabel }}
-              </button>
-            </div>
+            <CredentialsPanel
+              :credentials="temporaryCredentials"
+              :title="credentialsPanelTitle"
+            />
 
             <button
               type="button"
@@ -395,6 +382,7 @@ import {
 } from "vue";
 
 import AppLayout from "../components/AppLayout.vue";
+import CredentialsPanel, { type LoginCredentials } from "../components/CredentialsPanel.vue";
 import api from "../services/api";
 import { useLocale } from "../composables/useLocale";
 import { useAuth } from "../composables/useAuth";
@@ -415,10 +403,7 @@ type OptionItem = {
   label: string;
 };
 
-type TemporaryCredentials = {
-  username: string;
-  temporary_password: string;
-};
+type TemporaryCredentials = LoginCredentials;
 
 const props =
   defineProps<{
@@ -428,6 +413,7 @@ const props =
 const {
   locale,
   isRTL,
+  t,
 } = useLocale();
 
 const auth = useAuth();
@@ -445,6 +431,8 @@ const editingItem = ref<ListItem | null>(null);
 const deleteCandidate = ref<ListItem | null>(null);
 const temporaryCredentials = ref<TemporaryCredentials | null>(null);
 const credentialsCopied = ref(false);
+const resettingId = ref("");
+const credentialsFromReset = ref(false);
 const trusteeOptions = ref<OptionItem[]>([]);
 const donorOptions = ref<OptionItem[]>([]);
 
@@ -534,16 +522,21 @@ const phoneLabel = computed(() => text("טלפון", "Phone", "Teléfono"));
 const communityLabel = computed(() => text("קהילה", "Community", "Comunidad"));
 const notesLabel = computed(() => text("הערות", "Notes", "Notas"));
 const idNumberLabel = computed(() => text("תעודת זהות", "ID number", "Identificación"));
+const codeLoginFieldHint = computed(() =>
+  text(
+    "עם תעודת זהות וטלפון נייד או מייל אפשר להיכנס לאתר עם קוד, בלי סיסמה.",
+    "With an ID number and a mobile phone or email they can sign in with a code, no password needed.",
+    "Con documento y teléfono móvil o correo puede entrar con un código, sin contraseña."
+  )
+);
 const addressLabel = computed(() => text("כתובת", "Address", "Dirección"));
 const trusteeLabel = computed(() => text("נאמן", "Trustee", "Responsable"));
 const donorLabel = computed(() => text("תורם", "Donor", "Donante"));
 const amountLabel = computed(() => text("סכום", "Amount", "Importe"));
+const donationAmountLabel = computed(() => text("סכום ($)", "Amount ($)", "Importe ($)"));
 const dateLabel = computed(() => text("תאריך", "Date", "Fecha"));
 const usernameLabel = computed(() => text("שם משתמש", "Username", "Usuario"));
-const temporaryPasswordLabel = computed(() => text("סיסמה זמנית", "Temporary password", "Contraseña temporal"));
 const selectDonorLabel = computed(() => text("בחר תורם", "Select donor", "Selecciona donante"));
-const copyLabel = computed(() => text("העתקת פרטי כניסה", "Copy login details", "Copiar datos de acceso"));
-const copiedLabel = computed(() => text("הועתק", "Copied", "Copiado"));
 const adminLoginHint = computed(() =>
   text(
     "שם המשתמש ייווצר אוטומטית מהשם הפרטי ושם המשפחה. לאחר השמירה תוצג סיסמה זמנית לכניסה הראשונה.",
@@ -552,25 +545,64 @@ const adminLoginHint = computed(() =>
   )
 );
 
-const credentialsTitle = computed(() =>
-  text(
-    "פרטי כניסה לאתר",
-    "Website login details",
-    "Datos de acceso al sitio"
-  )
-);
-
-const credentialsNotice = computed(() =>
-  text(
-    "יש להעביר למשתמש את שם המשתמש והסיסמה. בכניסה הראשונה הוא יתבקש להחליף סיסמה.",
-    "Give the user this username and password. They will be asked to change the password on first login.",
-    "Entrega al usuario este nombre y contraseña. En el primer acceso deberá cambiar la contraseña."
-  )
-);
-
 const canEdit = computed(() =>
   auth.isAdmin.value
 );
+
+const canResetPassword = computed(() => {
+  if (!auth.isAdmin.value) {
+    return false;
+  }
+
+  if (props.section === "admins") {
+    // Only the super-admin may reset another administrator.
+    return Boolean(auth.user.value?.is_superuser);
+  }
+
+  // Donors do not sign in, so they have no password to reset.
+  return ["borrowers", "trustees"].includes(props.section);
+});
+
+const credentialsPanelTitle = computed(() =>
+  credentialsFromReset.value
+    ? t("credentials.resetTitle")
+    : t("credentials.title")
+);
+
+async function resetPassword(item: ListItem): Promise<void> {
+  const name = getPrimaryLabel(item);
+
+  if (!window.confirm(t("credentials.resetConfirm", { name }))) {
+    return;
+  }
+
+  const id = getItemId(item);
+  resettingId.value = id;
+  errorMessage.value = "";
+  successMessage.value = "";
+
+  try {
+    const response = await api.post(
+      `${endpointMap[props.section]}${encodeURIComponent(id)}/reset-password/`
+    );
+
+    const credentials = extractCredentials(response.data);
+
+    if (!credentials) {
+      throw new Error("missing credentials");
+    }
+
+    editingItem.value = null;
+    modalError.value = "";
+    temporaryCredentials.value = credentials;
+    credentialsFromReset.value = true;
+    modalOpen.value = true;
+  } catch (requestError: any) {
+    errorMessage.value = normalizeApiError(requestError);
+  } finally {
+    resettingId.value = "";
+  }
+}
 
 const showCreateButton = computed(() =>
   auth.isAdmin.value
@@ -592,7 +624,9 @@ const emptyTitle = computed(() => text("לא נמצאו נתונים", "No recor
 const emptyDescription = computed(() => text("אין כרגע רשומות להצגה.", "There are currently no records to display.", "No hay registros para mostrar."));
 
 const modalTitle = computed(() =>
-  editingItem.value
+  credentialsFromReset.value
+    ? t("credentials.reset")
+    : editingItem.value
     ? text("עריכת פרטים", "Edit details", "Editar datos")
     : createLabel.value
 );
@@ -668,7 +702,7 @@ function getSecondaryLabel(item: ListItem): string {
   }
 
   if (props.section === "donations") {
-    return formatCurrency(item.amount || 0);
+    return formatCurrency(item.amount || 0, "USD");
   }
 
   const user = getUserDetails(item);
@@ -701,7 +735,7 @@ function getStatusClass(item: ListItem): string {
     : "bg-success/10 text-success-deep";
 }
 
-function formatCurrency(value: any): string {
+function formatCurrency(value: any, currency = "ILS"): string {
   const formatterLocale =
     locale.value === "he"
       ? "he-IL"
@@ -713,7 +747,7 @@ function formatCurrency(value: any): string {
     formatterLocale,
     {
       style: "currency",
-      currency: "ILS",
+      currency,
       maximumFractionDigits: 2,
     }
   ).format(Number(value || 0));
@@ -794,6 +828,7 @@ function getDetails(item: ListItem): DetailItem[] {
   if (props.section === "trustees") {
     return [
       { label: communityLabel.value, value: String(item.community || "—") },
+      { label: idNumberLabel.value, value: String(item.id_number || "—") },
       {
         label: phoneLabel.value,
         value: String(item.phone || user.phone || "—"),
@@ -817,7 +852,7 @@ function getDetails(item: ListItem): DetailItem[] {
 
   if (props.section === "donations") {
     return [
-      { label: amountLabel.value, value: formatCurrency(item.amount) },
+      { label: amountLabel.value, value: formatCurrency(item.amount, "USD") },
       { label: dateLabel.value, value: formatDate(item.donation_date || item.date) },
       { label: notesLabel.value, value: String(item.notes || "—") },
     ];
@@ -877,6 +912,7 @@ function openCreateModal(): void {
   editingItem.value = null;
   temporaryCredentials.value = null;
   credentialsCopied.value = false;
+  credentialsFromReset.value = false;
   modalError.value = "";
   resetForm();
   modalOpen.value = true;
@@ -903,26 +939,10 @@ function finishCredentials(): void {
   closeModal();
 }
 
-async function copyCredentials(): Promise<void> {
-  if (!temporaryCredentials.value) {
-    return;
-  }
-
-  const value =
-    `${usernameLabel.value}: ${temporaryCredentials.value.username}\n` +
-    `${temporaryPasswordLabel.value}: ${temporaryCredentials.value.temporary_password}`;
-
-  try {
-    await navigator.clipboard.writeText(value);
-    credentialsCopied.value = true;
-  } catch {
-    credentialsCopied.value = false;
-  }
-}
-
 function buildPayload(): Record<string, any> {
   if (props.section === "trustees") {
     return {
+      id_number: String(form.id_number || "").trim(),
       first_name: String(form.first_name || "").trim(),
       last_name: String(form.last_name || "").trim(),
       email: String(form.email || "").trim(),
@@ -934,6 +954,7 @@ function buildPayload(): Record<string, any> {
 
   if (props.section === "donors") {
     return {
+      id_number: String(form.id_number || "").trim(),
       first_name: String(form.first_name || "").trim(),
       last_name: String(form.last_name || "").trim(),
       email: String(form.email || "").trim(),
@@ -944,6 +965,7 @@ function buildPayload(): Record<string, any> {
 
   if (props.section === "admins") {
     return {
+      id_number: String(form.id_number || "").trim(),
       first_name: String(form.first_name || "").trim(),
       last_name: String(form.last_name || "").trim(),
       email: String(form.email || "").trim(),
@@ -1014,6 +1036,12 @@ function extractCredentials(data: any): TemporaryCredentials | null {
   return {
     username: String(username),
     temporary_password: String(password),
+    login_hints: source?.login_hints || {},
+    can_send: source?.can_send,
+    phone_masked: source?.phone_masked || "",
+    code_login: Boolean(source?.code_login),
+    can_send_sms: source?.can_send_sms,
+    can_send_email: source?.can_send_email,
   };
 }
 

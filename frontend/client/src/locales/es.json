@@ -222,6 +222,14 @@
       "noFilteredLoans": "Ningún préstamo coincide con los filtros actuales",
       "noFilteredLoansDesc": "Prueba a quitar uno o más filtros o a cambiar el texto de búsqueda.",
       "error": "Hubo un problema al cargar los préstamos."
+    },
+    "row": {
+      "remaining": "Saldo pendiente",
+      "ofTotal": "de {total}",
+      "problemOne": "1 pago sin pagar",
+      "problemMany": "{count} pagos sin pagar",
+      "missing": "faltan {amount}",
+      "since": "desde {date}"
     }
   },
   "loanDetails": {
@@ -344,14 +352,24 @@
       "organization": "Guemaj Jasdei Yaakov",
       "title": "Iniciar sesión",
       "subtitle": "Inicia sesión para continuar al sistema de gestión del Guemaj.",
-      "username": "Nombre de usuario",
+      "username": "Documento, teléfono o usuario",
       "password": "Contraseña",
       "submit": "Iniciar sesión",
       "loading": "Iniciando sesión...",
-      "required": "El nombre de usuario y la contraseña son obligatorios.",
-      "invalid": "Nombre de usuario o contraseña incorrectos.",
+      "required": "Introduce tus datos de acceso y la contraseña.",
+      "invalid": "Los datos o la contraseña son incorrectos.",
       "tooManyAttempts": "Demasiados intentos de inicio de sesión. Inténtalo de nuevo más tarde.",
-      "securityNote": "Tu sesión está protegida y el acceso está limitado según tu rol."
+      "securityNote": "Tu sesión está protegida y el acceso está limitado según tu rol.",
+      "usernamePlaceholder": "p. ej. 054-1234567",
+      "usernameHelp": "Puedes iniciar sesión con tu número de documento, teléfono, correo o el usuario que recibiste.",
+      "noAccess": "Esta cuenta no tiene acceso al sistema. Contacta al administrador del Guemaj.",
+      "ambiguous": "Varias cuentas coinciden con estos datos. Inicia sesión con tu usuario.",
+      "network": "No se puede conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.",
+      "showPassword": "Mostrar contraseña",
+      "hidePassword": "Ocultar contraseña",
+      "forgot": "Olvidé mi contraseña / no recibí mis datos",
+      "forgotTitle": "¿Cómo obtengo una contraseña?",
+      "forgotText": "Las cuentas las abre el administrador del Guemaj. Si olvidaste tu contraseña o no recibiste tus datos, contacta al administrador o al responsable de tu comunidad. Te enviarán una nueva contraseña temporal por SMS o WhatsApp."
     },
     "changePassword": {
       "title": "Cambiar contraseña",
@@ -365,6 +383,35 @@
       "notMatch": "Las nuevas contraseñas no coinciden.",
       "samePassword": "La nueva contraseña debe ser diferente de la actual.",
       "error": "No se pudo cambiar la contraseña."
+    },
+    "code": {
+      "idNumber": "Número de documento",
+      "phone": "Teléfono móvil",
+      "phoneHelp": "El número registrado en el Guemaj. Se enviará un código de acceso a ese número.",
+      "sendBy": "¿Dónde enviamos el código?",
+      "send": "Enviar código",
+      "sending": "Enviando...",
+      "required": "Introduce tu documento y teléfono o correo.",
+      "sent": "Si los datos coinciden con nuestros registros, te enviamos un código por SMS. Es válido 10 minutos.",
+      "code": "Código de acceso (6 dígitos)",
+      "codeRequired": "Introduce el código de 6 dígitos.",
+      "invalid": "El código es incorrecto. Si no recibiste un código, revisa tu documento y teléfono.",
+      "expired": "El código expiró. Solicita uno nuevo.",
+      "tooSoon": "Ya se envió un código. Puedes pedir otro en un minuto.",
+      "sendFailed": "No pudimos enviar el código. Inténtalo de nuevo o contacta al Guemaj.",
+      "resend": "Enviar un código nuevo",
+      "resendIn": "Reenviar en {seconds} s",
+      "editDetails": "Cambiar datos",
+      "devCode": "Modo desarrollo – no hay servicio SMS configurado. Código:",
+      "usePassword": "Entrar con usuario y contraseña",
+      "useCode": "Entrar con documento y código SMS",
+      "trouble": "¿No recibes el código?",
+      "troubleText": "El código se envía solo al teléfono o correo registrado en el Guemaj. Si tus datos cambiaron o no tienes cuenta, contacta al administrador o al responsable de tu comunidad.",
+      "bySms": "SMS al teléfono",
+      "byEmail": "Correo",
+      "email": "Correo electrónico",
+      "emailHelp": "El correo registrado en el Guemaj. Se enviará un código de acceso.",
+      "sentEmail": "Si los datos coinciden con nuestros registros, te enviamos un código por correo. Es válido 10 minutos."
     }
   },
   "dashboard": {
@@ -411,5 +458,34 @@
       "title": "Resumen de donaciones",
       "subtitle": "Tu actividad de donaciones y el resumen general del Guemaj."
     }
+  },
+  "credentials": {
+    "title": "Datos de acceso al sitio",
+    "notice": "La contraseña temporal se muestra solo una vez. Envíala directamente al teléfono del usuario o cópiala y entrégala. En el primer acceso deberá elegir una nueva contraseña.",
+    "username": "Usuario",
+    "temporaryPassword": "Contraseña temporal",
+    "site": "Sitio",
+    "hintIdNumber": "También puede entrar con su documento: {value}",
+    "hintPhone": "También puede entrar con su teléfono: {value}",
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "sendSms": "Enviar por SMS",
+    "sending": "Enviando...",
+    "sent": "Datos enviados a {to}",
+    "noPhone": "No hay teléfono guardado, no se puede enviar. Cópialo y entrégalo manualmente.",
+    "notTemporary": "La contraseña ya fue cambiada o restablecida. Restablécela de nuevo para enviar.",
+    "sendFailed": "El envío falló: SMS o correo no está configurado en el servidor. Cópialo y entrégalo manualmente.",
+    "sendError": "El envío falló. Inténtalo de nuevo.",
+    "reset": "Restablecer contraseña",
+    "resetConfirm": "¿Restablecer la contraseña de {name}? La contraseña actual dejará de funcionar y se creará una nueva temporal.",
+    "resetTitle": "Nueva contraseña temporal",
+    "resetting": "Restableciendo...",
+    "codeLoginTitle": "Cómo entrar",
+    "codeLoginText": "Entra con el documento {id} y su teléfono o correo, y recibe un código. No necesita contraseña.",
+    "sendWelcome": "Enviar mensaje de bienvenida",
+    "passwordFallback": "Datos de acceso con contraseña (respaldo)",
+    "noCodeLogin": "Para entrar con código SMS, guarda su documento y teléfono móvil. Mientras tanto entra con este usuario y contraseña temporal:",
+    "sendEmail": "Enviar por correo",
+    "noEmail": "No hay correo guardado."
   }
 }

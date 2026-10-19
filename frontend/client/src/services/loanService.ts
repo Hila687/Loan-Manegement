@@ -15,23 +15,6 @@ import type {
 } from "../types/api-loan";
 
 
-type ReportLoanRow = {
-  loan_id: string;
-  loan_type: "checks" | "standing_order";
-  borrower_name?: string;
-  trustee_name?: string;
-  community?: string;
-  amount: string | number;
-  start_date: string;
-  status: "ACTIVE" | "OVERDUE" | "CLOSED";
-};
-
-
-type ManagementReportResponse = {
-  loans?: ReportLoanRow[];
-};
-
-
 function mapBorrower(
   apiLoan: ApiLoanListItem
 ) {
@@ -151,6 +134,38 @@ function mapLoanListItem(
     startDate:
       apiLoan.start_date,
 
+    remainingAmount:
+      apiLoan.remaining_amount !== undefined
+        ? Number(apiLoan.remaining_amount)
+        : undefined,
+
+    paidAmount:
+      Number(apiLoan.paid_amount || 0),
+
+    paymentsTotal:
+      apiLoan.payments_total || 0,
+
+    paymentsPaid:
+      apiLoan.payments_paid || 0,
+
+    nextPayment:
+      apiLoan.next_payment
+        ? {
+            dueDate: apiLoan.next_payment.due_date,
+            amount: Number(apiLoan.next_payment.amount),
+          }
+        : null,
+
+    problem:
+      apiLoan.problem
+        ? {
+            count: apiLoan.problem.count,
+            missingAmount: Number(apiLoan.problem.missing_amount || 0),
+            notes: apiLoan.problem.notes || [],
+            firstDueDate: apiLoan.problem.payments?.[0]?.due_date || "",
+          }
+        : null,
+
     borrower:
       mapBorrower(
         apiLoan
@@ -160,66 +175,6 @@ function mapLoanListItem(
       mapTrustee(
         apiLoan
       ),
-  };
-}
-
-
-function mapReportLoanListItem(
-  row: ReportLoanRow
-): LoanListItem {
-  return {
-    id:
-      String(
-        row.loan_id
-      ),
-
-    type:
-      mapLoanType(
-        row.loan_type
-      ),
-
-    status:
-      mapLoanStatus(
-        row.status
-      ),
-
-    amount:
-      Number(
-        row.amount ||
-          0
-      ),
-
-    startDate:
-      row.start_date,
-
-    borrower: {
-      name:
-        String(
-          row.borrower_name ||
-          ""
-        ),
-
-      phone: "",
-    },
-
-    trustee:
-      row.trustee_name ||
-      row.community
-        ? {
-            name:
-              String(
-                row.trustee_name ||
-                ""
-              ),
-
-            community:
-              String(
-                row.community ||
-                ""
-              ) ||
-              undefined,
-          }
-        : null,
   };
 }
 
@@ -356,26 +311,7 @@ function mapLoanDetails(
 async function getLoanDirectory(
   includeCompleted = false
 ): Promise<LoanListItem[]> {
-  if (
-    includeCompleted
-  ) {
-    const response =
-      await api.get<ManagementReportResponse>(
-        "/reports/summary/"
-      );
-
-    const rows =
-      Array.isArray(
-        response.data?.loans
-      )
-        ? response.data.loans
-        : [];
-
-    return rows.map(
-      mapReportLoanListItem
-    );
-  }
-
+  // One endpoint for every role; it returns balance + problem details too.
   const response =
     await api.get<
       ApiLoanListItem[]
@@ -384,6 +320,7 @@ async function getLoanDirectory(
       {
         params: {
           type: "all",
+          ...(includeCompleted ? { include_closed: 1 } : {}),
         },
       }
     );

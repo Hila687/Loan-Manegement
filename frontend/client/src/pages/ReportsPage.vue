@@ -817,7 +817,7 @@ const summaryCards =
             : "Donations",
 
         format:
-          "currency",
+          "usd",
       },
     ];
 
@@ -850,6 +850,12 @@ const summaryCards =
               ? formatCurrency(
                   rawValue
                 )
+              : definition.format ===
+                  "usd"
+                ? formatCurrency(
+                    rawValue,
+                    "USD"
+                  )
               : new Intl
                   .NumberFormat(
                     isHebrew.value
@@ -1257,7 +1263,8 @@ function rowStartDate(
 }
 
 function formatCurrency(
-  value: any
+  value: any,
+  currency = "ILS"
 ): string {
   return new Intl
     .NumberFormat(
@@ -1268,8 +1275,7 @@ function formatCurrency(
         style:
           "currency",
 
-        currency:
-          "ILS",
+        currency,
 
         maximumFractionDigits:
           2,

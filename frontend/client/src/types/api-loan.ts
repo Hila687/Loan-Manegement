@@ -35,6 +35,24 @@ export interface ApiLoanListItem {
     | "OVERDUE"
     | "CLOSED";
 
+  remaining_amount?: string | number;
+  paid_amount?: string | number;
+  payments_total?: number;
+  payments_paid?: number;
+  next_payment?: { due_date: string; amount: string | number } | null;
+  problem?: {
+    count: number;
+    missing_amount: string | number;
+    notes: string[];
+    payments: {
+      due_date: string;
+      amount: string | number;
+      missing: string | number;
+      status: string;
+      note: string;
+    }[];
+  } | null;
+
   borrower:
     ApiBorrower;
 

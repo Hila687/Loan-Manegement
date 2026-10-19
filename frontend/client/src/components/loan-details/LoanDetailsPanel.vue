@@ -657,7 +657,7 @@ const activeTab =
     | "details"
     | "schedule"
   >(
-    "details"
+    "schedule"
   );
 
 const isHebrew =

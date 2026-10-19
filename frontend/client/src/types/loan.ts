@@ -36,6 +36,21 @@ export interface LoanListItem {
   amount: number;
   startDate: string;
 
+  // Balance still owed, and what was paid so far.
+  remainingAmount?: number;
+  paidAmount?: number;
+  paymentsTotal?: number;
+  paymentsPaid?: number;
+  nextPayment?: { dueDate: string; amount: number } | null;
+
+  // Set when payments were marked late / partly paid.
+  problem?: {
+    count: number;
+    missingAmount: number;
+    notes: string[];
+    firstDueDate: string;
+  } | null;
+
   borrower: Borrower;
   trustee: Trustee | null;
 }

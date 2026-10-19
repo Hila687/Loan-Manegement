@@ -87,11 +87,17 @@
 
           <div class="mt-4 flex items-end justify-between gap-3">
             <div>
+              <p class="text-xs font-medium text-muted">
+                {{ tt("loanList.row.remaining") }}
+              </p>
               <p
                 dir="ltr"
                 class="text-2xl font-bold text-ink"
               >
-                {{ formatCurrency(loan.amount) }}
+                {{ formatCurrency(remainingOf(loan)) }}
+              </p>
+              <p class="mt-0.5 text-xs text-muted">
+                {{ tt("loanList.row.ofTotal", { total: formatCurrency(loan.amount) }) }}
               </p>
 
               <div class="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
@@ -125,6 +131,16 @@
                 />
               </svg>
             </span>
+          </div>
+          <div
+            v-if="loan.problem"
+            class="mt-3 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
+            role="note"
+          >
+            <svg class="mt-0.5 h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+            </svg>
+            <span>{{ problemText(loan) }}</span>
           </div>
         </button>
 
@@ -163,12 +179,21 @@
             </p>
           </div>
 
-          <p
-            dir="ltr"
-            class="self-center whitespace-nowrap text-lg font-bold text-ink"
-          >
-            {{ formatCurrency(loan.amount) }}
-          </p>
+          <div class="self-center whitespace-nowrap">
+            <p class="text-xs font-medium text-muted">
+              {{ tt("loanList.row.remaining") }}
+            </p>
+            <p
+              dir="ltr"
+              class="text-lg font-bold text-ink"
+              :class="isRTL ? 'text-right' : 'text-left'"
+            >
+              {{ formatCurrency(remainingOf(loan)) }}
+            </p>
+            <p class="text-xs text-muted">
+              {{ tt("loanList.row.ofTotal", { total: formatCurrency(loan.amount) }) }}
+            </p>
+          </div>
 
           <div class="flex min-w-0 items-center gap-2 self-center text-sm">
             <span
@@ -208,6 +233,16 @@
                 />
               </svg>
             </span>
+          </div>
+          <div
+            v-if="loan.problem"
+            class="sm:col-span-2 lg:col-span-5 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
+            role="note"
+          >
+            <svg class="mt-0.5 h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+            </svg>
+            <span>{{ problemText(loan) }}</span>
           </div>
         </button>
 
@@ -273,6 +308,8 @@ import {
 import LoanDetailsPanel
   from "./loan-details/LoanDetailsPanel.vue";
 
+import { useI18n } from "vue-i18n";
+
 import loanService
   from "../services/loanService";
 
@@ -318,6 +355,42 @@ const emit =
     ): void;
   }>();
 
+
+const { t: tt } = useI18n();
+
+// Balance still owed; falls back to the loan amount for old API data.
+function remainingOf(loan: LoanListItem): number {
+  return loan.remainingAmount ?? loan.amount;
+}
+
+// e.g. "2 payments not paid · ₪1,000 missing · Check bounced · since 01/03/2026"
+function problemText(loan: LoanListItem): string {
+  const problem = loan.problem;
+
+  if (!problem) {
+    return "";
+  }
+
+  const parts = [
+    problem.count === 1
+      ? tt("loanList.row.problemOne")
+      : tt("loanList.row.problemMany", { count: problem.count }),
+  ];
+
+  if (problem.missingAmount > 0) {
+    parts.push(
+      tt("loanList.row.missing", { amount: formatCurrency(problem.missingAmount) })
+    );
+  }
+
+  parts.push(...problem.notes);
+
+  if (problem.firstDueDate) {
+    parts.push(tt("loanList.row.since", { date: formatDate(problem.firstDueDate) }));
+  }
+
+  return parts.join(" · ");
+}
 
 const expandedLoanId =
   computed(

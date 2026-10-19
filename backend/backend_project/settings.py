@@ -355,3 +355,31 @@ DEFAULT_COUNTRY_CODE = os.getenv(
     "DEFAULT_COUNTRY_CODE",
     "+972",
 )
+
+# Sign-in with username, ID number, phone or email
+# (see core/auth_backends.py).
+AUTHENTICATION_BACKENDS = [
+    "core.auth_backends.FlexibleLoginBackend",
+]
+
+# Public address of the website, used in the login-details SMS.
+SITE_URL = os.getenv(
+    "SITE_URL",
+    "http://127.0.0.1:5173",
+).rstrip("/")
+
+# One-time SMS code sign-in (core/otp.py)
+OTP_TTL_SECONDS = int(os.getenv("OTP_TTL_SECONDS", "600"))
+OTP_RESEND_SECONDS = int(os.getenv("OTP_RESEND_SECONDS", "60"))
+OTP_MAX_ATTEMPTS = int(os.getenv("OTP_MAX_ATTEMPTS", "5"))
+OTP_MAX_CODES_PER_HOUR = int(os.getenv("OTP_MAX_CODES_PER_HOUR", "5"))
+OTP_MAX_REQUESTS_PER_IP = int(os.getenv("OTP_MAX_REQUESTS_PER_IP", "20"))
+
+# Email (login codes / account messages). Leave EMAIL_HOST empty in
+# development: codes are then shown on screen instead.
+EMAIL_HOST = os.getenv("EMAIL_HOST", "")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", True)
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "no-reply@gemach.local")

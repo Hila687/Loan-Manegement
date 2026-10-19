@@ -4,728 +4,459 @@
     :show-language-toggle="true"
     max-width="full"
   >
-    <div
-      v-if="loading"
-      class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
-    >
+    <!-- Loading skeleton -->
+    <div v-if="loading" class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
       <div
         v-for="index in 4"
         :key="index"
-        class="h-36 animate-pulse rounded-2xl border border-line bg-white"
+        class="h-32 animate-pulse rounded-2xl border border-line bg-white"
       ></div>
     </div>
 
     <div
       v-else-if="errorMessage"
       class="rounded-2xl border border-red-200 bg-white p-6 text-center"
+      role="alert"
     >
-      <div
-        class="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-red-50 text-red-500"
-      >
-        <svg
-          class="h-6 w-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
-          />
-        </svg>
-      </div>
-
-      <p class="mt-4 font-semibold text-ink">
-        {{ errorMessage }}
-      </p>
-
+      <p class="text-sm text-red-700">{{ errorMessage }}</p>
       <button
         type="button"
-        class="mt-4 rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-deep"
+        class="mt-4 cursor-pointer rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-deep"
         @click="loadDashboard"
       >
-        {{ t("common.retry") }}
+        {{ text("נסו שוב", "Try again", "Reintentar") }}
       </button>
     </div>
 
     <div v-else class="space-y-5 sm:space-y-6">
-      <!-- Main status shortcuts -->
+      <!-- 1. Headline numbers -->
       <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <button
+        <component
+          :is="tile.to ? 'button' : 'div'"
+          v-for="tile in tiles"
+          :key="tile.key"
           type="button"
-          class="dashboard-card dashboard-card-button text-start"
-          @click="openLoans('ACTIVE')"
+          class="rounded-2xl border bg-white p-5 text-start shadow-sm transition"
+          :class="[
+            tile.tone === 'problem' && tile.value !== '0'
+              ? 'border-red-200'
+              : 'border-line',
+            tile.to ? 'cursor-pointer hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-brand/40' : '',
+          ]"
+          @click="tile.to && router.push(tile.to)"
         >
-          <div class="flex items-start justify-between gap-3">
-            <div class="dashboard-icon bg-brand/10 text-brand">
-              <svg
-                class="h-6 w-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 12l2 2 4-4M7 7h3m-3 5h2m-2 5h8"
-                />
+          <div class="flex items-center gap-2">
+            <span
+              class="flex h-8 w-8 items-center justify-center rounded-lg"
+              :class="toneClass(tile.tone)"
+              aria-hidden="true"
+            >
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="icons[tile.icon]" />
               </svg>
-            </div>
-
+            </span>
+            <p class="text-sm font-medium text-muted">{{ tile.label }}</p>
           </div>
-
-          <p class="dashboard-label">{{ activeLoansLabel }}</p>
-          <p class="dashboard-value">{{ dashboard.loan_status.active }}</p>
-          <p class="dashboard-hint">{{ openLoansLabel }}</p>
-        </button>
-
-        <button
-          type="button"
-          class="dashboard-card dashboard-card-button text-start"
-          @click="openLoans('OVERDUE')"
-        >
-          <div class="flex items-start justify-between gap-3">
-            <div class="dashboard-icon bg-danger/10 text-danger">
-              <svg
-                class="h-6 w-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M12 8v4m0 4h.01M4.93 19h14.14a2 2 0 001.73-3L13.73 4a2 2 0 00-3.46 0L3.2 16A2 2 0 004.93 19z"
-                />
-              </svg>
-            </div>
-
-          </div>
-
-          <p class="dashboard-label">{{ problematicLoansLabel }}</p>
-          <p class="dashboard-value text-danger">{{ dashboard.loan_status.overdue }}</p>
-          <p class="dashboard-hint">{{ problematicHint }}</p>
-        </button>
-
-        <button
-          type="button"
-          class="dashboard-card text-start"
-          :class="auth.isAdmin.value ? 'dashboard-card-button' : ''"
-          :disabled="!auth.isAdmin.value"
-          @click="openArchive"
-        >
-          <div class="flex items-start justify-between gap-3">
-            <div class="dashboard-icon bg-success/10 text-success">
-              <svg
-                class="h-6 w-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-            </div>
-
-          </div>
-
-          <p class="dashboard-label">{{ completedLoansLabel }}</p>
-          <p class="dashboard-value">{{ dashboard.loan_status.closed }}</p>
-          <p class="dashboard-hint">
-            {{ auth.isAdmin.value ? archiveHint : completedReadOnlyHint }}
+          <p dir="ltr" class="mt-3 text-[1.75rem] font-bold leading-tight text-ink" :class="isRTL ? 'text-right' : 'text-left'">
+            {{ tile.value }}
           </p>
-        </button>
-
-        <button
-          type="button"
-          class="dashboard-card text-start"
-          :class="canOpenDonations ? 'dashboard-card-button' : ''"
-          :disabled="!canOpenDonations"
-          @click="openDonations"
-        >
-          <div class="flex items-start justify-between gap-3">
-            <div class="dashboard-icon bg-violet/10 text-violet">
-              <svg
-                class="h-6 w-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V6m0 12v-2"
-                />
-              </svg>
-            </div>
-
-          </div>
-
-          <p class="dashboard-label">{{ donationCardLabel }}</p>
-          <p dir="ltr" class="dashboard-value dashboard-value-money">
-            {{ formatCurrency(donationCardValue) }}
+          <p v-if="tile.hint" class="mt-1 text-xs" :class="tile.tone === 'problem' && tile.value !== '0' ? 'font-medium text-red-700' : 'text-muted'">
+            {{ tile.hint }}
           </p>
-          <p class="dashboard-hint">{{ donationsHint }}</p>
-        </button>
+        </component>
       </section>
 
-      <!-- Quick overview -->
-      <section class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <article
-          class="rounded-2xl bg-gradient-to-br from-brand to-brand-deep p-6 text-white shadow-lg shadow-brand/15 sm:p-7"
-        >
-          <div class="flex items-start justify-between gap-3">
-            <p class="text-sm font-medium text-white/80">
-              {{ openAmountLabel }}
+      <!-- 2. Status split + how much was repaid -->
+      <section class="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        <article v-if="!auth.isBorrower.value" class="chart-card">
+          <header class="chart-header">
+            <h2 class="chart-title">{{ text("מצב ההלוואות", "Loan status", "Estado de los préstamos") }}</h2>
+            <p class="chart-subtitle">
+              {{ text("לחיצה על חלק פותחת את רשימת ההלוואות שלו", "Click a slice to open those loans", "Haz clic en una parte para ver esos préstamos") }}
             </p>
+          </header>
+          <DonutChart
+            :segments="statusSegments"
+            :center-label="text('הלוואות', 'loans', 'préstamos')"
+            :aria-label="text('מצב ההלוואות', 'Loan status', 'Estado de los préstamos')"
+            @select="openStatus"
+          />
+        </article>
 
-            <span class="flex-shrink-0 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white">
-              {{ openLoansCount }}
-            </span>
+        <article class="chart-card" :class="auth.isBorrower.value ? 'lg:col-span-2' : ''">
+          <header class="chart-header">
+            <h2 class="chart-title">
+              {{ auth.isBorrower.value
+                ? text("ההחזר שלי", "My repayment", "Mi devolución")
+                : text("כמה כבר הוחזר", "How much has been repaid", "Cuánto se ha devuelto") }}
+            </h2>
+            <p class="chart-subtitle">
+              {{ text("בהלוואות הפתוחות", "Across open loans", "En los préstamos abiertos") }}
+            </p>
+          </header>
+
+          <div class="flex items-baseline justify-between gap-3">
+            <p dir="ltr" class="text-4xl font-bold text-ink">{{ repaidPercent }}%</p>
+            <p class="text-sm text-muted">{{ text("הוחזר", "repaid", "devuelto") }}</p>
           </div>
+
+          <div
+            class="mt-4 flex h-4 w-full overflow-hidden rounded-full bg-canvas-deep"
+            role="img"
+            :aria-label="`${text('הוחזר', 'Repaid', 'Devuelto')} ${money(data.repayment.paid)}, ${text('נותר', 'remaining', 'pendiente')} ${money(data.repayment.remaining)}`"
+          >
+            <div
+              class="h-full rounded-full"
+              :style="{ width: `${repaidPercent}%`, backgroundColor: COLORS.paid }"
+            ></div>
+          </div>
+
+          <dl class="mt-5 grid grid-cols-2 gap-3">
+            <div class="rounded-xl bg-canvas p-3">
+              <dt class="flex items-center gap-2 text-xs text-muted">
+                <span class="h-2.5 w-2.5 rounded-full" :style="{ backgroundColor: COLORS.paid }"></span>
+                {{ text("הוחזר", "Repaid", "Devuelto") }}
+              </dt>
+              <dd dir="ltr" class="mt-1 text-lg font-bold text-ink" :class="isRTL ? 'text-right' : 'text-left'">{{ money(data.repayment.paid) }}</dd>
+            </div>
+            <div class="rounded-xl bg-canvas p-3">
+              <dt class="flex items-center gap-2 text-xs text-muted">
+                <span class="h-2.5 w-2.5 rounded-full bg-canvas-deep ring-1 ring-line-strong"></span>
+                {{ text("יתרה לתשלום", "Still owed", "Pendiente") }}
+              </dt>
+              <dd dir="ltr" class="mt-1 text-lg font-bold text-ink" :class="isRTL ? 'text-right' : 'text-left'">{{ money(data.repayment.remaining) }}</dd>
+            </div>
+          </dl>
 
           <p
-            dir="ltr"
-            class="mt-2 whitespace-nowrap text-[clamp(1.45rem,6vw,2.25rem)] font-bold leading-tight"
+            v-if="data.repayment.missing > 0"
+            class="mt-3 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
           >
-            {{ formatCurrency(openLoansAmount) }}
+            <svg class="mt-0.5 h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="icons.alert" />
+            </svg>
+            <span>
+              {{ text("תשלומים שלא נפרעו (צ'ק חזר / הוראת קבע שנכשלה):", "Unpaid payments (bounced check / failed standing order):", "Pagos no cobrados:") }}
+              <strong dir="ltr">{{ money(data.repayment.missing) }}</strong>
+            </span>
           </p>
+        </article>
+      </section>
 
-          <div class="mt-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <p class="max-w-md text-sm leading-6 text-white/75">
-              {{ openAmountDescription }}
-            </p>
+      <!-- 3. What comes in next + where the money is -->
+      <section class="grid grid-cols-1 gap-5" :class="showCommunities ? 'lg:grid-cols-2' : ''">
+        <article class="chart-card">
+          <header class="chart-header">
+            <h2 class="chart-title">
+              {{ auth.isBorrower.value
+                ? text("התשלומים הקרובים שלי", "My upcoming payments", "Mis próximos pagos")
+                : text("גבייה צפויה בחודשים הקרובים", "Expected collections, next months", "Cobros previstos") }}
+            </h2>
+            <p class="chart-subtitle">{{ text("סכום התשלומים לפי חודש", "Total payments due per month", "Total de pagos por mes") }}</p>
+          </header>
+          <BarChart
+            :items="upcomingBars"
+            :color="COLORS.money"
+            :format-value="money"
+            :format-short="moneyShort"
+            :aria-label="text('גבייה צפויה לפי חודש', 'Expected collections per month', 'Cobros previstos por mes')"
+          />
+        </article>
 
+        <article v-if="showCommunities" class="chart-card">
+          <header class="chart-header">
+            <h2 class="chart-title">{{ text("יתרה פתוחה לפי קהילה", "Open balance by community", "Saldo abierto por comunidad") }}</h2>
+            <p class="chart-subtitle">{{ text("כמה עוד צריך לחזור מכל קהילה", "What is still owed in each community", "Lo que falta devolver en cada comunidad") }}</p>
+          </header>
+          <BarChart
+            orientation="horizontal"
+            :items="communityBars"
+            :color="COLORS.money"
+            :format-value="money"
+            :aria-label="text('יתרה פתוחה לפי קהילה', 'Open balance by community', 'Saldo abierto por comunidad')"
+          />
+        </article>
+      </section>
+
+      <!-- 4. Donations (admin) -->
+      <section v-if="auth.isAdmin.value && donationBars.length">
+        <article class="chart-card">
+          <header class="chart-header flex flex-wrap items-end justify-between gap-2">
+            <div>
+              <h2 class="chart-title">{{ text("תרומות ב-12 החודשים האחרונים", "Donations, last 12 months", "Donaciones, últimos 12 meses") }}</h2>
+              <p class="chart-subtitle">{{ text("סכום התרומות שנרשמו בכל חודש", "Total donations recorded each month", "Total de donaciones por mes") }}</p>
+            </div>
             <button
               type="button"
-              class="inline-flex cursor-pointer flex-shrink-0 items-center justify-center gap-2 rounded-xl bg-white/15 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/25"
-              @click="router.push('/loans')"
+              class="cursor-pointer text-sm font-semibold text-brand hover:underline"
+              @click="router.push('/donations')"
             >
-              {{ openLoansLabel }}
+              {{ text("לכל התרומות", "All donations", "Todas las donaciones") }}
             </button>
-          </div>
+          </header>
+          <BarChart
+            :items="donationBars"
+            :color="COLORS.donations"
+            :format-value="dollars"
+            :format-short="dollarsShort"
+            :aria-label="text('תרומות לפי חודש', 'Donations per month', 'Donaciones por mes')"
+          />
         </article>
-
-        <article
-          v-if="auth.isAdmin.value"
-          class="rounded-2xl border border-line bg-white p-6 shadow-sm sm:p-7"
-        >
-          <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-brand/10 text-brand">
-            <svg
-              class="h-6 w-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z"
-              />
-            </svg>
-          </div>
-
-          <h2 class="mt-4 text-lg font-bold text-ink">
-            {{ reportsShortcutTitle }}
-          </h2>
-
-          <p class="mt-2 text-sm leading-6 text-muted">
-            {{ reportsShortcutDescription }}
-          </p>
-
-          <button
-            type="button"
-            class="mt-5 inline-flex items-center gap-2 rounded-xl border border-brand/20 bg-brand/5 px-4 py-2.5 text-sm font-semibold text-brand transition hover:bg-brand/10"
-            @click="router.push('/reports')"
-          >
-            {{ reportsShortcutAction }}
-          </button>
-        </article>
-
-        <article
-          v-else-if="auth.isTrustee.value"
-          class="rounded-2xl border border-line bg-white p-6 shadow-sm sm:p-7"
-        >
-          <p class="text-sm text-muted">{{ t("dashboard.trustee.community") }}</p>
-          <p class="mt-1 text-xl font-bold text-ink">{{ dashboard.community || "—" }}</p>
-
-          <div class="mt-5 rounded-xl bg-canvas p-4">
-            <p class="text-sm text-muted">{{ t("dashboard.trustee.borrowers") }}</p>
-            <p class="mt-1 text-2xl font-bold text-ink">{{ dashboard.borrowers_count }}</p>
-          </div>
-        </article>
-
-        <article
-          v-else-if="auth.isDonor.value"
-          class="rounded-2xl border border-line bg-white p-6 shadow-sm sm:p-7"
-        >
-          <p class="text-sm text-muted">{{ t("dashboard.donor.title") }}</p>
-          <p class="mt-2 text-sm leading-6 text-muted">{{ t("dashboard.donor.subtitle") }}</p>
-          <p class="mt-5 text-3xl font-bold text-success">
-            {{ formatCurrency(dashboard.my_donations_amount) }}
-          </p>
-        </article>
-      </section>
-
-      <!-- People shortcuts -->
-      <section
-        v-if="auth.isAdmin.value && dashboard.people"
-        class="grid grid-cols-1 gap-4 sm:grid-cols-3"
-      >
-        <button
-          v-for="person in peopleShortcuts"
-          :key="person.key"
-          type="button"
-          class="cursor-pointer rounded-2xl border border-line bg-white p-5 text-start shadow-sm transition hover:-translate-y-0.5 hover:border-brand/30 hover:shadow-md"
-          @click="router.push(person.to)"
-        >
-          <div class="flex items-center justify-between gap-3">
-            <p class="text-sm font-medium text-muted">{{ person.label }}</p>
-          </div>
-
-          <p class="mt-2 text-3xl font-bold text-ink">{{ person.value }}</p>
-        </button>
-      </section>
-
-      <!-- Status overview -->
-      <section
-        class="rounded-2xl border border-line bg-white p-5 shadow-sm sm:p-6 lg:rounded-3xl lg:p-7"
-      >
-        <div class="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 class="text-lg font-bold text-ink sm:text-xl">
-              {{ statusOverviewTitle }}
-            </h2>
-
-            <p
-              v-if="statusOverviewSubtitle"
-              class="mt-1 text-sm text-muted"
-            >
-              {{ statusOverviewSubtitle }}
-            </p>
-          </div>
-
-          <span class="text-sm font-semibold text-brand">
-            {{ totalLoans }} {{ totalLoansLabel }}
-          </span>
-        </div>
-
-        <div class="space-y-5">
-          <button
-            v-for="row in statusRows"
-            :key="row.status"
-            type="button"
-            class="block w-full cursor-pointer rounded-xl p-2 text-start transition hover:bg-canvas"
-            @click="openStatusRow(row.status)"
-          >
-            <div class="mb-2 flex items-center justify-between gap-3 text-sm">
-              <span class="font-semibold text-ink-soft">{{ row.label }}</span>
-              <span class="font-bold text-ink">{{ row.count }}</span>
-            </div>
-
-            <div class="h-3 w-full overflow-hidden rounded-full bg-surface-muted">
-              <div
-                class="h-full rounded-full transition-all duration-500"
-                :class="row.barClass"
-                :style="{ width: `${statusPercentage(row.count)}%` }"
-              ></div>
-            </div>
-          </button>
-        </div>
-      </section>
-
-      <!-- Community overview -->
-      <section
-        v-if="auth.isAdmin.value && dashboard.by_community.length"
-        class="rounded-2xl border border-line bg-white p-5 shadow-sm sm:p-6 lg:rounded-3xl lg:p-7"
-      >
-        <div class="mb-6">
-          <h2 class="text-lg font-bold text-ink sm:text-xl">
-            {{ communityTitle }}
-          </h2>
-
-
-        </div>
-
-        <div class="space-y-4">
-          <div
-            v-for="community in dashboard.by_community"
-            :key="community.community"
-            class="rounded-xl border border-line/60 bg-surface-muted p-4"
-          >
-            <div class="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-              <p class="font-semibold text-ink">{{ community.community }}</p>
-
-              <p class="text-sm text-muted">
-                {{ community.loans_count }} {{ totalLoansLabel }}
-                ·
-                {{ formatCurrency(community.total_amount) }}
-              </p>
-            </div>
-
-            <div class="h-2.5 w-full overflow-hidden rounded-full bg-line">
-              <div
-                class="h-full rounded-full bg-gradient-to-r from-brand to-sky"
-                :style="{ width: `${communityPercentage(community.loans_count)}%` }"
-              ></div>
-            </div>
-          </div>
-        </div>
       </section>
     </div>
   </AppLayout>
 </template>
 
 <script setup lang="ts">
-import {
-  computed,
-  onMounted,
-  reactive,
-  ref,
-} from "vue";
-
-import {
-  useRouter,
-} from "vue-router";
+import { computed, onMounted, reactive, ref } from "vue";
+import { useRouter } from "vue-router";
 
 import AppLayout from "../components/AppLayout.vue";
-import { useLocale } from "../composables/useLocale";
+import BarChart, { type BarItem } from "../components/charts/BarChart.vue";
+import DonutChart, { type DonutSegment } from "../components/charts/DonutChart.vue";
 import { useAuth } from "../composables/useAuth";
+import { useLocale } from "../composables/useLocale";
 import api from "../services/api";
 
+type MonthRow = { month: string; amount: number; count: number };
 
-type CommunitySummary = {
-  community: string;
-  loans_count: number;
-  total_amount: number;
-};
-
-type LoanStatusKey =
-  | "ACTIVE"
-  | "OVERDUE"
-  | "CLOSED";
-
-type DashboardData = {
-  loan_status: {
-    active: number;
-    overdue: number;
-    closed: number;
-  };
-  active_loans_amount: number;
-  total_donations_amount: number;
-  people: {
-    borrowers: number;
-    trustees: number;
-    donors: number;
-  } | null;
-  by_community: CommunitySummary[];
-  community: string;
-  borrowers_count: number;
-  my_donations_amount: number;
-};
-
-const { t, locale } = useLocale();
-const auth = useAuth();
 const router = useRouter();
+const auth = useAuth();
+const { t, locale, isRTL } = useLocale();
+
+// Validated chart colors (status colors carry a text label beside them).
+const COLORS = {
+  active: "#2a78d6",
+  problem: "#d03b3b",
+  closed: "#0ca30c",
+  paid: "#2a78d6",
+  money: "#2a78d6",
+  donations: "#4a3aa7",
+};
+
+const icons: Record<string, string> = {
+  loans: "M9 12l2 2 4-4M7 7h3m-3 5h2m-2 5h8",
+  alert: "M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z",
+  wallet: "M3 7h18v12H3zM16 13h2M3 7l2-3h12l2 3",
+  donation: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V6m0 12v-2",
+  calendar: "M8 3v3m8-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z",
+  people: "M17 20v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2M10 10a4 4 0 1 0 0-8 4 4 0 0 0 0 8M21 20v-2a4 4 0 0 0-3-3.87M16 2.13a4 4 0 0 1 0 7.75",
+};
 
 const loading = ref(true);
 const errorMessage = ref<string | null>(null);
 
-const dashboard = reactive<DashboardData>({
-  loan_status: {
-    active: 0,
-    overdue: 0,
-    closed: 0,
-  },
-  active_loans_amount: 0,
+const data = reactive({
+  loan_status: { active: 0, overdue: 0, closed: 0 },
+  repayment: { paid: 0, remaining: 0, missing: 0 },
+  upcoming_by_month: [] as MonthRow[],
+  balance_by_community: [] as { community: string; remaining_amount: number; loans_count: number }[],
+  donations_by_month: [] as MonthRow[],
   total_donations_amount: 0,
-  people: null,
-  by_community: [],
-  community: "",
   borrowers_count: 0,
-  my_donations_amount: 0,
+  people: null as null | { borrowers: number; trustees: number; donors: number },
+  next_payment: null as null | { due_date: string; amount: number },
 });
 
-function text(
-  he: string,
-  en: string,
-  es: string
-): string {
-  if (locale.value === "he") {
-    return he;
-  }
-
-  if (locale.value === "es") {
-    return es;
-  }
-
+function text(he: string, en: string, es: string): string {
+  if (locale.value === "he") return he;
+  if (locale.value === "es") return es;
   return en;
 }
 
-const openLoansAmount = ref(0);
-const openLoansCount = ref(0);
-
-const activeLoansLabel = computed(() =>
-  text("הלוואות פעילות", "Active loans", "Préstamos activos")
+const numberLocale = computed(() =>
+  locale.value === "he" ? "he-IL" : locale.value === "es" ? "es-ES" : "en-US"
 );
 
-const problematicLoansLabel = computed(() =>
-  text("הלוואות בעייתיות", "Needs attention", "Préstamos problemáticos")
-);
+function money(value: number): string {
+  return `₪ ${new Intl.NumberFormat(numberLocale.value, { maximumFractionDigits: 0 }).format(value || 0)}`;
+}
 
-const completedLoansLabel = computed(() =>
-  text("הלוואות שהסתיימו", "Completed loans", "Préstamos finalizados")
-);
+function moneyShort(value: number): string {
+  return `₪${new Intl.NumberFormat(numberLocale.value, { notation: "compact", maximumFractionDigits: 1 }).format(value || 0)}`;
+}
 
-const openLoansLabel = computed(() =>
-  text("לצפייה בהלוואות", "View loans", "Ver préstamos")
-);
+function dollars(value: number): string {
+  return `$ ${new Intl.NumberFormat(numberLocale.value, { maximumFractionDigits: 0 }).format(value || 0)}`;
+}
 
-const openAmountLabel = computed(() =>
-  text("סכום הלוואות פתוחות", "Open loan amount", "Importe de préstamos abiertos")
-);
+function dollarsShort(value: number): string {
+  return `$${new Intl.NumberFormat(numberLocale.value, { notation: "compact", maximumFractionDigits: 1 }).format(value || 0)}`;
+}
 
-const openAmountDescription = computed(() =>
-  text(
-    "כולל הלוואות פעילות והלוואות בעייתיות שעדיין לא הסתיימו.",
-    "Includes active and problematic loans that have not yet been completed.",
-    "Incluye préstamos activos y problemáticos que aún no han finalizado."
-  )
-);
+function monthLabel(key: string): string {
+  const [year, month] = key.split("-").map(Number);
+  const date = new Date(year, month - 1, 1);
+  const sameYear = year === new Date().getFullYear();
+  return new Intl.DateTimeFormat(numberLocale.value, {
+    month: "short",
+    ...(sameYear ? {} : { year: "2-digit" }),
+  }).format(date);
+}
 
-const problematicHint = computed(() =>
-  text("דורשות תשומת לב", "Require attention", "Requieren atención")
-);
-
-const archiveHint = computed(() =>
-  text("לצפייה בארכיון", "Open archive", "Abrir archivo")
-);
-
-const completedReadOnlyHint = computed(() =>
-  text("הלוואות שהושלמו", "Completed loans", "Préstamos finalizados")
-);
-
-const donationsHint = computed(() =>
-  text("לצפייה בתרומות", "View donations", "Ver donaciones")
-);
-
-const reportsShortcutTitle = computed(() =>
-  text("דוחות וסיכומים", "Reports & summaries", "Informes y resúmenes")
-);
-
-const reportsShortcutDescription = computed(() =>
-  text(
-    "סינון וסיכום נתוני הלוואות לפי הצורך.",
-    "Filter and summarize loan data as needed.",
-    "Filtra y resume los datos de préstamos según sea necesario."
-  )
-);
-
-const reportsShortcutAction = computed(() =>
-  text("מעבר לדוחות", "Open reports", "Abrir informes")
-);
-
-const statusOverviewTitle = computed(() =>
-  text("מצב ההלוואות", "Loan status", "Estado de préstamos")
-);
-
-const statusOverviewSubtitle = computed(() => "");
-
-const totalLoansLabel = computed(() =>
-  text("הלוואות", "loans", "préstamos")
-);
-
-
-const communityTitle = computed(() =>
-  text(
-    "הלוואות לפי קהילה",
-    "Loans by community",
-    "Préstamos por comunidad"
-  )
-);
-
-const donationCardLabel = computed(() =>
-  auth.isDonor.value
-    ? text("התרומות שלי", "My donations", "Mis donaciones")
-    : text("סך התרומות", "Total donations", "Total de donaciones")
-);
-
-const donationCardValue = computed(() =>
-  auth.isDonor.value
-    ? dashboard.my_donations_amount
-    : dashboard.total_donations_amount
-);
-
-const canOpenDonations = computed(() =>
-  auth.isAdmin.value || auth.isDonor.value
-);
-
-const totalLoans = computed(() =>
-  dashboard.loan_status.active +
-  dashboard.loan_status.overdue +
-  dashboard.loan_status.closed
-);
-
-const maximumCommunityLoans = computed(() => {
-  if (dashboard.by_community.length === 0) {
-    return 0;
-  }
-
-  return Math.max(
-    ...dashboard.by_community.map((item) => item.loans_count)
+function formatDate(value: string): string {
+  return new Intl.DateTimeFormat(numberLocale.value, { day: "numeric", month: "short" }).format(
+    new Date(`${value}T00:00:00`)
   );
+}
+
+function toneClass(tone: string): string {
+  return {
+    active: "bg-brand/10 text-brand",
+    problem: "bg-red-50 text-red-600",
+    money: "bg-sky/10 text-sky-700",
+    donation: "bg-violet/10 text-violet",
+    neutral: "bg-canvas-deep text-ink-soft",
+  }[tone] || "bg-canvas-deep text-ink-soft";
+}
+
+const openLoans = computed(() => data.loan_status.active + data.loan_status.overdue);
+
+const repaidPercent = computed(() => {
+  const total = data.repayment.paid + data.repayment.remaining;
+  return total > 0 ? Math.round((data.repayment.paid / total) * 100) : 0;
 });
 
-const peopleShortcuts = computed(() => {
-  if (!dashboard.people) {
-    return [];
+type Tile = {
+  key: string;
+  label: string;
+  value: string;
+  hint?: string;
+  icon: string;
+  tone: string;
+  to?: string;
+};
+
+const tiles = computed<Tile[]>(() => {
+  const problemTile: Tile = {
+    key: "problem",
+    label: text("הלוואות בעייתיות", "Problem loans", "Préstamos con problemas"),
+    value: String(data.loan_status.overdue),
+    hint:
+      data.loan_status.overdue > 0
+        ? text(`חסרים ${money(data.repayment.missing)} – לחצו לפרטים`, `${money(data.repayment.missing)} missing – click for details`, `Faltan ${money(data.repayment.missing)}`)
+        : text("אין תשלומים חסרים", "No missing payments", "Sin pagos pendientes"),
+    icon: "alert",
+    tone: "problem",
+    to: "/loans?status=OVERDUE",
+  };
+
+  const balanceTile: Tile = {
+    key: "balance",
+    label: text("יתרה פתוחה", "Open balance", "Saldo abierto"),
+    value: money(data.repayment.remaining),
+    hint: text("כמה עוד צריך לחזור", "Still to be repaid", "Pendiente de devolver"),
+    icon: "wallet",
+    tone: "money",
+  };
+
+  if (auth.isBorrower.value) {
+    return [
+      balanceTile,
+      {
+        key: "next",
+        label: text("התשלום הבא", "Next payment", "Próximo pago"),
+        value: data.next_payment ? money(data.next_payment.amount) : "—",
+        hint: data.next_payment ? formatDate(data.next_payment.due_date) : text("אין תשלומים קרובים", "No upcoming payments", "Sin pagos próximos"),
+        icon: "calendar",
+        tone: "active",
+        to: "/loans",
+      },
+      { ...problemTile, label: text("תשלומים שלא נפרעו", "Unpaid payments", "Pagos no cobrados"), to: "/loans" },
+      {
+        key: "loans",
+        label: text("ההלוואות שלי", "My loans", "Mis préstamos"),
+        value: String(openLoans.value),
+        hint: text("לצפייה בלוח התשלומים", "View payment schedule", "Ver calendario de pagos"),
+        icon: "loans",
+        tone: "neutral",
+        to: "/loans",
+      },
+    ];
   }
 
-  return [
+  const list: Tile[] = [
     {
-      key: "borrowers",
-      label: text("לווים", "Borrowers", "Prestatarios"),
-      value: dashboard.people.borrowers,
-      to: "/borrowers",
+      key: "active",
+      label: text("הלוואות פעילות", "Active loans", "Préstamos activos"),
+      value: String(openLoans.value),
+      hint: text("לרשימת ההלוואות", "Open the loans list", "Ver préstamos"),
+      icon: "loans",
+      tone: "active",
+      to: "/loans",
     },
-    {
-      key: "trustees",
-      label: text("נאמנים", "Trustees", "Responsables"),
-      value: dashboard.people.trustees,
-      to: "/trustees",
-    },
-    {
-      key: "donors",
-      label: text("תורמים", "Donors", "Donantes"),
-      value: dashboard.people.donors,
-      to: "/donors",
-    },
+    problemTile,
+    balanceTile,
   ];
+
+  if (auth.isAdmin.value) {
+    list.push({
+      key: "donations",
+      label: text("סך התרומות", "Total donations", "Total de donaciones"),
+      value: dollars(data.total_donations_amount),
+      hint: text("לרשימת התרומות", "Open donations", "Ver donaciones"),
+      icon: "donation",
+      tone: "donation",
+      to: "/donations",
+    });
+  } else {
+    list.push({
+      key: "borrowers",
+      label: text("לווים בקהילה", "Borrowers in community", "Prestatarios"),
+      value: String(data.borrowers_count),
+      hint: text("לרשימת הלווים", "Open borrowers", "Ver prestatarios"),
+      icon: "people",
+      tone: "neutral",
+      to: "/borrowers",
+    });
+  }
+
+  return list;
 });
 
-const statusRows = computed(() => [
-  {
-    status: "ACTIVE" as LoanStatusKey,
-    label: activeLoansLabel.value,
-    count: dashboard.loan_status.active,
-    barClass: "bg-brand",
-  },
-  {
-    status: "OVERDUE" as LoanStatusKey,
-    label: problematicLoansLabel.value,
-    count: dashboard.loan_status.overdue,
-    barClass: "bg-danger",
-  },
-  {
-    status: "CLOSED" as LoanStatusKey,
-    label: completedLoansLabel.value,
-    count: dashboard.loan_status.closed,
-    barClass: "bg-success",
-  },
+const statusSegments = computed<DonutSegment[]>(() => [
+  { key: "ACTIVE", label: text("פעילות", "Active", "Activos"), value: data.loan_status.active, color: COLORS.active },
+  { key: "OVERDUE", label: text("בעייתיות", "Problem", "Con problemas"), value: data.loan_status.overdue, color: COLORS.problem },
+  { key: "CLOSED", label: text("הסתיימו", "Completed", "Finalizados"), value: data.loan_status.closed, color: COLORS.closed },
 ]);
 
-function formatCurrency(value: number): string {
-  const formatterLocale =
-    locale.value === "he"
-      ? "he-IL"
-      : locale.value === "es"
-        ? "es-ES"
-        : "en-US";
-
-  const formatted = new Intl.NumberFormat(
-    formatterLocale,
-    {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2,
-    }
-  ).format(Number(value || 0));
-
-  return `₪\u00A0${formatted}`;
+function openStatus(key: string): void {
+  router.push(key === "CLOSED" ? "/archive" : `/loans?status=${key}`);
 }
 
-function statusPercentage(count: number): number {
-  if (totalLoans.value === 0) {
-    return 0;
-  }
+const upcomingBars = computed<BarItem[]>(() =>
+  data.upcoming_by_month.map((row) => ({
+    key: row.month,
+    label: monthLabel(row.month),
+    value: row.amount,
+    detail: text(`${row.count} תשלומים`, `${row.count} payments`, `${row.count} pagos`),
+  }))
+);
 
-  return Math.min(
-    100,
-    Math.round((count / totalLoans.value) * 100)
-  );
-}
+const showCommunities = computed(() => auth.isAdmin.value && data.balance_by_community.length > 1);
 
-function communityPercentage(count: number): number {
-  if (maximumCommunityLoans.value === 0) {
-    return 0;
-  }
+const communityBars = computed<BarItem[]>(() =>
+  data.balance_by_community.map((row) => ({
+    key: row.community,
+    label: row.community,
+    value: row.remaining_amount,
+    detail: text(`${row.loans_count} הלוואות פתוחות`, `${row.loans_count} open loans`, `${row.loans_count} préstamos abiertos`),
+  }))
+);
 
-  return Math.min(
-    100,
-    Math.round((count / maximumCommunityLoans.value) * 100)
-  );
-}
+const donationBars = computed<BarItem[]>(() =>
+  data.donations_by_month.map((row) => ({
+    key: row.month,
+    label: monthLabel(row.month),
+    value: row.amount,
+    detail: text(`${row.count} תרומות`, `${row.count} donations`, `${row.count} donaciones`),
+  }))
+);
 
-function openLoans(status: "ACTIVE" | "OVERDUE"): void {
-  router.push({
-    path: "/loans",
-    query: {
-      status,
-    },
-  });
-}
-
-function openArchive(): void {
-  if (!auth.isAdmin.value) {
-    return;
-  }
-
-  router.push("/archive");
-}
-
-function openDonations(): void {
-  if (!canOpenDonations.value) {
-    return;
-  }
-
-  router.push("/donations");
-}
-
-function openStatusRow(status: LoanStatusKey): void {
-  if (status === "CLOSED") {
-    openArchive();
-    return;
-  }
-
-  openLoans(status);
-}
-
-function summarizeOpenLoans(
-  rows: any[]
-): void {
-  const openRows = rows.filter(
-    (loan) =>
-      String(
-        loan?.status || "ACTIVE"
-      ).toUpperCase() !== "CLOSED"
-  );
-
-  openLoansCount.value = openRows.length;
-
-  openLoansAmount.value = openRows.reduce(
-    (total: number, loan: any) =>
-      total + Number(loan?.amount || 0),
-    0
-  );
+function toMonthRows(rows: any): MonthRow[] {
+  return Array.isArray(rows)
+    ? rows.map((row) => ({ month: String(row.month), amount: Number(row.amount || 0), count: Number(row.count || 0) }))
+    : [];
 }
 
 async function loadDashboard(): Promise<void> {
@@ -733,168 +464,72 @@ async function loadDashboard(): Promise<void> {
   errorMessage.value = null;
 
   try {
-    const requests: Promise<any>[] = [
-      api.get("/dashboard/overview/"),
-    ];
+    const response = await api.get("/dashboard/overview/");
+    const d = response.data || {};
 
-    if (
-      auth.isAdmin.value ||
-      auth.isTrustee.value ||
-      auth.isBorrower.value
-    ) {
-      requests.push(
-        api.get("/loans/", {
-          params: {
-            type: "all",
-          },
-        })
-      );
-    }
-
-    const results = await Promise.all(requests);
-    const data = results[0].data || {};
-
-    dashboard.loan_status = {
-      active: Number(data.loan_status?.active || 0),
-      overdue: Number(data.loan_status?.overdue || 0),
-      closed: Number(data.loan_status?.closed || 0),
+    data.loan_status = {
+      active: Number(d.loan_status?.active || 0),
+      overdue: Number(d.loan_status?.overdue || 0),
+      closed: Number(d.loan_status?.closed || 0),
     };
-
-    dashboard.active_loans_amount = Number(
-      data.active_loans_amount || 0
-    );
-
-    dashboard.total_donations_amount = Number(
-      data.total_donations_amount || 0
-    );
-
-    dashboard.people = data.people
-      ? {
-          borrowers: Number(data.people.borrowers || 0),
-          trustees: Number(data.people.trustees || 0),
-          donors: Number(data.people.donors || 0),
-        }
-      : null;
-
-    dashboard.by_community = Array.isArray(data.by_community)
-      ? data.by_community.map(
-          (item: any): CommunitySummary => ({
-            community: String(item.community || ""),
-            loans_count: Number(item.loans_count || 0),
-            total_amount: Number(item.total_amount || 0),
-          })
-        )
+    data.repayment = {
+      paid: Number(d.repayment?.paid || 0),
+      remaining: Number(d.repayment?.remaining || 0),
+      missing: Number(d.repayment?.missing || 0),
+    };
+    data.upcoming_by_month = toMonthRows(d.upcoming_by_month);
+    data.donations_by_month = toMonthRows(d.donations_by_month);
+    data.balance_by_community = Array.isArray(d.balance_by_community)
+      ? d.balance_by_community.map((row: any) => ({
+          community: String(row.community || "—"),
+          remaining_amount: Number(row.remaining_amount || 0),
+          loans_count: Number(row.loans_count || 0),
+        }))
       : [];
-
-    dashboard.community = String(data.community || "");
-    dashboard.borrowers_count = Number(data.borrowers_count || 0);
-    dashboard.my_donations_amount = Number(
-      data.my_donations_amount || 0
-    );
-
-    if (results[1]) {
-      const rows = Array.isArray(results[1].data)
-        ? results[1].data
-        : [];
-
-      summarizeOpenLoans(rows);
-    } else {
-      openLoansCount.value =
-        dashboard.loan_status.active +
-        dashboard.loan_status.overdue;
-
-      openLoansAmount.value =
-        dashboard.active_loans_amount;
-    }
-  } catch (requestError: any) {
-    errorMessage.value =
-      requestError?.response?.data?.detail ||
-      t("dashboard.messages.loadError");
+    data.total_donations_amount = Number(d.total_donations_amount || 0);
+    data.borrowers_count = Number(d.borrowers_count || 0);
+    data.people = d.people || null;
+    data.next_payment = d.next_payment
+      ? { due_date: String(d.next_payment.due_date), amount: Number(d.next_payment.amount || 0) }
+      : null;
+  } catch (error: any) {
+    errorMessage.value = t("dashboard.messages.loadError");
   } finally {
     loading.value = false;
   }
 }
 
-onMounted(() => {
-  loadDashboard();
-});
+onMounted(loadDashboard);
 </script>
 
 <style scoped>
-.dashboard-card {
-  border: 1px solid rgba(229, 231, 235, 0.9);
+.chart-card {
+  border: 1px solid var(--color-line);
   border-radius: 1rem;
-  background: white;
+  background: var(--color-surface);
   padding: 1.25rem;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
-
-.dashboard-card-button {
-  cursor: pointer;
-  transition:
-    transform 0.2s ease,
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.dashboard-card-button:hover {
-  transform: translateY(-2px);
-  border-color: rgba(0, 122, 255, 0.25);
-  box-shadow:
-    0 8px 18px -10px rgba(0, 0, 0, 0.2),
-    0 2px 6px rgba(0, 0, 0, 0.05);
-}
-
-.dashboard-card:disabled {
-  cursor: default;
-}
-
-.dashboard-icon {
-  display: flex;
-  width: 2.75rem;
-  height: 2.75rem;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 1rem;
-  border-radius: 0.75rem;
-}
-
-.dashboard-label {
-  color: var(--color-muted);
-  font-size: 0.875rem;
-  font-weight: 600;
-}
-
-.dashboard-value {
-  margin-top: 0.25rem;
-  color: var(--color-ink);
-  font-size: 1.875rem;
-  line-height: 2.25rem;
-  font-weight: 700;
-}
-
-.dashboard-value-money {
-  white-space: nowrap;
-  direction: ltr;
-  font-size: clamp(1.05rem, 4.5vw, 1.35rem);
-  line-height: 1.8rem;
-}
-
-.dashboard-hint {
-  margin-top: 0.75rem;
-  color: var(--color-muted);
-  font-size: 0.75rem;
-}
-
 
 @media (min-width: 640px) {
-  .dashboard-card {
+  .chart-card {
     padding: 1.5rem;
   }
+}
 
-  .dashboard-value-money {
-    font-size: 1.5rem;
-    line-height: 2rem;
-  }
+.chart-header {
+  margin-bottom: 1.25rem;
+}
+
+.chart-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.chart-subtitle {
+  margin-top: 0.125rem;
+  font-size: 0.8125rem;
+  color: var(--color-muted);
 }
 </style>
