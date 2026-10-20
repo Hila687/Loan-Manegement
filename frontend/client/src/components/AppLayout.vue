@@ -274,7 +274,7 @@
         </button>
 
         <p class="mt-3 text-center text-[11px] font-medium text-muted">
-          Yael
+          {{ t("auth.login.organization") }}
         </p>
       </div>
     </aside>
@@ -576,7 +576,7 @@
           </button>
 
           <p class="text-center text-[11px] font-medium text-muted">
-            Yael
+            {{ t("auth.login.organization") }}
           </p>
         </div>
       </aside>

@@ -369,7 +369,7 @@
       "hidePassword": "Ocultar contraseña",
       "forgot": "Olvidé mi contraseña / no recibí mis datos",
       "forgotTitle": "¿Cómo obtengo una contraseña?",
-      "forgotText": "Las cuentas las abre el administrador del Guemaj. Si olvidaste tu contraseña o no recibiste tus datos, contacta al administrador o al responsable de tu comunidad. Te enviarán una nueva contraseña temporal por SMS o WhatsApp."
+      "forgotText": "Las cuentas las abre el administrador del Guemaj. Si olvidaste tu contraseña o no recibiste tus datos, contacta al administrador o al responsable de tu comunidad para una nueva contraseña temporal."
     },
     "changePassword": {
       "title": "Cambiar contraseña",
@@ -484,8 +484,9 @@
     "codeLoginText": "Entra con el documento {id} y su teléfono o correo, y recibe un código. No necesita contraseña.",
     "sendWelcome": "Enviar mensaje de bienvenida",
     "passwordFallback": "Datos de acceso con contraseña (respaldo)",
-    "noCodeLogin": "Para entrar con código SMS, guarda su documento y teléfono móvil. Mientras tanto entra con este usuario y contraseña temporal:",
+    "noCodeLogin": "Datos de acceso del usuario:",
     "sendEmail": "Enviar por correo",
-    "noEmail": "No hay correo guardado."
+    "noEmail": "No hay correo guardado.",
+    "manualHandoff": "Copia estos datos y entrégalos al usuario personalmente (por teléfono o en papel). En el primer acceso elegirá una nueva contraseña y puede usar su documento en lugar del usuario."
   }
 }

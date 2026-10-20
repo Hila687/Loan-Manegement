@@ -155,6 +155,7 @@
             <p class="chart-subtitle">{{ text("סכום התשלומים לפי חודש", "Total payments due per month", "Total de pagos por mes") }}</p>
           </header>
           <BarChart
+            :empty-text="text('אין עדיין נתונים להצגה', 'No data to show yet', 'Aún no hay datos')"
             :items="upcomingBars"
             :color="COLORS.money"
             :format-value="money"
@@ -169,6 +170,7 @@
             <p class="chart-subtitle">{{ text("כמה עוד צריך לחזור מכל קהילה", "What is still owed in each community", "Lo que falta devolver en cada comunidad") }}</p>
           </header>
           <BarChart
+            :empty-text="text('אין עדיין נתונים להצגה', 'No data to show yet', 'Aún no hay datos')"
             orientation="horizontal"
             :items="communityBars"
             :color="COLORS.money"
@@ -195,6 +197,7 @@
             </button>
           </header>
           <BarChart
+            :empty-text="text('אין עדיין נתונים להצגה', 'No data to show yet', 'Aún no hay datos')"
             :items="donationBars"
             :color="COLORS.donations"
             :format-value="dollars"

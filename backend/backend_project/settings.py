@@ -88,7 +88,19 @@ TEMPLATES = [
 WSGI_APPLICATION = "backend_project.wsgi.application"
 
 
-if os.getenv("DB_ENGINE", "postgresql").lower() == "sqlite":
+if os.getenv("DATABASE_URL"):
+    # Hosting platforms (Render, Railway, Heroku...) give one URL.
+    import dj_database_url
+
+    DATABASES = {
+        "default": dj_database_url.parse(
+            os.environ["DATABASE_URL"],
+            conn_max_age=int(os.getenv("DB_CONN_MAX_AGE", "60")),
+            conn_health_checks=True,
+            ssl_require=env_bool("DB_SSL_REQUIRE", False),
+        )
+    }
+elif os.getenv("DB_ENGINE", "postgresql").lower() == "sqlite":
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
@@ -157,6 +169,26 @@ USE_TZ = True
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+# The built Vue app (frontend/client/dist). WhiteNoise serves its files at
+# the site root (/assets/..., /vite.svg); index.html is served by
+# core.spa_views for every page URL.
+FRONTEND_DIST = Path(
+    os.getenv(
+        "FRONTEND_DIST",
+        str(BASE_DIR.parent / "frontend" / "client" / "dist"),
+    )
+)
+
+WHITENOISE_ROOT = FRONTEND_DIST if FRONTEND_DIST.exists() else None
+
+
+def _immutable_file_test(path, url):
+    # Vite puts a content hash in every file under /assets/.
+    return url.startswith("/assets/")
+
+
+WHITENOISE_IMMUTABLE_FILE_TEST = _immutable_file_test
+
 MEDIA_ROOT = Path(
     os.getenv(
         "MEDIA_ROOT",
@@ -220,20 +252,22 @@ CSRF_TRUSTED_ORIGINS = env_list(
 
 
 CSRF_COOKIE_HTTPONLY = False
-CSRF_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = env_bool("CSRF_COOKIE_SECURE", not DEBUG)
 
+# The site and the API are served from one address, so Lax is enough.
+# Set "None" only if the frontend is hosted on a different domain.
 CSRF_COOKIE_SAMESITE = os.getenv(
     "CSRF_COOKIE_SAMESITE",
-    "None" if not DEBUG else "Lax",
+    "Lax",
 )
 
 
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_SECURE = env_bool("SESSION_COOKIE_SECURE", not DEBUG)
 
 SESSION_COOKIE_SAMESITE = os.getenv(
     "SESSION_COOKIE_SAMESITE",
-    "None" if not DEBUG else "Lax",
+    "Lax",
 )
 
 SESSION_COOKIE_AGE = int(
@@ -298,14 +332,24 @@ FILE_UPLOAD_PERMISSIONS = 0o600
 FILE_UPLOAD_DIRECTORY_PERMISSIONS = 0o700
 
 
-CACHES = {
-    "default": {
-        "BACKEND":
-            "django.core.cache.backends.locmem.LocMemCache",
-        "LOCATION":
-            "gemach-security-cache",
+# Login-attempt and SMS-code limits live in the cache. In production it is
+# a database table shared by all server processes (`createcachetable`).
+if env_bool("USE_DB_CACHE", not DEBUG):
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+            "LOCATION": "django_cache",
+        }
     }
-}
+else:
+    CACHES = {
+        "default": {
+            "BACKEND":
+                "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION":
+                "gemach-security-cache",
+        }
+    }
 
 
 LOGIN_MAX_ATTEMPTS = int(
@@ -368,6 +412,27 @@ SITE_URL = os.getenv(
     "http://127.0.0.1:5173",
 ).rstrip("/")
 
+# The public address also tells Django which host name to accept and
+# which origin to trust for forms, so one variable is enough to deploy.
+if os.getenv("SITE_URL"):
+    from urllib.parse import urlparse
+
+    _site = urlparse(SITE_URL)
+
+    if _site.hostname and _site.hostname not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(_site.hostname)
+
+    _origin = f"{_site.scheme}://{_site.netloc}"
+    if _origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(_origin)
+
+# Render sets this automatically for its *.onrender.com address.
+if os.getenv("RENDER_EXTERNAL_HOSTNAME"):
+    ALLOWED_HOSTS.append(os.environ["RENDER_EXTERNAL_HOSTNAME"])
+    CSRF_TRUSTED_ORIGINS.append(
+        f"https://{os.environ['RENDER_EXTERNAL_HOSTNAME']}"
+    )
+
 # One-time SMS code sign-in (core/otp.py)
 OTP_TTL_SECONDS = int(os.getenv("OTP_TTL_SECONDS", "600"))
 OTP_RESEND_SECONDS = int(os.getenv("OTP_RESEND_SECONDS", "60"))
@@ -383,3 +448,55 @@ EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
 EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", True)
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "no-reply@gemach.local")
+
+
+# Logs go to stdout, where Docker / the hosting platform collects them.
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "plain": {
+            "format": "%(asctime)s %(levelname)s %(name)s: %(message)s",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "plain",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": os.getenv("LOG_LEVEL", "INFO"),
+    },
+    "loggers": {
+        "django.request": {
+            "handlers": ["console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+    },
+}
+
+# Admins whose email gets server error reports (optional): "Name:a@b.c,..."
+ADMINS = [
+    tuple(item.split(":", 1))
+    for item in env_list("DJANGO_ADMINS")
+    if ":" in item
+]
+
+
+# ---- Which messaging channels are switched on -------------------------
+# The system works with neither: users then sign in with ID number /
+# username + password, and the admin hands out the temporary password.
+SMS_ENABLED = bool(
+    TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN and TWILIO_SMS_FROM
+)
+EMAIL_ENABLED = bool(EMAIL_HOST)
+
+# Sign-in with a one-time code needs a channel to deliver it. In
+# development (DEBUG) the code is shown on screen, so it is always on.
+# LOGIN_CODES=off disables it even when SMS / email are configured.
+_login_codes = os.getenv("LOGIN_CODES", "auto").strip().lower()
+CODE_LOGIN_SMS = _login_codes != "off" and (SMS_ENABLED or DEBUG)
+CODE_LOGIN_EMAIL = _login_codes != "off" and (EMAIL_ENABLED or DEBUG)

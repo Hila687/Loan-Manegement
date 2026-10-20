@@ -22,7 +22,14 @@
       </p>
     </template>
 
-    <div class="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+    <p
+      v-if="!anySendChannel"
+      class="mt-3 rounded-lg bg-white/70 px-3 py-2 text-xs leading-5 text-ink-soft"
+    >
+      {{ t("credentials.manualHandoff") }}
+    </p>
+
+    <div v-else class="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
       <button
         v-for="option in (['SMS', 'EMAIL'] as const)"
         :key="option"
@@ -43,12 +50,6 @@
       </button>
     </div>
 
-    <p
-      v-if="!canSendBy('SMS') && !canSendBy('EMAIL')"
-      class="mt-2 text-xs text-amber-800"
-    >
-      {{ t("credentials.noPhone") }}
-    </p>
 
     <p
       v-if="sendResult"
@@ -61,9 +62,9 @@
 
     <!-- Username + temporary password: the main route when there is no
          ID/phone on file, a collapsed backup otherwise. -->
-    <details
+    <component
+      :is="codeLogin ? 'details' : 'div'"
       class="group mt-4"
-      :open="!codeLogin"
     >
       <summary
         v-if="codeLogin"
@@ -95,7 +96,7 @@
           {{ copied ? t("credentials.copied") : t("credentials.copy") }}
         </button>
       </div>
-    </details>
+    </component>
   </div>
 </template>
 
@@ -136,12 +137,15 @@ const loginUrl = computed(() => `${window.location.origin}/login`);
 // Keep numbers like "050-1234567" in left-to-right order inside Hebrew text.
 const ltr = (value: string) => `\u2066${value}\u2069`;
 
+// With no SMS / email set up the admin passes the details on in person.
+const anySendChannel = computed(() => canSendBy("SMS") || canSendBy("EMAIL"));
+
 function canSendBy(channel: "SMS" | "EMAIL"): boolean {
   if (channel === "EMAIL") {
     return Boolean(props.credentials.can_send_email);
   }
 
-  return (props.credentials.can_send_sms ?? props.credentials.can_send) !== false;
+  return Boolean(props.credentials.can_send_sms ?? props.credentials.can_send);
 }
 
 const codeLogin = computed(() => Boolean(props.credentials.code_login));

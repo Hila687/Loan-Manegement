@@ -522,6 +522,32 @@ def otp_error_response(exc: OtpError):
     return Response(body, status=http_status)
 
 
+def channel_enabled(channel: str) -> bool:
+    if channel == "EMAIL":
+        return settings.CODE_LOGIN_EMAIL
+    return settings.CODE_LOGIN_SMS
+
+
+class AuthConfigView(APIView):
+    """Tells the login screen which sign-in options are switched on."""
+
+    permission_classes = [
+        AllowAny,
+    ]
+
+    def get(self, request):
+        return Response({
+            "code_login": {
+                "sms": settings.CODE_LOGIN_SMS,
+                "email": settings.CODE_LOGIN_EMAIL,
+            },
+            "send": {
+                "sms": settings.SMS_ENABLED,
+                "email": settings.EMAIL_ENABLED,
+            },
+        })
+
+
 def otp_identity(request):
     """(ID number, phone-or-email, channel) from an OTP request body."""
     id_number = str(request.data.get("id_number", "")).strip()
@@ -549,6 +575,15 @@ class OtpRequestView(APIView):
 
     def post(self, request):
         id_number, contact, channel = otp_identity(request)
+
+        if not channel_enabled(channel):
+            return Response(
+                {
+                    "code": "disabled",
+                    "detail": "Sign-in with a code is not available.",
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         if not id_number or not contact:
             return Response(

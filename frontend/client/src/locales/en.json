@@ -368,7 +368,7 @@
       "hidePassword": "Hide password",
       "forgot": "Forgot password / didn't get login details",
       "forgotTitle": "How do I get a password?",
-      "forgotText": "Accounts are opened by the Gemach administrator. If you forgot your password or never received login details, contact the Gemach administrator or your community trustee. They will send you a new temporary password by SMS or WhatsApp."
+      "forgotText": "Accounts are opened by the Gemach administrator. If you forgot your password or never got sign-in details, contact the administrator or your community trustee for a new temporary password."
     },
     "changePassword": {
       "title": "Change password",
@@ -483,8 +483,9 @@
     "codeLoginText": "They sign in with ID number {id} and their phone or email, and get a sign-in code. No password needed.",
     "sendWelcome": "Send account-opened message",
     "passwordFallback": "Password sign-in details (backup)",
-    "noCodeLogin": "To sign in with an SMS code, save an ID number and mobile phone for them. Until then they sign in with this username and temporary password:",
+    "noCodeLogin": "The user's sign-in details:",
     "sendEmail": "Send by email",
-    "noEmail": "No email address on file."
+    "noEmail": "No email address on file.",
+    "manualHandoff": "Copy these details and give them to the user yourself (by phone or on paper). They choose a new password on first sign-in, and can use their ID number instead of the username."
   }
 }

@@ -35,9 +35,16 @@ media/
 node_modules/
 
 # Browser cookies
-cookies.txtdb_backups/
+cookies.txt
+db_backups/
 
 # Local runtime and backup files
 backend/cookies.txt
 db_backups/
 backend/local-env.sh
+
+
+# Production secrets
+.env.production
+!.env.production.example
+!.env.example

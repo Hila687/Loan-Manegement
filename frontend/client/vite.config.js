@@ -7,4 +7,9 @@ export default defineConfig({
     vue(),
     tailwindcss(),
   ],
+  build: {
+    // Hashed file names -> safe to cache forever in the browser.
+    assetsDir: 'assets',
+    sourcemap: false,
+  },
 })

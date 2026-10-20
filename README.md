@@ -1,7 +1,6 @@
 # Gemach Management System – Chasdei Yaakov
 **Software Engineering Project – JCT (Course 151060)**
 
----
 
 ## Overview
 The Gemach Management System is a full-stack web application designed to manage community loans, repayments, trustees, borrowers, and donations in a structured, transparent, and secure manner.

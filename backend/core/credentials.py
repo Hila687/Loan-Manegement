@@ -69,9 +69,9 @@ def credentials_payload(user, temporary_password: str) -> dict:
         "username": user.username,
         "temporary_password": temporary_password,
         "login_hints": login_hints(user),
-        "can_send": bool(phone_digits(phone)),
-        "can_send_sms": bool(phone_digits(phone)),
-        "can_send_email": bool(user_email(user)),
+        "can_send": bool(phone_digits(phone)) and settings.SMS_ENABLED,
+        "can_send_sms": bool(phone_digits(phone)) and settings.SMS_ENABLED,
+        "can_send_email": bool(user_email(user)) and settings.EMAIL_ENABLED,
         "phone_masked": mask_phone(phone) if phone else "",
         # ID number + phone on file = can sign in with an SMS code,
         # no password needed.
@@ -81,9 +81,13 @@ def credentials_payload(user, temporary_password: str) -> dict:
 
 def can_use_code_login(user) -> bool:
     hints = login_hints(user)
+    # Only when a channel to deliver the code is switched on.
     return bool(
         hints.get("id_number")
-        and (phone_digits(hints.get("phone")) or hints.get("email"))
+        and (
+            (phone_digits(hints.get("phone")) and settings.CODE_LOGIN_SMS)
+            or (hints.get("email") and settings.CODE_LOGIN_EMAIL)
+        )
     )
 
 

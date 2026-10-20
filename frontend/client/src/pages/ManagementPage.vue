@@ -524,9 +524,9 @@ const notesLabel = computed(() => text("הערות", "Notes", "Notas"));
 const idNumberLabel = computed(() => text("תעודת זהות", "ID number", "Identificación"));
 const codeLoginFieldHint = computed(() =>
   text(
-    "עם תעודת זהות וטלפון נייד או מייל אפשר להיכנס לאתר עם קוד, בלי סיסמה.",
-    "With an ID number and a mobile phone or email they can sign in with a code, no password needed.",
-    "Con documento y teléfono móvil o correo puede entrar con un código, sin contraseña."
+    "עם תעודת זהות המשתמש יכול להיכנס בלי לזכור שם משתמש.",
+    "With an ID number the user can sign in without remembering a username.",
+    "Con el documento puede entrar sin recordar un nombre de usuario."
   )
 );
 const addressLabel = computed(() => text("כתובת", "Address", "Dirección"));

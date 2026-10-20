@@ -126,6 +126,7 @@ class CredentialsManagementTests(TestCase):
             first_name="Dina", last_name="Katz", phone="054-2222222", address="J",
         )
 
+    @override_settings(SMS_ENABLED=True, CODE_LOGIN_SMS=True)
     def test_create_borrower_returns_hints(self):
         r = self.client.post(
             "/api/borrowers/",

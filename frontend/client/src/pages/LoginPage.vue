@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 import { useLocale } from "../composables/useLocale";
 import LanguageSelector from "../components/LanguageSelector.vue";
 import { useAuth } from "../composables/useAuth";
+import api from "../services/api";
 
 const router = useRouter();
 const route = useRoute();
@@ -16,6 +17,29 @@ const isRTL = computed(() => locale.value === "he");
 // "code" = ID number + phone + SMS code (default, no password).
 // "password" = username / ID / phone + password (fallback, e.g. admins).
 const mode = ref<"code" | "password">("code");
+
+// Which code channels the server has switched on. With no SMS and no
+// email set up, the only way in is ID number / username + password.
+const codeChannels = ref<("SMS" | "EMAIL")[]>([]);
+const codeLoginAvailable = computed(() => codeChannels.value.length > 0);
+
+onMounted(async () => {
+  try {
+    const { data } = await api.get("/auth/config/");
+    const channels: ("SMS" | "EMAIL")[] = [];
+    if (data?.code_login?.sms) channels.push("SMS");
+    if (data?.code_login?.email) channels.push("EMAIL");
+    codeChannels.value = channels;
+  } catch {
+    codeChannels.value = [];
+  }
+
+  if (!codeChannels.value.length) {
+    mode.value = "password";
+  } else if (!codeChannels.value.includes(channel.value)) {
+    channel.value = codeChannels.value[0];
+  }
+});
 
 // --- code sign-in -------------------------------------------------------
 const step = ref<"details" | "code">("details");
@@ -365,11 +389,11 @@ async function submitPassword(): Promise<void> {
               />
             </div>
 
-            <fieldset>
+            <fieldset v-if="codeChannels.length > 1">
               <legend class="mb-2 block text-sm font-medium text-ink-soft">{{ t("auth.code.sendBy") }}</legend>
               <div class="grid grid-cols-2 gap-2">
                 <label
-                  v-for="option in (['SMS', 'EMAIL'] as const)"
+                  v-for="option in codeChannels"
                   :key="option"
                   class="flex h-11 cursor-pointer items-center justify-center rounded-xl border text-sm font-semibold transition"
                   :class="channel === option
@@ -574,6 +598,7 @@ async function submitPassword(): Promise<void> {
 
           <div class="space-y-3 border-t border-line pt-4 text-center">
             <button
+              v-if="codeLoginAvailable"
               type="button"
               class="cursor-pointer text-sm font-medium text-brand underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:text-muted disabled:no-underline"
               @click="switchMode(mode === 'code' ? 'password' : 'code')"
@@ -588,7 +613,7 @@ async function submitPassword(): Promise<void> {
                 :aria-expanded="showForgotHelp"
                 @click="showForgotHelp = !showForgotHelp"
               >
-                {{ t("auth.code.trouble") }}
+                {{ codeLoginAvailable ? t("auth.code.trouble") : t("auth.login.forgot") }}
               </button>
 
               <div
@@ -596,7 +621,7 @@ async function submitPassword(): Promise<void> {
                 class="mt-3 rounded-xl border border-brand/15 bg-brand/5 px-4 py-3 text-start text-sm leading-6 text-ink-soft"
                 role="note"
               >
-                {{ t("auth.code.troubleText") }}
+                {{ codeLoginAvailable ? t("auth.code.troubleText") : t("auth.login.forgotText") }}
               </div>
             </div>
 

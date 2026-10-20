@@ -1,0 +1,72 @@
+# Production stack for one server (VPS):
+#   caddy      - HTTPS (free certificate from Let's Encrypt) -> web
+#   web        - Django + gunicorn, serves the site and the API
+#   db         - PostgreSQL
+#   reminders  - sends payment reminders every morning
+#   backup     - nightly database + uploaded-forms backup
+#
+# Usage:  cp .env.production.example .env.production   (fill it in)
+#         docker compose up -d --build
+#         docker compose exec web docker-entrypoint.sh createsuperuser
+
+x-app: &app
+  build: .
+  image: gemach-app
+  env_file: .env.production
+  restart: unless-stopped
+  volumes:
+    - app_data:/data
+  depends_on:
+    db:
+      condition: service_healthy
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-gemach}
+      POSTGRES_USER: ${POSTGRES_USER:-gemach}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  web:
+    <<: *app
+    command: web
+    expose:
+      - "8000"
+
+  reminders:
+    <<: *app
+    command: reminders
+
+  backup:
+    <<: *app
+    command: backup-loop
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN in .env}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+
+volumes:
+  pg_data:
+  app_data:
+  caddy_data:
+  caddy_config:

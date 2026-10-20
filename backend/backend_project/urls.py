@@ -1,8 +1,11 @@
 from django.contrib import admin
-from django.urls import include, path
+import os
+
+from django.urls import include, path, re_path
 from rest_framework.routers import DefaultRouter
 
 from core.auth_views import (
+    AuthConfigView,
     ChangePasswordView,
     CsrfView,
     LoginView,
@@ -23,6 +26,7 @@ from core.payments_views import (
     PaymentExceptionView,
 )
 from core.reminders_views import RunRemindersView
+from core.spa_views import health, spa_index
 from core.reports_views import ManagementReportView
 from core.views import (
     AdminUserViewSet,
@@ -84,14 +88,27 @@ router.register(
 
 
 urlpatterns = [
+    # Django's own admin; the path can be moved with DJANGO_ADMIN_URL.
     path(
-        "admin/",
+        os.getenv("DJANGO_ADMIN_URL", "admin/"),
         admin.site.urls,
+    ),
+
+    path(
+        "api/health/",
+        health,
+        name="health",
     ),
 
     path(
         "api/",
         include(router.urls),
+    ),
+
+    path(
+        "api/auth/config/",
+        AuthConfigView.as_view(),
+        name="auth-config",
     ),
 
     path(
@@ -206,5 +223,14 @@ urlpatterns = [
         "api/reminders/run/",
         RunRemindersView.as_view(),
         name="reminders-run",
+    ),
+
+    # Everything else is a page of the Vue app (must stay last).
+    re_path(
+        r"^(?!api/|static/|assets/|"
+        + os.getenv("DJANGO_ADMIN_URL", "admin/").rstrip("/")
+        + r"(/|$)).*$",
+        spa_index,
+        name="spa",
     ),
 ]

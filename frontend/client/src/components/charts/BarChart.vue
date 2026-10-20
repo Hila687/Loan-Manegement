@@ -1,7 +1,14 @@
 <template>
   <figure>
+    <p
+      v-if="maxValue <= 0"
+      class="rounded-xl bg-canvas px-4 py-8 text-center text-sm text-muted"
+    >
+      {{ emptyText }}
+    </p>
+
     <!-- Vertical columns (e.g. months) -->
-    <div v-if="orientation === 'vertical'" class="relative">
+    <div v-else-if="orientation === 'vertical'" class="relative">
       <!-- Y scale: one recessive gridline at the top value -->
       <div class="mb-2 flex items-center gap-2 text-xs text-faint">
         <span dir="ltr">{{ format(scaleMax) }}</span>
@@ -125,8 +132,10 @@ const props = withDefaults(
     orientation?: "vertical" | "horizontal";
     formatValue?: (value: number) => string;
     formatShort?: (value: number) => string;
+    emptyText?: string;
   }>(),
   {
+    emptyText: "—",
     color: "#2a78d6",
     orientation: "vertical",
     formatValue: undefined,
